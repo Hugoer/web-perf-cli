@@ -8,9 +8,11 @@ const { runLab } = require('../lib/lab');
 const { runLinks } = require('../lib/links');
 const { runRum } = require('../lib/rum');
 const { runSitemap } = require('../lib/sitemap');
+const { name, version } = require('../package.json');
 
 program
-    .name('web-perf')
+    .name(name)
+    .version(version)
     .description('Analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM), CrUX BigQuery (collect/collect-history), or sitemap extraction (sitemap)')
     .argument('[url]', 'URL or domain to analyze')
     .option('--lab', 'Run a local Lighthouse audit')
@@ -19,14 +21,30 @@ program
     .option('--collect-history', 'Extract historical CrUX data from BigQuery')
     .option('--links', 'Extract internal links from the rendered DOM (supports SPAs)')
     .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
-    .option('--depth <n>', 'Max depth for sitemap index recursion (default: 3)', parseInt)
+    .option('--depth <n>', 'Max depth for sitemap index recursion (--sitemap, default: 3)', parseInt)
     .option('--sitemap-url <url>', 'Custom sitemap URL (default: <domain>/sitemap.xml)')
     .option('--api-key <key>', 'PageSpeed Insights API key inline (for --rum)')
     .option('--api-key-path <path>', 'Path to a key file: plain text with API key (for --rum) or service account JSON (for --collect/--collect-history)')
     .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
     .option('--urls <urls>', 'Comma-separated list of URLs (for --rum)')
     .option('--urls-file <path>', 'Path to a file with one URL per line (for --rum)')
-    .option('--category <categories>', 'Comma-separated Lighthouse categories for --rum (default: performance,accessibility,best-practices,seo)')
+    .option('--category <categories>', 'Lighthouse categories, comma-separated (--rum, default: all)')
+    .addHelpText('after', `
+Examples:
+  $ web-perf --lab <url>
+  $ web-perf --rum --api-key=<KEY> <url>
+  $ web-perf --rum --urls=<u1>,<u2> --api-key=<KEY>
+  $ web-perf --rum --urls-file=<path-to-file> --api-key=<KEY>
+  $ web-perf --collect --api-key-path=<path-to-file> <url>
+  $ web-perf --collect-history --api-key-path=<path-to-file> [--since=YYYY-MM-DD] <url>
+  $ web-perf --links <url>
+  $ web-perf --sitemap [--depth=N] <domain>
+
+Notes:
+  Modes are mutually exclusive — pick exactly one:
+    --lab | --rum | --collect | --collect-history | --links | --sitemap
+  In --rum mode, <url> is ignored when --urls or --urls-file is provided.
+  Results are saved to results/<mode>/.`)
     .action(async (url, options) => {
         try {
             const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap, options.links].filter(Boolean);
@@ -66,10 +84,10 @@ program
                 const urls = [];
                 const hasUrlList = options.urls || options.urlsFile;
                 if (url && !hasUrlList) {
-                    urls.push(url); 
+                    urls.push(url);
                 }
                 if (options.urls) {
-                    urls.push(...options.urls.split(',').map((u) => u.trim()).filter(Boolean)); 
+                    urls.push(...options.urls.split(',').map((u) => u.trim()).filter(Boolean));
                 }
                 if (options.urlsFile) {
                     const fileContent = fs.readFileSync(options.urlsFile, 'utf-8');
