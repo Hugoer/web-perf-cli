@@ -23,7 +23,7 @@ program
     .option('--links', 'Extract internal links from the rendered DOM (supports SPAs)')
     .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
     .option('--depth <n>', 'Max depth for sitemap index recursion (--sitemap, default: 3)', parseInt)
-    .option('--sitemap-url <url>', 'Custom sitemap URL (default: <domain>/sitemap.xml)')
+    .option('--sitemap-url <url>', 'Custom sitemap URL (default: <url>/sitemap.xml)')
     .option('--api-key <key>', 'PageSpeed Insights API key inline (for --rum)')
     .option('--api-key-path <path>', 'Path to a key file: plain text with API key (for --rum) or service account JSON (for --collect/--collect-history)')
     .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
@@ -45,7 +45,7 @@ Examples:
   $ web-perf --collect --api-key-path=<path-to-file> <url>
   $ web-perf --collect-history --api-key-path=<path-to-file> [--since=YYYY-MM-DD] <url>
   $ web-perf --links <url>
-  $ web-perf --sitemap [--depth=N] <domain>
+  $ web-perf --sitemap [--depth=N] <url>
 
   Lab profiles:
   $ web-perf --lab --profile=low <url>

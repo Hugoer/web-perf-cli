@@ -29,7 +29,7 @@ node bin/web-perf.js --collect --api-key-path=<service-account.json> <url>
 node bin/web-perf.js --collect-history --api-key-path=<service-account.json> [--since=YYYY-MM-DD] <url>
 
 # Sitemap: Extract URLs from sitemap.xml
-node bin/web-perf.js --sitemap [--depth=3] [--sitemap-url=<url>] <domain>
+node bin/web-perf.js --sitemap [--depth=3] [--sitemap-url=<url>] <url>
 
 # Links: Extract internal links from rendered DOM (SPA-compatible)
 node bin/web-perf.js --links <url>

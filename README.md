@@ -188,14 +188,14 @@ node bin/web-perf.js --collect-history --api-key-path=<service-account.json> [--
 Parses a domain's `sitemap.xml` (including sitemap indexes) and extracts all URLs.
 
 ```bash
-node bin/web-perf.js --sitemap [--depth=<n>] [--sitemap-url=<url>] <domain>
+node bin/web-perf.js --sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<domain>` | Yes | Domain to extract URLs from (e.g. `example.com` or `https://example.com`) |
+| `<url>` | Yes | Domain or URL to extract URLs from (e.g. `example.com` or `https://example.com`) |
 | `--depth <n>` | No | Max recursion depth for sitemap indexes. Default: `3` |
-| `--sitemap-url <url>` | No | Custom sitemap URL. Default: `<domain>/sitemap.xml` |
+| `--sitemap-url <url>` | No | Custom sitemap URL. Default: `<url>/sitemap.xml` |
 
 **Output:** `results/sitemap/sitemap-<hostname>-YYYY-MM-DD-HHMM.json`
 
