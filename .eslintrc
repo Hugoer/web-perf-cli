@@ -1,0 +1,52 @@
+{
+  "root": true,
+  "extends": [
+    "@netcentric/eslint-config",
+    "plugin:import/recommended"
+  ],
+  "plugins": [
+    "unused-imports"
+  ],
+  "env": {
+    "browser": false,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "rules": {
+    "comma-dangle": ["error", "only-multiline"],
+    "no-restricted-syntax": "off",
+    "no-plusplus": "off",
+    "default-param-last": "off",
+    "no-console": "off",
+    "no-prototype-builtins": "off",
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "internal", "index", "parent", "sibling"],
+        "pathGroupsExcludedImportTypes": ["builtin"],
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        },
+        "newlines-between": "never"
+      }
+    ],
+    // Disabled to avoid duplicate reporting with eslint plugin "unused-imports"
+    "no-unused-vars": "off",
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "args": "after-used",
+        // Ignore unused arguments that start with _ (common convention for intentionally unused parameters)
+        "argsIgnorePattern": "^_",
+        // Ignore unused variables when using object rest destructuring (avoids false positives in patterns like const { used, ...rest } = obj;)
+        "ignoreRestSiblings": true
+      }
+    ]
+  }
+}

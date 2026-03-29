@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node bin/web-perf.js",
+    "lint": "eslint . --fix",
     "test": "vitest run"
   },
   "dependencies": {
@@ -19,6 +20,10 @@
     "puppeteer-core": "^24.40.0"
   },
   "devDependencies": {
+    "@netcentric/eslint-config": "^1.0.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "vitest": "^3.0.0"
   },
   "engines": {
