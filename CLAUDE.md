@@ -7,6 +7,11 @@ Node.js CLI for web performance auditing. CommonJS, executable via `npx web-perf
 ```bash
 # Lab: Local Lighthouse (headless Chrome)
 node bin/web-perf.js --lab <url>
+node bin/web-perf.js --lab --profile=low <url>
+node bin/web-perf.js --lab --profile=high <url>
+node bin/web-perf.js --lab --network=3g --device=iphone-12 <url>
+node bin/web-perf.js --lab --profile=low --network=wifi <url>   # override parcial
+node bin/web-perf.js --list-profiles
 
 # RUM: PageSpeed Insights API (single URL)
 node bin/web-perf.js --rum --api-key=<PSI_KEY> <url>
@@ -40,6 +45,7 @@ lib/collect.js         # CrUX BigQuery (chrome-ux-report.materialized.device_sum
 lib/collect-history.js # CrUX BigQuery historical range query
 lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
 lib/sitemap.js         # Recursive sitemap parser
+lib/profiles.js        # Lab simulation profiles, network/device presets
 lib/utils.js       # Shared helpers (ensureResultsDir, buildFilename)
 ```
 

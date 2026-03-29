@@ -6,6 +6,7 @@ const { runCollect } = require('../lib/collect');
 const { runCollectHistory } = require('../lib/collect-history');
 const { runLab } = require('../lib/lab');
 const { runLinks } = require('../lib/links');
+const { printProfiles, printNetworks, printDevices } = require('../lib/profiles');
 const { runRum } = require('../lib/rum');
 const { runSitemap } = require('../lib/sitemap');
 const { name, version } = require('../package.json');
@@ -29,6 +30,12 @@ program
     .option('--urls <urls>', 'Comma-separated list of URLs (for --rum)')
     .option('--urls-file <path>', 'Path to a file with one URL per line (for --rum)')
     .option('--category <categories>', 'Lighthouse categories, comma-separated (--rum, default: all)')
+    .option('--profile <preset>', 'Simulation profile for --lab (low, medium, high)')
+    .option('--network <preset>', 'Network throttling preset for --lab (3g-slow, 3g, 4g, 4g-fast, wifi, none)')
+    .option('--device <preset>', 'Device emulation preset for --lab (moto-g-power, iphone-12, iphone-14, ipad, desktop, desktop-large)')
+    .option('--list-profiles', 'List all available simulation profiles')
+    .option('--list-networks', 'List all available network presets')
+    .option('--list-devices', 'List all available device presets')
     .addHelpText('after', `
 Examples:
   $ web-perf --lab <url>
@@ -40,13 +47,38 @@ Examples:
   $ web-perf --links <url>
   $ web-perf --sitemap [--depth=N] <domain>
 
+  Lab profiles:
+  $ web-perf --lab --profile=low <url>
+  $ web-perf --lab --network=3g --device=iphone-12 <url>
+  $ web-perf --lab --profile=low --network=wifi <url>
+  $ web-perf --list-profiles
+
 Notes:
   Modes are mutually exclusive — pick exactly one:
     --lab | --rum | --collect | --collect-history | --links | --sitemap
   In --rum mode, <url> is ignored when --urls or --urls-file is provided.
+  --profile, --network, --device only apply to --lab mode.
   Results are saved to results/<mode>/.`)
     .action(async (url, options) => {
         try {
+            if (options.listProfiles || options.listNetworks || options.listDevices) {
+                if (options.listProfiles) {
+                    printProfiles();
+                }
+                if (options.listNetworks) {
+                    printNetworks();
+                }
+                if (options.listDevices) {
+                    printDevices();
+                }
+                return;
+            }
+
+            const profileFlags = [options.profile, options.network, options.device].filter(Boolean);
+            if (profileFlags.length > 0 && !options.lab) {
+                console.warn('Warning: --profile, --network, and --device only apply to --lab mode.');
+            }
+
             const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap, options.links].filter(Boolean);
             if (modes.length === 0) {
                 console.error('Error: You must specify a mode: --lab, --rum, --collect, --collect-history, --sitemap, or --links.');
@@ -64,7 +96,11 @@ Notes:
 
             if (options.lab) {
                 console.log(`Running Lighthouse audit for: ${url}`);
-                const outputPath = await runLab(url);
+                const outputPath = await runLab(url, {
+                    profile: options.profile,
+                    network: options.network,
+                    device: options.device,
+                });
                 console.log(`Lab results saved to: ${outputPath}`);
             }
 

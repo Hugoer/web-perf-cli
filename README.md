@@ -55,23 +55,55 @@ npm install
 node bin/web-perf.js [options] <url>
 ```
 
-You must specify exactly one mode per execution: `--lab`, `--rum`, `--collect`, `--collect-history`, or `--sitemap`.
+You must specify exactly one mode per execution: `--lab`, `--rum`, `--collect`, `--collect-history`, `--links`, or `--sitemap`.
 
 ## Modes
 
 ### `--lab` — Local Lighthouse audit
 
-Runs a full Lighthouse audit in headless Chrome and saves the JSON report.
+Runs a full Lighthouse audit in headless Chrome and saves the JSON report. Supports simulation profiles to test under different device and network conditions.
 
 ```bash
+# Default (Lighthouse defaults: Moto G Power on Slow 4G)
 node bin/web-perf.js --lab <url>
+
+# Generic profiles
+node bin/web-perf.js --lab --profile=low <url>
+node bin/web-perf.js --lab --profile=high <url>
+
+# Granular control
+node bin/web-perf.js --lab --network=3g --device=iphone-12 <url>
+
+# Profile with partial override (low device + wifi network)
+node bin/web-perf.js --lab --profile=low --network=wifi <url>
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `<url>` | Yes | Full URL to audit (e.g. `https://example.com`) |
+| `--profile <preset>` | No | Simulation profile: `low`, `medium`, `high` |
+| `--network <preset>` | No | Network throttling: `3g-slow`, `3g`, `4g`, `4g-fast`, `wifi`, `none` |
+| `--device <preset>` | No | Device emulation: `moto-g-power`, `iphone-12`, `iphone-14`, `ipad`, `desktop`, `desktop-large` |
 
-No additional options. Chrome must be installed on the machine.
+Chrome must be installed on the machine.
+
+#### Profiles
+
+| Profile | Device | Network | Description |
+|---------|--------|---------|-------------|
+| `low` | Moto G Power | Regular 3G | Budget phone on 3G |
+| `medium` | Moto G Power | Slow 4G | Lighthouse default |
+| `high` | Desktop 1350x940 | WiFi | Desktop on broadband |
+
+When `--network` or `--device` are used together with `--profile`, the granular flags override the corresponding part of the profile. For example, `--profile=low --network=wifi` keeps the Moto G Power device but switches the network to WiFi.
+
+Run `--list-profiles`, `--list-networks`, or `--list-devices` to see all available presets:
+
+```bash
+node bin/web-perf.js --list-profiles
+node bin/web-perf.js --list-networks
+node bin/web-perf.js --list-devices
+```
 
 **Output:** `results/lab/lab-<hostname>-YYYY-MM-DD-HHMM.json`
 
