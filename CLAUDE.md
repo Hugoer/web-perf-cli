@@ -21,6 +21,9 @@ node bin/web-perf.js --collect-history --api-key-path=<service-account.json> [--
 
 # Sitemap: Extract URLs from sitemap.xml
 node bin/web-perf.js --sitemap [--depth=3] [--sitemap-url=<url>] <domain>
+
+# Links: Extract internal links from rendered DOM (SPA-compatible)
+node bin/web-perf.js --links <url>
 ```
 
 ## Structure
@@ -31,6 +34,7 @@ lib/lab.js         # Lighthouse via chrome-launcher
 lib/rum.js         # PageSpeed Insights via node-fetch
 lib/collect.js         # CrUX BigQuery (chrome-ux-report.materialized.device_summary)
 lib/collect-history.js # CrUX BigQuery historical range query
+lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
 lib/sitemap.js         # Recursive sitemap parser
 lib/utils.js       # Shared helpers (ensureResultsDir, buildFilename)
 ```
@@ -43,12 +47,14 @@ Each mode writes to its own subdirectory under `results/`:
 - `results/rum/` — rum (format: `rum-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/collect/` — collect (format: `collect-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/collect-history/` — collect-history (format: `collect-history-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMM.json`)
 
 ## Key Dependencies
 
 - `lighthouse` v12 — default export via `.default` (ESM-style in CJS)
 - `node-fetch` v2 — CJS-compatible version
+- `puppeteer-core` — headless Chrome DOM access (connects to chrome-launcher instance)
 - `@google-cloud/bigquery` — auth with service account JSON (requires BigQuery User role)
 
 ## BigQuery / CrUX

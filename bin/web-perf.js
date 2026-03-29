@@ -7,6 +7,7 @@ const { runRum } = require('../lib/rum');
 const { runCollect } = require('../lib/collect');
 const { runCollectHistory } = require('../lib/collect-history');
 const { runSitemap } = require('../lib/sitemap');
+const { runLinks } = require('../lib/links');
 
 program
   .name('web-perf')
@@ -16,6 +17,7 @@ program
   .option('--rum', 'Fetch data from PageSpeed Insights API')
   .option('--collect', 'Extract CrUX data from BigQuery materialized tables')
   .option('--collect-history', 'Extract historical CrUX data from BigQuery')
+  .option('--links', 'Extract internal links from the rendered DOM (supports SPAs)')
   .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
   .option('--depth <n>', 'Max depth for sitemap index recursion (default: 3)', parseInt)
   .option('--sitemap-url <url>', 'Custom sitemap URL (default: <domain>/sitemap.xml)')
@@ -25,13 +27,13 @@ program
   .option('--category <categories>', 'Comma-separated Lighthouse categories for --rum (default: performance,accessibility,best-practices,seo)')
   .action(async (url, options) => {
     try {
-      const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap].filter(Boolean);
+      const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap, options.links].filter(Boolean);
       if (modes.length === 0) {
-        console.error('Error: You must specify a mode: --lab, --rum, --collect, --collect-history, or --sitemap.');
+        console.error('Error: You must specify a mode: --lab, --rum, --collect, --collect-history, --sitemap, or --links.');
         process.exit(1);
       }
       if (modes.length > 1) {
-        console.error('Error: Please specify only one mode: --lab, --rum, --collect, --collect-history, or --sitemap.');
+        console.error('Error: Please specify only one mode: --lab, --rum, --collect, --collect-history, --sitemap, or --links.');
         process.exit(1);
       }
 
@@ -80,6 +82,11 @@ program
         console.log(`Extracting sitemap URLs for: ${url}`);
         const outputPath = await runSitemap(url, options.depth || 3, options.sitemapUrl);
         console.log(`Sitemap results saved to: ${outputPath}`);
+      }
+      if (options.links) {
+        console.log(`Extracting links from: ${url}`);
+        const outputPath = await runLinks(url);
+        console.log(`Links results saved to: ${outputPath}`);
       }
     } catch (err) {
       console.error(`Error: ${err.message}`);
