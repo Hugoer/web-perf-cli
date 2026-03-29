@@ -8,10 +8,14 @@ Node.js CLI for web performance auditing. CommonJS, executable via `npx web-perf
 # Lab: Local Lighthouse (headless Chrome)
 node bin/web-perf.js --lab <url>
 
-# RUM: PageSpeed Insights API (inline key or plain text key file)
+# RUM: PageSpeed Insights API (single URL)
 node bin/web-perf.js --rum --api-key=<PSI_KEY> <url>
 node bin/web-perf.js --rum --api-key-path=<key-file.txt> <url>
 node bin/web-perf.js --rum --category=performance,seo --api-key-path=<key-file.txt> <url>
+
+# RUM: Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
+node bin/web-perf.js --rum --urls=<url1>,<url2> --api-key=<PSI_KEY>
+node bin/web-perf.js --rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 # Collect: CrUX via BigQuery (origin-level data only, NOT per-page URL)
 node bin/web-perf.js --collect --api-key-path=<service-account.json> <url>

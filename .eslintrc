@@ -16,6 +16,8 @@
     "sourceType": "module"
   },
   "rules": {
+    "brace-style": ["error", "1tbs", { "allowSingleLine": false }],
+    "curly": ["error", "all"],
     "comma-dangle": ["error", "only-multiline"],
     "no-restricted-syntax": "off",
     "no-plusplus": "off",

@@ -82,18 +82,26 @@ No additional options. Chrome must be installed on the machine.
 Fetches real-user metrics and Lighthouse results from the PageSpeed Insights API.
 
 ```bash
-# With inline API key
+# Single URL with inline API key
 node bin/web-perf.js --rum --api-key=<PSI_KEY> <url>
 
-# With API key from file (plain text, key only)
+# Single URL with API key from file (plain text, key only)
 node bin/web-perf.js --rum --api-key-path=<path-to-key-file> <url>
+
+# Multiple URLs (comma-separated) — <url> argument is ignored if present
+node bin/web-perf.js --rum --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
+
+# Multiple URLs from file (one URL per line) — <url> argument is ignored if present
+node bin/web-perf.js --rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<url>` | Yes | Full URL to analyze (e.g. `https://example.com`) |
+| `<url>` | Yes (unless `--urls` or `--urls-file` is provided) | Full URL to analyze (e.g. `https://example.com`) |
 | `--api-key <key>` | One of the two | PageSpeed Insights API key passed inline |
 | `--api-key-path <path>` | One of the two | Path to a plain text file containing only the API key |
+| `--urls <list>` | No | Comma-separated list of URLs. When provided, `<url>` argument is ignored |
+| `--urls-file <path>` | No | Path to a file with one URL per line. When provided, `<url>` argument is ignored |
 | `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
 
 ```bash
@@ -104,7 +112,7 @@ node bin/web-perf.js --rum --category=performance --api-key-path=<key-file> <url
 node bin/web-perf.js --rum --category=performance,seo --api-key-path=<key-file> <url>
 ```
 
-**Output:** `results/rum/rum-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/rum/rum-<hostname>-YYYY-MM-DD-HHMM.json` (one file per URL)
 
 ---
 

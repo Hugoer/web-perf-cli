@@ -12,7 +12,7 @@ const { runSitemap } = require('../lib/sitemap');
 program
     .name('web-perf')
     .description('Analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM), CrUX BigQuery (collect/collect-history), or sitemap extraction (sitemap)')
-    .argument('<url>', 'URL or domain to analyze')
+    .argument('[url]', 'URL or domain to analyze')
     .option('--lab', 'Run a local Lighthouse audit')
     .option('--rum', 'Fetch data from PageSpeed Insights API')
     .option('--collect', 'Extract CrUX data from BigQuery materialized tables')
@@ -24,6 +24,8 @@ program
     .option('--api-key <key>', 'PageSpeed Insights API key inline (for --rum)')
     .option('--api-key-path <path>', 'Path to a key file: plain text with API key (for --rum) or service account JSON (for --collect/--collect-history)')
     .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
+    .option('--urls <urls>', 'Comma-separated list of URLs (for --rum)')
+    .option('--urls-file <path>', 'Path to a file with one URL per line (for --rum)')
     .option('--category <categories>', 'Comma-separated Lighthouse categories for --rum (default: performance,accessibility,best-practices,seo)')
     .action(async (url, options) => {
         try {
@@ -34,6 +36,11 @@ program
             }
             if (modes.length > 1) {
                 console.error('Error: Please specify only one mode: --lab, --rum, --collect, --collect-history, --sitemap, or --links.');
+                process.exit(1);
+            }
+
+            if (!options.rum && !url) {
+                console.error('Error: <url> argument is required for this mode.');
                 process.exit(1);
             }
 
@@ -55,9 +62,30 @@ program
                 const categories = options.category
                     ? options.category.split(',').map((c) => c.trim().toUpperCase().replace(/-/g, '_'))
                     : undefined;
-                console.log(`Fetching PageSpeed Insights for: ${url}`);
-                const outputPath = await runRum(url, apiKey, categories);
-                console.log(`RUM results saved to: ${outputPath}`);
+
+                const urls = [];
+                const hasUrlList = options.urls || options.urlsFile;
+                if (url && !hasUrlList) {
+                    urls.push(url); 
+                }
+                if (options.urls) {
+                    urls.push(...options.urls.split(',').map((u) => u.trim()).filter(Boolean)); 
+                }
+                if (options.urlsFile) {
+                    const fileContent = fs.readFileSync(options.urlsFile, 'utf-8');
+                    urls.push(...fileContent.split('\n').map((u) => u.trim()).filter(Boolean));
+                }
+                if (urls.length === 0) {
+                    console.error('Error: Provide at least one URL via argument, --urls, or --urls-file.');
+                    process.exit(1);
+                }
+
+                // eslint-disable-next-line no-await-in-loop -- sequential to respect PSI API rate limits
+                for (const targetUrl of urls) {
+                    console.log(`Fetching PageSpeed Insights for: ${targetUrl}`);
+                    const outputPath = await runRum(targetUrl, apiKey, categories); // eslint-disable-line no-await-in-loop
+                    console.log(`RUM results saved to: ${outputPath}`);
+                }
             }
 
             if (options.collect) {
