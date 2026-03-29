@@ -2,3 +2,4 @@ node_modules
 results
 .claude/settings.local.json
 web-perf-cli-*.json
+.pagespeed-apikey

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 const { program } = require('commander');
 const { runLab } = require('../lib/lab');
 const { runRum } = require('../lib/rum');
@@ -18,9 +19,10 @@ program
   .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
   .option('--depth <n>', 'Max depth for sitemap index recursion (default: 3)', parseInt)
   .option('--sitemap-url <url>', 'Custom sitemap URL (default: <domain>/sitemap.xml)')
-  .option('--api-key <key>', 'PageSpeed Insights API key (for --rum)')
-  .option('--api-key-path <path>', 'Path to service account JSON file (for --collect and --collect-history)')
+  .option('--api-key <key>', 'PageSpeed Insights API key inline (for --rum)')
+  .option('--api-key-path <path>', 'Path to a key file: plain text with API key (for --rum) or service account JSON (for --collect/--collect-history)')
   .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
+  .option('--category <categories>', 'Comma-separated Lighthouse categories for --rum (default: performance,accessibility,best-practices,seo)')
   .action(async (url, options) => {
     try {
       const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap].filter(Boolean);
@@ -40,12 +42,19 @@ program
       }
 
       if (options.rum) {
-        if (!options.apiKey) {
-          console.error('Error: --api-key is required for RUM mode.');
+        let apiKey = options.apiKey;
+        if (!apiKey && options.apiKeyPath) {
+          apiKey = fs.readFileSync(options.apiKeyPath, 'utf-8').trim();
+        }
+        if (!apiKey) {
+          console.error('Error: --api-key or --api-key-path is required for RUM mode.');
           process.exit(1);
         }
+        const categories = options.category
+          ? options.category.split(',').map(c => c.trim().toUpperCase().replace(/-/g, '_'))
+          : undefined;
         console.log(`Fetching PageSpeed Insights for: ${url}`);
-        const outputPath = await runRum(url, options.apiKey);
+        const outputPath = await runRum(url, apiKey, categories);
         console.log(`RUM results saved to: ${outputPath}`);
       }
 

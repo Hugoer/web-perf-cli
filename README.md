@@ -6,8 +6,42 @@ Node.js CLI tool for web performance auditing. Analyze any website using local L
 
 - **Node.js** >= 18
 - **Google Chrome** installed locally (required for `--lab` mode)
-- **PageSpeed Insights API key** (required for `--rum` mode) — [Get one here](https://developers.google.com/speed/docs/insights/v5/get-started#key)
-- **Google Cloud service account JSON** with BigQuery User role (required for `--collect` mode)
+- **PageSpeed Insights API key** (required for `--rum` mode) — pass inline with `--api-key` or via a file with `--api-key-path`
+- **Google Cloud service account JSON** with BigQuery User role (required for `--collect` and `--collect-history` modes)
+
+## Setup
+
+### PageSpeed Insights API key (for `--rum` mode)
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **APIs & Services > Library**
+4. Search for **PageSpeed Insights API** and enable it
+5. Go to **APIs & Services > Credentials**
+6. Click **Create Credentials > API key**
+7. Copy the generated key — you can either:
+   - Pass it inline: `--api-key=<YOUR_KEY>`
+   - Save it to a plain text file (just the key, nothing else) and reference it: `--api-key-path=<path-to-file>`
+
+Optional: restrict the key to only the PageSpeed Insights API under **API restrictions** in the key settings.
+
+### Google Cloud service account JSON (for `--collect` and `--collect-history` modes)
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to **IAM & Admin > Service Accounts**
+4. Click **Create Service Account**
+   - Name: e.g. `crux-reader`
+   - Click **Create and Continue**
+5. Grant the role **BigQuery User** (`roles/bigquery.user`) — this allows running queries against public datasets like CrUX
+   - Click **Continue**, then **Done**
+6. Click on the newly created service account
+7. Go to the **Keys** tab
+8. Click **Add Key > Create new key**
+9. Select **JSON** and click **Create**
+10. Save the downloaded `.json` file securely — use it with `--api-key-path=<path-to-file.json>`
+
+> **Note:** You do not need to enable the BigQuery API manually — it is enabled by default in new projects. The service account only needs the **BigQuery User** role to query the public `chrome-ux-report` dataset.
 
 ## Installation
 
@@ -21,7 +55,7 @@ npm install
 node bin/web-perf.js [options] <url>
 ```
 
-You must specify exactly one mode per execution: `--lab`, `--rum`, `--collect`, or `--sitemap`.
+You must specify exactly one mode per execution: `--lab`, `--rum`, `--collect`, `--collect-history`, or `--sitemap`.
 
 ## Modes
 
@@ -48,13 +82,27 @@ No additional options. Chrome must be installed on the machine.
 Fetches real-user metrics and Lighthouse results from the PageSpeed Insights API.
 
 ```bash
+# With inline API key
 node bin/web-perf.js --rum --api-key=<PSI_KEY> <url>
+
+# With API key from file (plain text, key only)
+node bin/web-perf.js --rum --api-key-path=<path-to-key-file> <url>
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `<url>` | Yes | Full URL to analyze (e.g. `https://example.com`) |
-| `--api-key <key>` | Yes | PageSpeed Insights API key |
+| `--api-key <key>` | One of the two | PageSpeed Insights API key passed inline |
+| `--api-key-path <path>` | One of the two | Path to a plain text file containing only the API key |
+| `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
+
+```bash
+# Only performance
+node bin/web-perf.js --rum --category=performance --api-key-path=<key-file> <url>
+
+# Performance and SEO only
+node bin/web-perf.js --rum --category=performance,seo --api-key-path=<key-file> <url>
+```
 
 **Output:** `results/rum/rum-<hostname>-YYYY-MM-DD-HHMM.json`
 

@@ -8,8 +8,10 @@ Node.js CLI for web performance auditing. CommonJS, executable via `npx web-perf
 # Lab: Local Lighthouse (headless Chrome)
 node bin/web-perf.js --lab <url>
 
-# RUM: PageSpeed Insights API
+# RUM: PageSpeed Insights API (inline key or plain text key file)
 node bin/web-perf.js --rum --api-key=<PSI_KEY> <url>
+node bin/web-perf.js --rum --api-key-path=<key-file.txt> <url>
+node bin/web-perf.js --rum --category=performance,seo --api-key-path=<key-file.txt> <url>
 
 # Collect: CrUX via BigQuery (origin-level data only, NOT per-page URL)
 node bin/web-perf.js --collect --api-key-path=<service-account.json> <url>
@@ -53,7 +55,7 @@ Each mode writes to its own subdirectory under `results/`:
 
 - Dataset: `chrome-ux-report.materialized.device_summary`
 - Only contains **origin**-level (domain) data, NOT per-page URLs
-- `yyyymmdd` is a DATE type — cast to STRING for single-date comparison, use CAST(@param AS DATE) for range queries
+- `yyyymmdd` is a STRING type — use string comparison for both single-date and range queries
 - Monthly snapshots available since 2017 — use date range queries for historical data
 - CLS uses `small_cls/medium_cls/large_cls` (not fast/avg/slow like other metrics)
 - Connection: `_4GDensity`, `_3GDensity`, `_2GDensity`, `slow2GDensity`, `offlineDensity`
