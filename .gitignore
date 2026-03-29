@@ -1,4 +1,4 @@
 node_modules
 results
-claude
+.claude/settings.local.json
 web-perf-cli-*.json

@@ -1,0 +1,26 @@
+{
+  "name": "web-perf",
+  "version": "1.0.0",
+  "description": "CLI tool to analyze web performance via Lighthouse (lab) and PageSpeed Insights (RUM)",
+  "main": "bin/web-perf.js",
+  "bin": {
+    "web-perf": "bin/web-perf.js"
+  },
+  "scripts": {
+    "start": "node bin/web-perf.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^8.1.1",
+    "chrome-launcher": "^1.1.0",
+    "commander": "^12.1.0",
+    "lighthouse": "^12.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
