@@ -77,6 +77,24 @@ node bin/web-perf.js --collect --api-key-path=<service-account.json> <url>
 
 ---
 
+### `--collect-history` — Historical CrUX data via BigQuery
+
+Queries the Chrome UX Report materialized dataset for all monthly snapshots within a date range. By default, retrieves the last 12 months of data. CrUX data is available as monthly snapshots since 2017.
+
+```bash
+node bin/web-perf.js --collect-history --api-key-path=<service-account.json> [--since=YYYY-MM-DD] <url>
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<url>` | Yes | Domain or origin to query (e.g. `https://example.com` or `example.com`) |
+| `--api-key-path <path>` | Yes | Path to a Google Cloud service account JSON file with BigQuery User role |
+| `--since <date>` | No | Start date in `YYYY-MM-DD` format. Default: 12 months ago |
+
+**Output:** `results/collect-history/collect-history-<hostname>-YYYY-MM-DD-HHMM.json`
+
+---
+
 ### `--sitemap` — Sitemap URL extraction
 
 Parses a domain's `sitemap.xml` (including sitemap indexes) and extracts all URLs.
@@ -105,6 +123,8 @@ results/
 │   └── rum-example.com-2026-03-29-1430.json
 ├── collect/
 │   └── collect-www.example.com-2026-03-29-1430.json
+├── collect-history/
+│   └── collect-history-www.example.com-2026-03-29-1430.json
 └── sitemap/
     └── sitemap-www.example.com-2026-03-29-1430.json
 ```

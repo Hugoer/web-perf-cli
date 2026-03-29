@@ -4,29 +4,32 @@ const { program } = require('commander');
 const { runLab } = require('../lib/lab');
 const { runRum } = require('../lib/rum');
 const { runCollect } = require('../lib/collect');
+const { runCollectHistory } = require('../lib/collect-history');
 const { runSitemap } = require('../lib/sitemap');
 
 program
   .name('web-perf')
-  .description('Analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM), CrUX BigQuery (collect), or sitemap extraction (sitemap)')
+  .description('Analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM), CrUX BigQuery (collect/collect-history), or sitemap extraction (sitemap)')
   .argument('<url>', 'URL or domain to analyze')
   .option('--lab', 'Run a local Lighthouse audit')
   .option('--rum', 'Fetch data from PageSpeed Insights API')
   .option('--collect', 'Extract CrUX data from BigQuery materialized tables')
+  .option('--collect-history', 'Extract historical CrUX data from BigQuery')
   .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
   .option('--depth <n>', 'Max depth for sitemap index recursion (default: 3)', parseInt)
   .option('--sitemap-url <url>', 'Custom sitemap URL (default: <domain>/sitemap.xml)')
   .option('--api-key <key>', 'PageSpeed Insights API key (for --rum)')
-  .option('--api-key-path <path>', 'Path to service account JSON file (for --collect)')
+  .option('--api-key-path <path>', 'Path to service account JSON file (for --collect and --collect-history)')
+  .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
   .action(async (url, options) => {
     try {
-      const modes = [options.lab, options.rum, options.collect, options.sitemap].filter(Boolean);
+      const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap].filter(Boolean);
       if (modes.length === 0) {
-        console.error('Error: You must specify a mode: --lab, --rum, --collect, or --sitemap.');
+        console.error('Error: You must specify a mode: --lab, --rum, --collect, --collect-history, or --sitemap.');
         process.exit(1);
       }
       if (modes.length > 1) {
-        console.error('Error: Please specify only one mode: --lab, --rum, --collect, or --sitemap.');
+        console.error('Error: Please specify only one mode: --lab, --rum, --collect, --collect-history, or --sitemap.');
         process.exit(1);
       }
 
@@ -54,6 +57,15 @@ program
         console.log(`Collecting CrUX data for: ${url}`);
         const outputPath = await runCollect(url, options.apiKeyPath);
         console.log(`Collect results saved to: ${outputPath}`);
+      }
+      if (options.collectHistory) {
+        if (!options.apiKeyPath) {
+          console.error('Error: --api-key-path is required for collect-history mode (path to service account JSON).');
+          process.exit(1);
+        }
+        console.log(`Collecting historical CrUX data for: ${url}`);
+        const outputPath = await runCollectHistory(url, options.apiKeyPath, options.since);
+        console.log(`Collect-history results saved to: ${outputPath}`);
       }
       if (options.sitemap) {
         console.log(`Extracting sitemap URLs for: ${url}`);
