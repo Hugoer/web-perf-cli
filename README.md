@@ -5,47 +5,46 @@ Node.js CLI tool for web performance auditing. Analyze any website using local L
 ## Requirements
 
 - **Node.js** >= 18
-- **Google Chrome** installed locally (required for `--lab` mode)
-- **PageSpeed Insights API key** (required for `--rum` mode) — pass inline with `--api-key`, via a file with `--api-key-path`, or set the `WEB_PERF_PSI_API_KEY` environment variable
-- **Google Cloud service account JSON** with BigQuery User role (required for `--collect` and `--collect-history` modes) — pass via `--api-key-path`, or set `WEB_PERF_CRUX_KEY_PATH` (file path) or `WEB_PERF_CRUX_KEY` (JSON content) environment variable
+- **Google Chrome** installed locally (required for `lab`)
+- **PageSpeed Insights API key** (required for `rum`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set the `WEB_PERF_PSI_API_KEY` environment variable
+- **Google Cloud service account JSON** with BigQuery User role (required for `collect` and `collect-history`) — pass via `--api-key-path`, or set `WEB_PERF_CRUX_KEY_PATH` (file path) or `WEB_PERF_CRUX_KEY` (JSON content) environment variable
 
 ## Setup
 
-### PageSpeed Insights API key (for `--rum` mode)
+### PageSpeed Insights API key (for `rum`)
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to **APIs & Services > Library**
-4. Search for **PageSpeed Insights API** and enable it
-5. Go to **APIs & Services > Credentials**
-6. Click **Create Credentials > API key**
-7. Copy the generated key — you can use it in any of these ways:
-   - Pass it inline: `--api-key=<YOUR_KEY>`
-   - Save it to a plain text file (just the key, nothing else) and reference it: `--api-key-path=<path-to-file>`
-   - Set it as an environment variable: `export WEB_PERF_PSI_API_KEY=<YOUR_KEY>`
+Create an API key in the [Google Cloud Console](https://console.cloud.google.com/) under **APIs & Services > Credentials**, with the **PageSpeed Insights API** enabled.
 
-Optional: restrict the key to only the PageSpeed Insights API under **API restrictions** in the key settings.
+```bash
+# Inline
+node bin/web-perf.js rum --api-key=<YOUR_KEY> <url>
 
-### Google Cloud service account JSON (for `--collect` and `--collect-history` modes)
+# From file (plain text, key only)
+node bin/web-perf.js rum --api-key-path=<path-to-file> <url>
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Navigate to **IAM & Admin > Service Accounts**
-4. Click **Create Service Account**
-   - Name: e.g. `crux-reader`
-   - Click **Create and Continue**
-5. Grant the role **BigQuery User** (`roles/bigquery.user`) — this allows running queries against public datasets like CrUX
-   - Click **Continue**, then **Done**
-6. Click on the newly created service account
-7. Go to the **Keys** tab
-8. Click **Add Key > Create new key**
-9. Select **JSON** and click **Create**
-10. Save the downloaded `.json` file securely — you can use it in any of these ways:
-    - Pass the file path: `--api-key-path=<path-to-file.json>`
-    - Set the file path as an environment variable: `export WEB_PERF_CRUX_KEY_PATH=<path-to-file.json>`
-    - Set the full JSON content as an environment variable: `export WEB_PERF_CRUX_KEY='{"type":"service_account",...}'`
+# Via environment variable
+export WEB_PERF_PSI_API_KEY=<YOUR_KEY>
+node bin/web-perf.js rum <url>
+```
 
-> **Note:** You do not need to enable the BigQuery API manually — it is enabled by default in new projects. The service account only needs the **BigQuery User** role to query the public `chrome-ux-report` dataset.
+### Google Cloud service account JSON (for `collect` and `collect-history`)
+
+Create a service account in the [Google Cloud Console](https://console.cloud.google.com/) under **IAM & Admin > Service Accounts** with the **BigQuery User** role (`roles/bigquery.user`), then export a JSON key.
+
+```bash
+# From file
+node bin/web-perf.js collect --api-key-path=<service-account.json> <url>
+
+# Via environment variable (file path)
+export WEB_PERF_CRUX_KEY_PATH=<path-to-file.json>
+node bin/web-perf.js collect <url>
+
+# Via environment variable (JSON content)
+export WEB_PERF_CRUX_KEY='{"type":"service_account",...}'
+node bin/web-perf.js collect <url>
+```
+
+> **Note:** The BigQuery API is enabled by default in new projects. The service account only needs the **BigQuery User** role to query the public `chrome-ux-report` dataset.
 
 ## Installation
 
@@ -61,7 +60,7 @@ node bin/web-perf.js <command> [options] <url>
 
 Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
 
-## Modes
+## Commands
 
 ### `lab` — Local Lighthouse audit
 
@@ -133,14 +132,15 @@ node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<url>` | Yes (unless `--urls` or `--urls-file` is provided) | Full URL to analyze (e.g. `https://example.com`) |
-| `--api-key <key>` | No* | PageSpeed Insights API key passed inline |
-| `--api-key-path <path>` | No* | Path to a plain text file containing only the API key |
-
-\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` environment variable. CLI flags take precedence over the env var.
+| `<url>` | Yes\* | Full URL to analyze (e.g. `https://example.com`) |
+| `--api-key <key>` | No\*\* | PageSpeed Insights API key passed inline |
+| `--api-key-path <path>` | No\*\* | Path to a plain text file containing only the API key |
 | `--urls <list>` | No | Comma-separated list of URLs. When provided, `<url>` argument is ignored |
 | `--urls-file <path>` | No | Path to a file with one URL per line. When provided, `<url>` argument is ignored |
 | `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
+
+\* Not required when `--urls` or `--urls-file` is provided.
+\*\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` environment variable. CLI flags take precedence.
 
 ```bash
 # Only performance
@@ -165,7 +165,7 @@ node bin/web-perf.js collect --api-key-path=<service-account.json> <url>
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `<url>` | Yes | Domain or origin to query (e.g. `https://example.com` or `example.com`) |
-| `--api-key-path <path>` | No* | Path to a Google Cloud service account JSON file with BigQuery User role |
+| `--api-key-path <path>` | No\* | Path to a Google Cloud service account JSON file with BigQuery User role |
 
 \* BigQuery credentials are required. Provide them via `--api-key-path`, `WEB_PERF_CRUX_KEY_PATH` (file path), or `WEB_PERF_CRUX_KEY` (JSON content) environment variable. CLI flags take precedence.
 
@@ -184,7 +184,7 @@ node bin/web-perf.js collect-history --api-key-path=<service-account.json> [--si
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `<url>` | Yes | Domain or origin to query (e.g. `https://example.com` or `example.com`) |
-| `--api-key-path <path>` | No* | Path to a Google Cloud service account JSON file with BigQuery User role |
+| `--api-key-path <path>` | No\* | Path to a Google Cloud service account JSON file with BigQuery User role |
 | `--since <date>` | No | Start date in `YYYY-MM-DD` format. Default: 12 months ago |
 
 \* BigQuery credentials are required. Provide them via `--api-key-path`, `WEB_PERF_CRUX_KEY_PATH` (file path), or `WEB_PERF_CRUX_KEY` (JSON content) environment variable. CLI flags take precedence.
@@ -211,17 +211,17 @@ node bin/web-perf.js sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
 
 ## Environment variables
 
-| Variable | Mode | Description |
+| Variable | Command | Description |
 |---|---|---|
-| `WEB_PERF_PSI_API_KEY` | `--rum` | PageSpeed Insights API key |
-| `WEB_PERF_CRUX_KEY_PATH` | `--collect`, `--collect-history` | Path to BigQuery service account JSON file |
-| `WEB_PERF_CRUX_KEY` | `--collect`, `--collect-history` | BigQuery service account JSON content (full JSON string) |
+| `WEB_PERF_PSI_API_KEY` | `rum` | PageSpeed Insights API key |
+| `WEB_PERF_CRUX_KEY_PATH` | `collect`, `collect-history` | Path to BigQuery service account JSON file |
+| `WEB_PERF_CRUX_KEY` | `collect`, `collect-history` | BigQuery service account JSON content (full JSON string) |
 
 CLI flags (`--api-key`, `--api-key-path`) always take precedence over environment variables.
 
 ## Output structure
 
-All results are saved as JSON files under the `results/` directory, organized by mode:
+All results are saved as JSON files under the `results/` directory, organized by command:
 
 ```
 results/
@@ -233,6 +233,8 @@ results/
 │   └── collect-www.example.com-2026-03-29-1430.json
 ├── collect-history/
 │   └── collect-history-www.example.com-2026-03-29-1430.json
+├── links/
+│   └── links-www.example.com-2026-03-29-1430.json
 └── sitemap/
     └── sitemap-www.example.com-2026-03-29-1430.json
 ```

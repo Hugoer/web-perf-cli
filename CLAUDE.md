@@ -51,7 +51,7 @@ lib/utils.js       # Shared helpers (ensureResultsDir, buildFilename)
 
 ## Output
 
-Each mode writes to its own subdirectory under `results/`:
+Each command writes to its own subdirectory under `results/`:
 
 - `results/lab/` — lab (format: `lab-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/rum/` — rum (format: `rum-<hostname>-YYYY-MM-DD-HHMM.json`)
@@ -62,7 +62,7 @@ Each mode writes to its own subdirectory under `results/`:
 
 ## Environment Variables
 
-| Variable | Mode | Description |
+| Variable | Command | Description |
 |---|---|---|
 | `WEB_PERF_PSI_API_KEY` | `rum` | PageSpeed Insights API key (string) |
 | `WEB_PERF_CRUX_KEY_PATH` | `collect`, `collect-history` | Path to BigQuery service account JSON file |
