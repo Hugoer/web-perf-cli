@@ -11,6 +11,19 @@ const { runRum } = require('../lib/rum');
 const { runSitemap } = require('../lib/sitemap');
 const { name, version } = require('../package.json');
 
+function resolveCruxAuth(apiKeyPath) {
+    if (apiKeyPath) {
+        return { keyFilename: apiKeyPath };
+    }
+    if (process.env.WEB_PERF_CRUX_KEY_PATH) {
+        return { keyFilename: process.env.WEB_PERF_CRUX_KEY_PATH };
+    }
+    if (process.env.WEB_PERF_CRUX_KEY) {
+        return { credentials: JSON.parse(process.env.WEB_PERF_CRUX_KEY) };
+    }
+    return null;
+}
+
 program
     .name(name)
     .version(version)
@@ -24,8 +37,8 @@ program
     .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
     .option('--depth <n>', 'Max depth for sitemap index recursion (--sitemap, default: 3)', parseInt)
     .option('--sitemap-url <url>', 'Custom sitemap URL (default: <url>/sitemap.xml)')
-    .option('--api-key <key>', 'PageSpeed Insights API key inline (for --rum)')
-    .option('--api-key-path <path>', 'Path to a key file: plain text with API key (for --rum) or service account JSON (for --collect/--collect-history)')
+    .option('--api-key <key>', 'PSI API key inline (for --rum, overrides WEB_PERF_PSI_API_KEY)')
+    .option('--api-key-path <path>', 'Path to key file: plain text API key (--rum) or service account JSON (--collect/--collect-history, overrides WEB_PERF_CRUX_KEY_PATH/WEB_PERF_CRUX_KEY)')
     .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
     .option('--urls <urls>', 'Comma-separated list of URLs (for --rum)')
     .option('--urls-file <path>', 'Path to a file with one URL per line (for --rum)')
@@ -52,6 +65,12 @@ Examples:
   $ web-perf --lab --network=3g --device=iphone-12 <url>
   $ web-perf --lab --profile=low --network=wifi <url>
   $ web-perf --list-profiles
+
+Environment variables:
+  WEB_PERF_PSI_API_KEY     PageSpeed Insights API key (for --rum)
+  WEB_PERF_CRUX_KEY_PATH   Path to BigQuery service account JSON (for --collect/--collect-history)
+  WEB_PERF_CRUX_KEY        BigQuery service account JSON content (for --collect/--collect-history)
+  CLI flags take precedence over env vars.
 
 Notes:
   Modes are mutually exclusive — pick exactly one:
@@ -109,8 +128,11 @@ Notes:
                 if (!apiKey && options.apiKeyPath) {
                     apiKey = fs.readFileSync(options.apiKeyPath, 'utf-8').trim();
                 }
+                if (!apiKey && process.env.WEB_PERF_PSI_API_KEY) {
+                    apiKey = process.env.WEB_PERF_PSI_API_KEY;
+                }
                 if (!apiKey) {
-                    console.error('Error: --api-key or --api-key-path is required for RUM mode.');
+                    console.error('Error: Provide a PSI API key via --api-key, --api-key-path, or WEB_PERF_PSI_API_KEY env var.');
                     process.exit(1);
                 }
                 const categories = options.category
@@ -143,21 +165,23 @@ Notes:
             }
 
             if (options.collect) {
-                if (!options.apiKeyPath) {
-                    console.error('Error: --api-key-path is required for collect mode (path to service account JSON).');
+                const cruxAuth = resolveCruxAuth(options.apiKeyPath);
+                if (!cruxAuth) {
+                    console.error('Error: Provide BigQuery credentials via --api-key-path, WEB_PERF_CRUX_KEY_PATH, or WEB_PERF_CRUX_KEY env var.');
                     process.exit(1);
                 }
                 console.log(`Collecting CrUX data for: ${url}`);
-                const outputPath = await runCollect(url, options.apiKeyPath);
+                const outputPath = await runCollect(url, cruxAuth);
                 console.log(`Collect results saved to: ${outputPath}`);
             }
             if (options.collectHistory) {
-                if (!options.apiKeyPath) {
-                    console.error('Error: --api-key-path is required for collect-history mode (path to service account JSON).');
+                const cruxAuth = resolveCruxAuth(options.apiKeyPath);
+                if (!cruxAuth) {
+                    console.error('Error: Provide BigQuery credentials via --api-key-path, WEB_PERF_CRUX_KEY_PATH, or WEB_PERF_CRUX_KEY env var.');
                     process.exit(1);
                 }
                 console.log(`Collecting historical CrUX data for: ${url}`);
-                const outputPath = await runCollectHistory(url, options.apiKeyPath, options.since);
+                const outputPath = await runCollectHistory(url, cruxAuth, options.since);
                 console.log(`Collect-history results saved to: ${outputPath}`);
             }
             if (options.sitemap) {

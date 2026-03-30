@@ -60,6 +60,16 @@ Each mode writes to its own subdirectory under `results/`:
 - `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMM.json`)
 
+## Environment Variables
+
+| Variable | Mode | Description |
+|---|---|---|
+| `WEB_PERF_PSI_API_KEY` | `--rum` | PageSpeed Insights API key (string) |
+| `WEB_PERF_CRUX_KEY_PATH` | `--collect`, `--collect-history` | Path to BigQuery service account JSON file |
+| `WEB_PERF_CRUX_KEY` | `--collect`, `--collect-history` | BigQuery service account JSON content (full JSON string) |
+
+CLI flags (`--api-key`, `--api-key-path`) take precedence over environment variables.
+
 ## Key Dependencies
 
 - `lighthouse` v12 — default export via `.default` (ESM-style in CJS)
