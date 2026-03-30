@@ -70,7 +70,7 @@ async function sitemapAction(url, options) {
     try {
         const resolved = await promptSitemap(url, options);
         console.log(`Extracting sitemap URLs for: ${resolved.url}`);
-        const outputPath = await runSitemap(resolved.url, resolved.depth, resolved.sitemapUrl);
+        const outputPath = await runSitemap(resolved.url, resolved.depth, resolved.sitemapUrl, resolved.delay);
         console.log(`Sitemap results saved to: ${outputPath}`);
     } catch (err) {
         console.error(`Error: ${err.message}`);
@@ -168,6 +168,7 @@ program
     .argument('[url]', 'Domain or URL to extract URLs from (e.g. example.com)')
     .option('--depth <n>', 'Max recursion depth for sitemap indexes (default: 3)', parseInt)
     .option('--sitemap-url <url>', 'Custom sitemap URL (default: <url>/sitemap.xml)')
+    .option('--delay <ms>', 'Delay between requests in ms (randomized ±50ms)', parseInt)
     .action(sitemapAction);
 
 program
