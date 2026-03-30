@@ -60,6 +60,18 @@ node bin/web-perf.js <command> [options] <url>
 
 Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
 
+| Command | Source | Result | Options |
+|---------|--------|--------|---------|
+| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device` |
+| `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category` |
+| `collect` | Chrome UX Report via BigQuery (origin-level) | JSON with p75 Web Vitals by device and rank | `--api-key-path` |
+| `collect-history` | Chrome UX Report via BigQuery (monthly snapshots) | JSON with historical p75 Web Vitals over time | `--api-key-path`, `--since` |
+| `sitemap` | Domain's `sitemap.xml` (recursive) | JSON list of all URLs found | `--depth`, `--sitemap-url` |
+| `links` | Rendered DOM via headless Chrome (SPA-compatible) | JSON list of internal links | — |
+| `list-profiles` | — | Prints available simulation profiles | — |
+| `list-networks` | — | Prints available network presets | — |
+| `list-devices` | — | Prints available device presets | — |
+
 ## Commands
 
 ### `lab` — Local Lighthouse audit
