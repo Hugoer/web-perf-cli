@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Contributing Guide
+    url: https://github.com/Hugoer/web-perf-cli/blob/main/docs/CONTRIBUTING.md#commit-message-convention
+    about: Please check our contribution guidelines before opening an issue.
+  - name: ⚖️ Code of Conduct
+    url: https://github.com/Hugoer/web-perf-cli/blob/main/docs/CODE_OF_CONDUCT.md
+    about: Review our standards for a healthy and welcoming community.
