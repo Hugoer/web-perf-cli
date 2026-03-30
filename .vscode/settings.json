@@ -1,0 +1,13 @@
+{
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "text": "Prefix: use conventional commit format: <type>(<scope>): "
+        },
+        {
+            "text": "<type>: build, ci, docs, feat, fix, perf, refactor, test. <scope> (optional): lab, rum, collect, sitemap, links, cli, prompts, profiles, utils. It is mandatory that both the value chosen in type and scope be one, and only one of those defined above."
+        },
+        {
+            "text": "<short summary> Summary must be in present tense, not capitalized, no period at the end. Max 100 characters for the full header."
+        }
+    ]
+}
