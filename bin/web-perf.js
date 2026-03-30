@@ -27,177 +27,174 @@ function resolveCruxAuth(apiKeyPath) {
 program
     .name(name)
     .version(version)
-    .description('Analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM), CrUX BigQuery (collect/collect-history), or sitemap extraction (sitemap)')
-    .argument('[url]', 'URL or domain to analyze')
-    .option('--lab', 'Run a local Lighthouse audit')
-    .option('--rum', 'Fetch data from PageSpeed Insights API')
-    .option('--collect', 'Extract CrUX data from BigQuery materialized tables')
-    .option('--collect-history', 'Extract historical CrUX data from BigQuery')
-    .option('--links', 'Extract internal links from the rendered DOM (supports SPAs)')
-    .option('--sitemap', 'Extract all URLs from the domain sitemap.xml')
-    .option('--depth <n>', 'Max depth for sitemap index recursion (--sitemap, default: 3)', parseInt)
-    .option('--sitemap-url <url>', 'Custom sitemap URL (default: <url>/sitemap.xml)')
-    .option('--api-key <key>', 'PSI API key inline (for --rum, overrides WEB_PERF_PSI_API_KEY)')
-    .option('--api-key-path <path>', 'Path to key file: plain text API key (--rum) or service account JSON (--collect/--collect-history, overrides WEB_PERF_CRUX_KEY_PATH/WEB_PERF_CRUX_KEY)')
-    .option('--since <date>', 'Start date for --collect-history (YYYY-MM-DD, default: 12 months ago)')
-    .option('--urls <urls>', 'Comma-separated list of URLs (for --rum)')
-    .option('--urls-file <path>', 'Path to a file with one URL per line (for --rum)')
-    .option('--category <categories>', 'Lighthouse categories, comma-separated (--rum, default: all)')
-    .option('--profile <preset>', 'Simulation profile for --lab (low, medium, high)')
-    .option('--network <preset>', 'Network throttling preset for --lab (3g-slow, 3g, 4g, 4g-fast, wifi, none)')
-    .option('--device <preset>', 'Device emulation preset for --lab (moto-g-power, iphone-12, iphone-14, ipad, desktop, desktop-large)')
-    .option('--list-profiles', 'List all available simulation profiles')
-    .option('--list-networks', 'List all available network presets')
-    .option('--list-devices', 'List all available device presets')
+    .description('Analyze web performance via Lighthouse, PageSpeed Insights, CrUX BigQuery, or sitemap extraction')
     .addHelpText('after', `
-Examples:
-  $ web-perf --lab <url>
-  $ web-perf --rum --api-key=<KEY> <url>
-  $ web-perf --rum --urls=<u1>,<u2> --api-key=<KEY>
-  $ web-perf --rum --urls-file=<path-to-file> --api-key=<KEY>
-  $ web-perf --collect --api-key-path=<path-to-file> <url>
-  $ web-perf --collect-history --api-key-path=<path-to-file> [--since=YYYY-MM-DD] <url>
-  $ web-perf --links <url>
-  $ web-perf --sitemap [--depth=N] <url>
-
-  Lab profiles:
-  $ web-perf --lab --profile=low <url>
-  $ web-perf --lab --network=3g --device=iphone-12 <url>
-  $ web-perf --lab --profile=low --network=wifi <url>
-  $ web-perf --list-profiles
-
 Environment variables:
-  WEB_PERF_PSI_API_KEY     PageSpeed Insights API key (for --rum)
-  WEB_PERF_CRUX_KEY_PATH   Path to BigQuery service account JSON (for --collect/--collect-history)
-  WEB_PERF_CRUX_KEY        BigQuery service account JSON content (for --collect/--collect-history)
-  CLI flags take precedence over env vars.
+  WEB_PERF_PSI_API_KEY     PageSpeed Insights API key (for rum)
+  WEB_PERF_CRUX_KEY_PATH   Path to BigQuery service account JSON (for collect/collect-history)
+  WEB_PERF_CRUX_KEY        BigQuery service account JSON content (for collect/collect-history)
 
-Notes:
-  Modes are mutually exclusive — pick exactly one:
-    --lab | --rum | --collect | --collect-history | --links | --sitemap
-  In --rum mode, <url> is ignored when --urls or --urls-file is provided.
-  --profile, --network, --device only apply to --lab mode.
-  Results are saved to results/<mode>/.`)
+Examples:
+  $ web-perf lab https://example.com
+  $ web-perf lab --profile=low https://example.com
+  $ web-perf rum --api-key=KEY https://example.com
+  $ web-perf collect --api-key-path=sa.json https://example.com
+  $ web-perf sitemap https://example.com
+`);
+
+program
+    .command('lab')
+    .description('Run a local Lighthouse audit')
+    .argument('<url>', 'Full URL to audit (e.g. https://example.com)')
+    .option('--profile <preset>', 'Simulation profile: low, medium, high')
+    .option('--network <preset>', 'Network throttling: 3g-slow, 3g, 4g, 4g-fast, wifi, none')
+    .option('--device <preset>', 'Device emulation: moto-g-power, iphone-12, iphone-14, ipad, desktop, desktop-large')
     .action(async (url, options) => {
         try {
-            if (options.listProfiles || options.listNetworks || options.listDevices) {
-                if (options.listProfiles) {
-                    printProfiles();
-                }
-                if (options.listNetworks) {
-                    printNetworks();
-                }
-                if (options.listDevices) {
-                    printDevices();
-                }
-                return;
-            }
+            console.log(`Running Lighthouse audit for: ${url}`);
+            const outputPath = await runLab(url, {
+                profile: options.profile,
+                network: options.network,
+                device: options.device,
+            });
+            console.log(`Lab results saved to: ${outputPath}`);
+        } catch (err) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+        }
+    });
 
-            const profileFlags = [options.profile, options.network, options.device].filter(Boolean);
-            if (profileFlags.length > 0 && !options.lab) {
-                console.warn('Warning: --profile, --network, and --device only apply to --lab mode.');
+program
+    .command('rum')
+    .description('Fetch data from PageSpeed Insights API')
+    .argument('[url]', 'URL to analyze (ignored when --urls or --urls-file is provided)')
+    .option('--api-key <key>', 'PSI API key inline (overrides WEB_PERF_PSI_API_KEY)')
+    .option('--api-key-path <path>', 'Path to plain text file containing only the API key')
+    .option('--urls <urls>', 'Comma-separated list of URLs')
+    .option('--urls-file <path>', 'Path to a file with one URL per line')
+    .option('--category <categories>', 'Lighthouse categories, comma-separated (default: all)')
+    .action(async (url, options) => {
+        try {
+            let apiKey = options.apiKey;
+            if (!apiKey && options.apiKeyPath) {
+                apiKey = fs.readFileSync(options.apiKeyPath, 'utf-8').trim();
             }
-
-            const modes = [options.lab, options.rum, options.collect, options.collectHistory, options.sitemap, options.links].filter(Boolean);
-            if (modes.length === 0) {
-                console.error('Error: You must specify a mode: --lab, --rum, --collect, --collect-history, --sitemap, or --links.');
+            if (!apiKey && process.env.WEB_PERF_PSI_API_KEY) {
+                apiKey = process.env.WEB_PERF_PSI_API_KEY;
+            }
+            if (!apiKey) {
+                console.error('Error: Provide a PSI API key via --api-key, --api-key-path, or WEB_PERF_PSI_API_KEY env var.');
                 process.exit(1);
             }
-            if (modes.length > 1) {
-                console.error('Error: Please specify only one mode: --lab, --rum, --collect, --collect-history, --sitemap, or --links.');
+            const categories = options.category
+                ? options.category.split(',').map((c) => c.trim().toUpperCase().replace(/-/g, '_'))
+                : undefined;
+
+            const urls = [];
+            const hasUrlList = options.urls || options.urlsFile;
+            if (url && !hasUrlList) {
+                urls.push(url);
+            }
+            if (options.urls) {
+                urls.push(...options.urls.split(',').map((u) => u.trim()).filter(Boolean));
+            }
+            if (options.urlsFile) {
+                const fileContent = fs.readFileSync(options.urlsFile, 'utf-8');
+                urls.push(...fileContent.split('\n').map((u) => u.trim()).filter(Boolean));
+            }
+            if (urls.length === 0) {
+                console.error('Error: Provide at least one URL via argument, --urls, or --urls-file.');
                 process.exit(1);
             }
 
-            if (!options.rum && !url) {
-                console.error('Error: <url> argument is required for this mode.');
-                process.exit(1);
-            }
-
-            if (options.lab) {
-                console.log(`Running Lighthouse audit for: ${url}`);
-                const outputPath = await runLab(url, {
-                    profile: options.profile,
-                    network: options.network,
-                    device: options.device,
-                });
-                console.log(`Lab results saved to: ${outputPath}`);
-            }
-
-            if (options.rum) {
-                let apiKey = options.apiKey;
-                if (!apiKey && options.apiKeyPath) {
-                    apiKey = fs.readFileSync(options.apiKeyPath, 'utf-8').trim();
-                }
-                if (!apiKey && process.env.WEB_PERF_PSI_API_KEY) {
-                    apiKey = process.env.WEB_PERF_PSI_API_KEY;
-                }
-                if (!apiKey) {
-                    console.error('Error: Provide a PSI API key via --api-key, --api-key-path, or WEB_PERF_PSI_API_KEY env var.');
-                    process.exit(1);
-                }
-                const categories = options.category
-                    ? options.category.split(',').map((c) => c.trim().toUpperCase().replace(/-/g, '_'))
-                    : undefined;
-
-                const urls = [];
-                const hasUrlList = options.urls || options.urlsFile;
-                if (url && !hasUrlList) {
-                    urls.push(url);
-                }
-                if (options.urls) {
-                    urls.push(...options.urls.split(',').map((u) => u.trim()).filter(Boolean));
-                }
-                if (options.urlsFile) {
-                    const fileContent = fs.readFileSync(options.urlsFile, 'utf-8');
-                    urls.push(...fileContent.split('\n').map((u) => u.trim()).filter(Boolean));
-                }
-                if (urls.length === 0) {
-                    console.error('Error: Provide at least one URL via argument, --urls, or --urls-file.');
-                    process.exit(1);
-                }
-
-                // eslint-disable-next-line no-await-in-loop -- sequential to respect PSI API rate limits
-                for (const targetUrl of urls) {
-                    console.log(`Fetching PageSpeed Insights for: ${targetUrl}`);
-                    const outputPath = await runRum(targetUrl, apiKey, categories); // eslint-disable-line no-await-in-loop
-                    console.log(`RUM results saved to: ${outputPath}`);
-                }
-            }
-
-            if (options.collect) {
-                const cruxAuth = resolveCruxAuth(options.apiKeyPath);
-                if (!cruxAuth) {
-                    console.error('Error: Provide BigQuery credentials via --api-key-path, WEB_PERF_CRUX_KEY_PATH, or WEB_PERF_CRUX_KEY env var.');
-                    process.exit(1);
-                }
-                console.log(`Collecting CrUX data for: ${url}`);
-                const outputPath = await runCollect(url, cruxAuth);
-                console.log(`Collect results saved to: ${outputPath}`);
-            }
-            if (options.collectHistory) {
-                const cruxAuth = resolveCruxAuth(options.apiKeyPath);
-                if (!cruxAuth) {
-                    console.error('Error: Provide BigQuery credentials via --api-key-path, WEB_PERF_CRUX_KEY_PATH, or WEB_PERF_CRUX_KEY env var.');
-                    process.exit(1);
-                }
-                console.log(`Collecting historical CrUX data for: ${url}`);
-                const outputPath = await runCollectHistory(url, cruxAuth, options.since);
-                console.log(`Collect-history results saved to: ${outputPath}`);
-            }
-            if (options.sitemap) {
-                console.log(`Extracting sitemap URLs for: ${url}`);
-                const outputPath = await runSitemap(url, options.depth || 3, options.sitemapUrl);
-                console.log(`Sitemap results saved to: ${outputPath}`);
-            }
-            if (options.links) {
-                console.log(`Extracting links from: ${url}`);
-                const outputPath = await runLinks(url);
-                console.log(`Links results saved to: ${outputPath}`);
+            for (const targetUrl of urls) {
+                console.log(`Fetching PageSpeed Insights for: ${targetUrl}`);
+                const outputPath = await runRum(targetUrl, apiKey, categories); // eslint-disable-line no-await-in-loop
+                console.log(`RUM results saved to: ${outputPath}`);
             }
         } catch (err) {
             console.error(`Error: ${err.message}`);
             process.exit(1);
         }
     });
+
+program
+    .command('collect')
+    .description('Extract CrUX data from BigQuery (origin-level)')
+    .argument('<url>', 'Domain or origin to query (e.g. https://example.com)')
+    .option('--api-key-path <path>', 'Path to BigQuery service account JSON (overrides WEB_PERF_CRUX_KEY_PATH/WEB_PERF_CRUX_KEY)')
+    .action(async (url, options) => {
+        try {
+            const cruxAuth = resolveCruxAuth(options.apiKeyPath);
+            if (!cruxAuth) {
+                console.error('Error: Provide BigQuery credentials via --api-key-path, WEB_PERF_CRUX_KEY_PATH, or WEB_PERF_CRUX_KEY env var.');
+                process.exit(1);
+            }
+            console.log(`Collecting CrUX data for: ${url}`);
+            const outputPath = await runCollect(url, cruxAuth);
+            console.log(`Collect results saved to: ${outputPath}`);
+        } catch (err) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('collect-history')
+    .description('Extract historical CrUX data from BigQuery')
+    .argument('<url>', 'Domain or origin to query (e.g. https://example.com)')
+    .option('--api-key-path <path>', 'Path to BigQuery service account JSON (overrides WEB_PERF_CRUX_KEY_PATH/WEB_PERF_CRUX_KEY)')
+    .option('--since <date>', 'Start date YYYY-MM-DD (default: 12 months ago)')
+    .action(async (url, options) => {
+        try {
+            const cruxAuth = resolveCruxAuth(options.apiKeyPath);
+            if (!cruxAuth) {
+                console.error('Error: Provide BigQuery credentials via --api-key-path, WEB_PERF_CRUX_KEY_PATH, or WEB_PERF_CRUX_KEY env var.');
+                process.exit(1);
+            }
+            console.log(`Collecting historical CrUX data for: ${url}`);
+            const outputPath = await runCollectHistory(url, cruxAuth, options.since);
+            console.log(`Collect-history results saved to: ${outputPath}`);
+        } catch (err) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('sitemap')
+    .description('Extract all URLs from domain sitemap.xml')
+    .argument('<url>', 'Domain or URL to extract URLs from (e.g. example.com)')
+    .option('--depth <n>', 'Max recursion depth for sitemap indexes (default: 3)', parseInt)
+    .option('--sitemap-url <url>', 'Custom sitemap URL (default: <url>/sitemap.xml)')
+    .action(async (url, options) => {
+        try {
+            console.log(`Extracting sitemap URLs for: ${url}`);
+            const outputPath = await runSitemap(url, options.depth || 3, options.sitemapUrl);
+            console.log(`Sitemap results saved to: ${outputPath}`);
+        } catch (err) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+        }
+    });
+
+program
+    .command('links')
+    .description('Extract internal links from rendered DOM (SPA-compatible)')
+    .argument('<url>', 'URL to extract links from')
+    .action(async (url) => {
+        try {
+            console.log(`Extracting links from: ${url}`);
+            const outputPath = await runLinks(url);
+            console.log(`Links results saved to: ${outputPath}`);
+        } catch (err) {
+            console.error(`Error: ${err.message}`);
+            process.exit(1);
+        }
+    });
+
+program.command('list-profiles').description('List available simulation profiles').action(() => printProfiles());
+program.command('list-networks').description('List available network presets').action(() => printNetworks());
+program.command('list-devices').description('List available device presets').action(() => printDevices());
 
 program.parse(process.argv);

@@ -56,30 +56,30 @@ npm install
 ## Usage
 
 ```bash
-node bin/web-perf.js [options] <url>
+node bin/web-perf.js <command> [options] <url>
 ```
 
-You must specify exactly one mode per execution: `--lab`, `--rum`, `--collect`, `--collect-history`, `--links`, or `--sitemap`.
+Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
 
 ## Modes
 
-### `--lab` — Local Lighthouse audit
+### `lab` — Local Lighthouse audit
 
 Runs a full Lighthouse audit in headless Chrome and saves the JSON report. Supports simulation profiles to test under different device and network conditions.
 
 ```bash
 # Default (Lighthouse defaults: Moto G Power on Slow 4G)
-node bin/web-perf.js --lab <url>
+node bin/web-perf.js lab <url>
 
 # Generic profiles
-node bin/web-perf.js --lab --profile=low <url>
-node bin/web-perf.js --lab --profile=high <url>
+node bin/web-perf.js lab --profile=low <url>
+node bin/web-perf.js lab --profile=high <url>
 
 # Granular control
-node bin/web-perf.js --lab --network=3g --device=iphone-12 <url>
+node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 
 # Profile with partial override (low device + wifi network)
-node bin/web-perf.js --lab --profile=low --network=wifi <url>
+node bin/web-perf.js lab --profile=low --network=wifi <url>
 ```
 
 | Parameter | Required | Description |
@@ -88,6 +88,8 @@ node bin/web-perf.js --lab --profile=low --network=wifi <url>
 | `--profile <preset>` | No | Simulation profile: `low`, `medium`, `high` |
 | `--network <preset>` | No | Network throttling: `3g-slow`, `3g`, `4g`, `4g-fast`, `wifi`, `none` |
 | `--device <preset>` | No | Device emulation: `moto-g-power`, `iphone-12`, `iphone-14`, `ipad`, `desktop`, `desktop-large` |
+
+Run `list-profiles`, `list-networks`, or `list-devices` to see all available presets:
 
 Chrome must be installed on the machine.
 
@@ -101,34 +103,32 @@ Chrome must be installed on the machine.
 
 When `--network` or `--device` are used together with `--profile`, the granular flags override the corresponding part of the profile. For example, `--profile=low --network=wifi` keeps the Moto G Power device but switches the network to WiFi.
 
-Run `--list-profiles`, `--list-networks`, or `--list-devices` to see all available presets:
-
 ```bash
-node bin/web-perf.js --list-profiles
-node bin/web-perf.js --list-networks
-node bin/web-perf.js --list-devices
+node bin/web-perf.js list-profiles
+node bin/web-perf.js list-networks
+node bin/web-perf.js list-devices
 ```
 
 **Output:** `results/lab/lab-<hostname>-YYYY-MM-DD-HHMM.json`
 
 ---
 
-### `--rum` — PageSpeed Insights (real-user data)
+### `rum` — PageSpeed Insights (real-user data)
 
 Fetches real-user metrics and Lighthouse results from the PageSpeed Insights API.
 
 ```bash
 # Single URL with inline API key
-node bin/web-perf.js --rum --api-key=<PSI_KEY> <url>
+node bin/web-perf.js rum --api-key=<PSI_KEY> <url>
 
 # Single URL with API key from file (plain text, key only)
-node bin/web-perf.js --rum --api-key-path=<path-to-key-file> <url>
+node bin/web-perf.js rum --api-key-path=<path-to-key-file> <url>
 
 # Multiple URLs (comma-separated) — <url> argument is ignored if present
-node bin/web-perf.js --rum --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
+node bin/web-perf.js rum --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
 
 # Multiple URLs from file (one URL per line) — <url> argument is ignored if present
-node bin/web-perf.js --rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
+node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 ```
 
 | Parameter | Required | Description |
@@ -144,22 +144,22 @@ node bin/web-perf.js --rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 ```bash
 # Only performance
-node bin/web-perf.js --rum --category=performance --api-key-path=<key-file> <url>
+node bin/web-perf.js rum --category=performance --api-key-path=<key-file> <url>
 
 # Performance and SEO only
-node bin/web-perf.js --rum --category=performance,seo --api-key-path=<key-file> <url>
+node bin/web-perf.js rum --category=performance,seo --api-key-path=<key-file> <url>
 ```
 
 **Output:** `results/rum/rum-<hostname>-YYYY-MM-DD-HHMM.json` (one file per URL)
 
 ---
 
-### `--collect` — CrUX via BigQuery
+### `collect` — CrUX via BigQuery
 
 Queries the Chrome UX Report materialized dataset in BigQuery for origin-level performance data. Note: CrUX only provides **origin-level** (domain) data, not per-page URL metrics.
 
 ```bash
-node bin/web-perf.js --collect --api-key-path=<service-account.json> <url>
+node bin/web-perf.js collect --api-key-path=<service-account.json> <url>
 ```
 
 | Parameter | Required | Description |
@@ -173,12 +173,12 @@ node bin/web-perf.js --collect --api-key-path=<service-account.json> <url>
 
 ---
 
-### `--collect-history` — Historical CrUX data via BigQuery
+### `collect-history` — Historical CrUX data via BigQuery
 
 Queries the Chrome UX Report materialized dataset for all monthly snapshots within a date range. By default, retrieves the last 12 months of data. CrUX data is available as monthly snapshots since 2017.
 
 ```bash
-node bin/web-perf.js --collect-history --api-key-path=<service-account.json> [--since=YYYY-MM-DD] <url>
+node bin/web-perf.js collect-history --api-key-path=<service-account.json> [--since=YYYY-MM-DD] <url>
 ```
 
 | Parameter | Required | Description |
@@ -193,12 +193,12 @@ node bin/web-perf.js --collect-history --api-key-path=<service-account.json> [--
 
 ---
 
-### `--sitemap` — Sitemap URL extraction
+### `sitemap` — Sitemap URL extraction
 
 Parses a domain's `sitemap.xml` (including sitemap indexes) and extracts all URLs.
 
 ```bash
-node bin/web-perf.js --sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
+node bin/web-perf.js sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
 ```
 
 | Parameter | Required | Description |
