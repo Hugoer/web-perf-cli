@@ -119,9 +119,10 @@ program
     .description('Analyze web performance via Lighthouse, PageSpeed Insights, CrUX BigQuery, or sitemap extraction')
     .addHelpText('after', `
 Environment variables:
-  WEB_PERF_PSI_API_KEY     PageSpeed Insights API key (for rum)
-  WEB_PERF_CRUX_KEY_PATH   Path to BigQuery service account JSON (for collect/collect-history)
-  WEB_PERF_CRUX_KEY        BigQuery service account JSON content (for collect/collect-history)
+  WEB_PERF_PSI_API_KEY       PageSpeed Insights API key (for rum)
+  WEB_PERF_PSI_API_KEY_PATH  Path to file containing the PSI API key (for rum)
+  WEB_PERF_CRUX_KEY_PATH     Path to BigQuery service account JSON (for collect/collect-history)
+  WEB_PERF_CRUX_KEY          BigQuery service account JSON content (for collect/collect-history)
 
 Examples:
   $ web-perf lab https://example.com
