@@ -67,7 +67,7 @@ Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitema
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
 | `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device` |
-| `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category` |
+| `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
 | `collect` | Chrome UX Report via BigQuery (origin-level) | JSON with p75 Web Vitals by device and rank | `--api-key-path` |
 | `collect-history` | Chrome UX Report via BigQuery (monthly snapshots) | JSON with historical p75 Web Vitals over time | `--api-key-path`, `--since` |
 | `sitemap` | Domain's `sitemap.xml` (recursive) | JSON list of all URLs found | `--depth`, `--sitemap-url` |
@@ -144,6 +144,9 @@ node bin/web-perf.js rum --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
 
 # Multiple URLs from file (one URL per line) — <url> argument is ignored if present
 node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
+
+# Parallel processing (10 concurrent requests, 100ms delay between each)
+node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -154,6 +157,8 @@ node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 | `--urls <list>` | No | Comma-separated list of URLs. When provided, `<url>` argument is ignored |
 | `--urls-file <path>` | No | Path to a file with one URL per line. When provided, `<url>` argument is ignored |
 | `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
+| `--concurrency <n>` | No | Max parallel API requests when processing multiple URLs. Default: `5` |
+| `--delay <ms>` | No | Delay in ms between requests per worker. Default: `0` (no delay) |
 
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables. CLI flags take precedence.
