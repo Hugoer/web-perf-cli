@@ -35,8 +35,8 @@ async function rumAction(url, options) {
         }
 
         const { runRumBatch } = require('../lib/rum');
-        const concurrency = options.concurrency || 5;
-        const delayMs = options.delay || 0;
+        const concurrency = resolved.concurrency || 5;
+        const delayMs = resolved.delay || 0;
 
         console.log(`Processing ${resolved.urls.length} URLs (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
         const results = await runRumBatch(resolved.urls, resolved.apiKey, resolved.categories, {
