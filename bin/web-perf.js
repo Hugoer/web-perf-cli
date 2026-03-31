@@ -1,18 +1,12 @@
 #!/usr/bin/env node
 
 const { program } = require('commander');
-const { runCollect } = require('../lib/collect');
-const { runCollectHistory } = require('../lib/collect-history');
-const { runLab } = require('../lib/lab');
-const { runLinks } = require('../lib/links');
-const { printProfiles, printNetworks, printDevices } = require('../lib/profiles');
-const { promptForSubcommand, promptLab, promptRum, promptCollect, promptCollectHistory, promptSitemap, promptLinks } = require('../lib/prompts');
-const { runRum } = require('../lib/rum');
-const { runSitemap } = require('../lib/sitemap');
 const { name, version } = require('../package.json');
 
 async function labAction(url, options) {
     try {
+        const { promptLab } = require('../lib/prompts');
+        const { runLab } = require('../lib/lab');
         const resolved = await promptLab(url, options);
         console.log(`Running Lighthouse audit for: ${resolved.url}`);
         const outputPath = await runLab(resolved.url, {
@@ -29,6 +23,8 @@ async function labAction(url, options) {
 
 async function rumAction(url, options) {
     try {
+        const { promptRum } = require('../lib/prompts');
+        const { runRum } = require('../lib/rum');
         const resolved = await promptRum(url, options);
 
         for (const targetUrl of resolved.urls) {
@@ -44,6 +40,8 @@ async function rumAction(url, options) {
 
 async function collectAction(url, options) {
     try {
+        const { promptCollect } = require('../lib/prompts');
+        const { runCollect } = require('../lib/collect');
         const resolved = await promptCollect(url, options);
         console.log(`Collecting CrUX data for: ${resolved.url}`);
         const outputPath = await runCollect(resolved.url, resolved.cruxAuth);
@@ -56,6 +54,8 @@ async function collectAction(url, options) {
 
 async function collectHistoryAction(url, options) {
     try {
+        const { promptCollectHistory } = require('../lib/prompts');
+        const { runCollectHistory } = require('../lib/collect-history');
         const resolved = await promptCollectHistory(url, options);
         console.log(`Collecting historical CrUX data for: ${resolved.url}`);
         const outputPath = await runCollectHistory(resolved.url, resolved.cruxAuth, resolved.since);
@@ -68,6 +68,8 @@ async function collectHistoryAction(url, options) {
 
 async function sitemapAction(url, options) {
     try {
+        const { promptSitemap } = require('../lib/prompts');
+        const { runSitemap } = require('../lib/sitemap');
         const resolved = await promptSitemap(url, options);
         console.log(`Extracting sitemap URLs for: ${resolved.url}`);
         const outputPath = await runSitemap(resolved.url, resolved.depth, resolved.sitemapUrl, resolved.delay);
@@ -80,6 +82,8 @@ async function sitemapAction(url, options) {
 
 async function linksAction(url) {
     try {
+        const { promptLinks } = require('../lib/prompts');
+        const { runLinks } = require('../lib/links');
         const resolved = await promptLinks(url);
         console.log(`Extracting links from: ${resolved}`);
         const outputPath = await runLinks(resolved);
@@ -92,6 +96,7 @@ async function linksAction(url) {
 
 async function wizardMode() {
     try {
+        const { promptForSubcommand } = require('../lib/prompts');
         const command = await promptForSubcommand();
         const actions = {
             lab: () => labAction(undefined, {}),
@@ -177,9 +182,18 @@ program
     .argument('[url]', 'URL to extract links from')
     .action(linksAction);
 
-program.command('list-profiles').description('List available simulation profiles').action(() => printProfiles());
-program.command('list-networks').description('List available network presets').action(() => printNetworks());
-program.command('list-devices').description('List available device presets').action(() => printDevices());
+program.command('list-profiles').description('List available simulation profiles').action(() => {
+    const { printProfiles } = require('../lib/profiles');
+    printProfiles();
+});
+program.command('list-networks').description('List available network presets').action(() => {
+    const { printNetworks } = require('../lib/profiles');
+    printNetworks();
+});
+program.command('list-devices').description('List available device presets').action(() => {
+    const { printDevices } = require('../lib/profiles');
+    printDevices();
+});
 
 program.action(() => {
     wizardMode();
