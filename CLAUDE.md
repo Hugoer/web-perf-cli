@@ -65,6 +65,7 @@ Each command writes to its own subdirectory under `results/`:
 | Variable | Command | Description |
 |---|---|---|
 | `WEB_PERF_PSI_API_KEY` | `rum` | PageSpeed Insights API key (string) |
+| `WEB_PERF_PSI_API_KEY_PATH` | `rum` | Path to file containing the PSI API key |
 | `WEB_PERF_CRUX_KEY_PATH` | `collect`, `collect-history` | Path to BigQuery service account JSON file |
 | `WEB_PERF_CRUX_KEY` | `collect`, `collect-history` | BigQuery service account JSON content (full JSON string) |
 

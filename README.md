@@ -6,7 +6,7 @@ Node.js CLI tool for web performance auditing. Analyze any website using local L
 
 - **Node.js** >= 18
 - **Google Chrome** installed locally (required for `lab`)
-- **PageSpeed Insights API key** (required for `rum`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set the `WEB_PERF_PSI_API_KEY` environment variable
+- **PageSpeed Insights API key** (required for `rum`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
 - **Google Cloud service account JSON** with BigQuery User role (required for `collect` and `collect-history`) — pass via `--api-key-path`, or set `WEB_PERF_CRUX_KEY_PATH` (file path) or `WEB_PERF_CRUX_KEY` (JSON content) environment variable
 
 ## Setup
@@ -22,8 +22,12 @@ node bin/web-perf.js rum --api-key=<YOUR_KEY> <url>
 # From file (plain text, key only)
 node bin/web-perf.js rum --api-key-path=<path-to-file> <url>
 
-# Via environment variable
+# Via environment variable (inline key)
 export WEB_PERF_PSI_API_KEY=<YOUR_KEY>
+node bin/web-perf.js rum <url>
+
+# Via environment variable (file path)
+export WEB_PERF_PSI_API_KEY_PATH=<path-to-key-file>
 node bin/web-perf.js rum <url>
 ```
 
@@ -152,7 +156,7 @@ node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
 | `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
 
 \* Not required when `--urls` or `--urls-file` is provided.
-\*\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` environment variable. CLI flags take precedence.
+\*\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables. CLI flags take precedence.
 
 ```bash
 # Only performance
@@ -161,6 +165,14 @@ node bin/web-perf.js rum --category=performance --api-key-path=<key-file> <url>
 # Performance and SEO only
 node bin/web-perf.js rum --category=performance,seo --api-key-path=<key-file> <url>
 ```
+
+#### Credential resolution order
+
+1. `--api-key` flag (inline key)
+2. `--api-key-path` flag (file path)
+3. `WEB_PERF_PSI_API_KEY` env var (inline key)
+4. `WEB_PERF_PSI_API_KEY_PATH` env var (file path)
+5. Interactive prompt
 
 **Output:** `results/rum/rum-<hostname>-YYYY-MM-DD-HHMM.json` (one file per URL)
 
@@ -181,6 +193,13 @@ node bin/web-perf.js collect --api-key-path=<service-account.json> <url>
 
 \* BigQuery credentials are required. Provide them via `--api-key-path`, `WEB_PERF_CRUX_KEY_PATH` (file path), or `WEB_PERF_CRUX_KEY` (JSON content) environment variable. CLI flags take precedence.
 
+#### Credential resolution order
+
+1. `--api-key-path` flag (file path)
+2. `WEB_PERF_CRUX_KEY_PATH` env var (file path)
+3. `WEB_PERF_CRUX_KEY` env var (JSON content)
+4. Interactive prompt
+
 **Output:** `results/collect/collect-<hostname>-YYYY-MM-DD-HHMM.json`
 
 ---
@@ -199,7 +218,7 @@ node bin/web-perf.js collect-history --api-key-path=<service-account.json> [--si
 | `--api-key-path <path>` | No\* | Path to a Google Cloud service account JSON file with BigQuery User role |
 | `--since <date>` | No | Start date in `YYYY-MM-DD` format. Default: 12 months ago |
 
-\* BigQuery credentials are required. Provide them via `--api-key-path`, `WEB_PERF_CRUX_KEY_PATH` (file path), or `WEB_PERF_CRUX_KEY` (JSON content) environment variable. CLI flags take precedence.
+\* BigQuery credentials are required. Credential resolution is identical to `collect` (see above).
 
 **Output:** `results/collect-history/collect-history-<hostname>-YYYY-MM-DD-HHMM.json`
 
@@ -226,6 +245,7 @@ node bin/web-perf.js sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
 | Variable | Command | Description |
 |---|---|---|
 | `WEB_PERF_PSI_API_KEY` | `rum` | PageSpeed Insights API key |
+| `WEB_PERF_PSI_API_KEY_PATH` | `rum` | Path to file containing the PSI API key |
 | `WEB_PERF_CRUX_KEY_PATH` | `collect`, `collect-history` | Path to BigQuery service account JSON file |
 | `WEB_PERF_CRUX_KEY` | `collect`, `collect-history` | BigQuery service account JSON content (full JSON string) |
 
