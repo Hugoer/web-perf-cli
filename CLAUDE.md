@@ -21,6 +21,7 @@ node bin/web-perf.js rum --category=performance,seo --api-key-path=<key-file.txt
 # RUM: Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 node bin/web-perf.js rum --urls=<url1>,<url2> --api-key=<PSI_KEY>
 node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
+node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
 
 # Collect: CrUX via BigQuery (origin-level data only, NOT per-page URL)
 node bin/web-perf.js collect --api-key-path=<service-account.json> <url>

@@ -24,13 +24,43 @@ async function labAction(url, options) {
 async function rumAction(url, options) {
     try {
         const { promptRum } = require('../lib/prompts');
-        const { runRum } = require('../lib/rum');
         const resolved = await promptRum(url, options);
 
-        for (const targetUrl of resolved.urls) {
-            console.log(`Fetching PageSpeed Insights for: ${targetUrl}`);
-            const outputPath = await runRum(targetUrl, resolved.apiKey, resolved.categories); // eslint-disable-line no-await-in-loop
+        if (resolved.urls.length === 1) {
+            const { runRum } = require('../lib/rum');
+            console.log(`Fetching PageSpeed Insights for: ${resolved.urls[0]}`);
+            const outputPath = await runRum(resolved.urls[0], resolved.apiKey, resolved.categories);
             console.log(`RUM results saved to: ${outputPath}`);
+            return;
+        }
+
+        const { runRumBatch } = require('../lib/rum');
+        const concurrency = options.concurrency || 5;
+        const delayMs = options.delay || 0;
+
+        console.log(`Processing ${resolved.urls.length} URLs (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        const results = await runRumBatch(resolved.urls, resolved.apiKey, resolved.categories, {
+            concurrency,
+            delayMs,
+            onProgress(completed, total, targetUrl, error) {
+                process.stderr.write(`\r  Progress: ${completed}/${total} done`);
+                if (error) {
+                    process.stderr.write(`\n  Failed: ${targetUrl} — ${error}\n`);
+                }
+            },
+        });
+        process.stderr.write('\n');
+
+        const succeeded = results.filter((r) => !r.error);
+        const failed = results.filter((r) => r.error);
+
+        succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
+        console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
+
+        if (failed.length > 0) {
+            console.error('\nFailed URLs:');
+            failed.forEach((r) => console.error(`  - ${r.url}: ${r.error}`));
+            process.exit(1);
         }
     } catch (err) {
         console.error(`Error: ${err.message}`);
@@ -151,6 +181,8 @@ program
     .option('--urls <urls>', 'Comma-separated list of URLs')
     .option('--urls-file <path>', 'Path to a file with one URL per line')
     .option('--category <categories>', 'Lighthouse categories, comma-separated (default: all)')
+    .option('--concurrency <n>', 'Max parallel API requests (default: 5)', parseInt)
+    .option('--delay <ms>', 'Delay between requests per worker in ms (default: 0)', parseInt)
     .action(rumAction);
 
 program
