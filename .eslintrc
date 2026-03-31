@@ -27,13 +27,17 @@
     "import/order": [
       "error",
       {
-        "groups": ["builtin", "external", "internal", "index", "parent", "sibling"],
+        "newlines-between": "always",
+        "groups": [
+          ["builtin", "external"],
+          "internal",
+          ["parent", "sibling", "index"]
+        ],
         "pathGroupsExcludedImportTypes": ["builtin"],
         "alphabetize": {
           "order": "asc",
           "caseInsensitive": true
-        },
-        "newlines-between": "never"
+        }
       }
     ],
     // Disabled to avoid duplicate reporting with eslint plugin "unused-imports"
