@@ -8,7 +8,9 @@ Node.js CLI for web performance auditing. CommonJS, executable via `npx web-perf
 # Lab: Local Lighthouse (headless Chrome)
 node bin/web-perf.js lab <url>
 node bin/web-perf.js lab --profile=low <url>
-node bin/web-perf.js lab --profile=high <url>
+node bin/web-perf.js lab --profile=native <url>
+node bin/web-perf.js lab --profile=low,high <url>
+node bin/web-perf.js lab --profile=all <url>
 node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 node bin/web-perf.js lab --profile=low --network=wifi <url>   # override parcial
 node bin/web-perf.js list-profiles
