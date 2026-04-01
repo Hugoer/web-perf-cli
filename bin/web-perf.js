@@ -6,16 +6,26 @@ const { name, version } = require('../package.json');
 
 async function labAction(url, options) {
     try {
+        const chromeLauncher = require('chrome-launcher');
         const { promptLab } = require('../lib/prompts');
-        const { runLab } = require('../lib/lab');
+        const { runLab, CHROME_FLAGS } = require('../lib/lab');
         const resolved = await promptLab(url, options);
-        console.log(`Running Lighthouse audit for: ${resolved.url}`);
-        const outputPath = await runLab(resolved.url, {
-            profile: resolved.profile,
-            network: resolved.network,
-            device: resolved.device,
-        });
-        console.log(`Lab results saved to: ${outputPath}`);
+
+        const chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
+        try {
+            for (const run of resolved.runs) {
+                const label = run.profile || 'custom';
+                console.log(`\nRunning Lighthouse audit for: ${resolved.url} [profile: ${label}]`);
+                // eslint-disable-next-line no-await-in-loop
+                const outputPath = await runLab(resolved.url, { ...run, port: chrome.port });
+                console.log(`Lab results saved to: ${outputPath}`);
+            }
+            if (resolved.runs.length > 1) {
+                console.log(`\nCompleted ${resolved.runs.length} audits.`);
+            }
+        } finally {
+            await chrome.kill();
+        }
     } catch (err) {
         console.error(`Error: ${err.message}`);
         process.exit(1);
@@ -168,7 +178,7 @@ program
     .command('lab')
     .description('Run a local Lighthouse audit')
     .argument('[url]', 'Full URL to audit (e.g. https://example.com)')
-    .option('--profile <preset>', 'Simulation profile: low, medium, high')
+    .option('--profile <preset>', 'Simulation profile(s): low, medium, high, native, all (comma-separated)')
     .option('--network <preset>', 'Network throttling: 3g-slow, 3g, 4g, 4g-fast, wifi, none')
     .option('--device <preset>', 'Device emulation: moto-g-power, iphone-12, iphone-14, ipad, desktop, desktop-large')
     .action(labAction);
