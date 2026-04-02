@@ -10,6 +10,7 @@ async function labAction(url, options) {
         const { promptLab, parseSkipAuditsFlag } = require('../lib/prompts');
         const { runLab, CHROME_FLAGS } = require('../lib/lab');
         const { formatElapsed } = require('../lib/utils');
+        const logger = require('../lib/logger');
         const resolved = await promptLab(url, options);
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
 
@@ -19,8 +20,8 @@ async function labAction(url, options) {
 
         const startTime = Date.now();
         if (isBatch) {
-            console.log(`Started at ${new Date().toLocaleTimeString()}`);
-            console.log(`Processing ${totalUrls} URLs × ${resolved.runs.length} profile(s) = ${totalRuns} total runs\n`);
+            logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+            logger.header(`Processing ${totalUrls} URLs × ${resolved.runs.length} profile(s) = ${totalRuns} total runs\n`);
         }
 
         const chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
@@ -35,21 +36,22 @@ async function labAction(url, options) {
                     const label = run.profile || 'custom';
                     if (isBatch) {
                         const pct = Math.round((runIndex / totalRuns) * 100);
-                        process.stderr.write(`\x1B[2K\r${pct}% [URL ${urlIdx + 1}/${totalUrls}] [Run ${runIndex}/${totalRuns}] ${targetUrl} [profile: ${label}]`);
+                        logger.progress(pct, runIndex, totalRuns, `${targetUrl} [profile: ${label}]`);
                     } else {
-                        console.log(`\nRunning Lighthouse audit for: ${targetUrl} [profile: ${label}]`);
+                        logger.action(`\nRunning Lighthouse audit for: ${targetUrl} [profile: ${label}]`);
                     }
                     try {
                         // eslint-disable-next-line no-await-in-loop
                         const outputPath = await runLab(targetUrl, { ...run, skipAudits, port: chrome.port, silent: isBatch });
                         results.push({ url: targetUrl, profile: label, outputPath });
                         if (!isBatch) {
-                            console.log(`Lab results saved to: ${outputPath}`);
+                            const elapsed = formatElapsed(Date.now() - startTime);
+                            logger.success(`Lab results saved to: ${outputPath} (${elapsed})`);
                         }
                     } catch (err) {
                         results.push({ url: targetUrl, profile: label, error: err.message });
                         if (isBatch) {
-                            process.stderr.write(`\n  Failed: ${targetUrl} [${label}] — ${err.message}\n`);
+                            logger.fail(`${targetUrl} [${label}] — ${err.message}`);
                         } else {
                             throw err;
                         }
@@ -58,7 +60,7 @@ async function labAction(url, options) {
             }
 
             if (!isBatch && resolved.runs.length > 1) {
-                console.log(`\nCompleted ${resolved.runs.length} audits.`);
+                logger.footer(`\nCompleted ${resolved.runs.length} audits.`);
             }
         } finally {
             await chrome.kill();
@@ -69,18 +71,19 @@ async function labAction(url, options) {
             const succeeded = results.filter((r) => !r.error);
             const failed = results.filter((r) => r.error);
 
-            succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
-            console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
-            console.log(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+            succeeded.forEach((r) => logger.outputPath(r.outputPath));
+            console.log('');
+            logger.summary(succeeded.length, failed.length);
+            logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
 
             if (failed.length > 0) {
-                console.error('\nFailed:');
-                failed.forEach((r) => console.error(`  - ${r.url} [${r.profile}]: ${r.error}`));
+                logger.failedList(failed.map((r) => `${r.url} [${r.profile}]: ${r.error}`));
                 process.exit(1);
             }
         }
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
@@ -89,13 +92,21 @@ async function rumAction(url, options) {
     try {
         const { promptRum } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
+        const logger = require('../lib/logger');
         const resolved = await promptRum(url, options);
+
+        const categoryLabels = (resolved.categories || []).map((c) => c.toLowerCase().replace(/_/g, '-'));
 
         if (resolved.urls.length === 1) {
             const { runRum } = require('../lib/rum');
-            console.log(`Fetching PageSpeed Insights for: ${resolved.urls[0]}`);
+            logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]}`);
+            if (categoryLabels.length > 0) {
+                logger.info(`Categories: ${categoryLabels.join(', ')}`);
+            }
+            const startTime = Date.now();
             const outputPath = await runRum(resolved.urls[0], resolved.apiKey, resolved.categories);
-            console.log(`RUM results saved to: ${outputPath}`);
+            const elapsed = formatElapsed(Date.now() - startTime);
+            logger.success(`RUM results saved to: ${outputPath} (${elapsed})`);
             return;
         }
 
@@ -104,16 +115,20 @@ async function rumAction(url, options) {
         const delayMs = resolved.delay || 0;
 
         const startTime = Date.now();
-        console.log(`Started at ${new Date().toLocaleTimeString()}`);
-        console.log(`Processing ${resolved.urls.length} URLs (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+        logger.header(`Processing ${resolved.urls.length} URLs (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        if (categoryLabels.length > 0) {
+            logger.info(`Categories: ${categoryLabels.join(', ')}`);
+        }
+        console.log('');
         const results = await runRumBatch(resolved.urls, resolved.apiKey, resolved.categories, {
             concurrency,
             delayMs,
             onProgress(completed, total, targetUrl, error) {
                 const pct = Math.round((completed / total) * 100);
-                process.stderr.write(`\x1B[2K\r${pct}% [${completed}/${total}] done`);
+                logger.progress(pct, completed, total, targetUrl);
                 if (error) {
-                    process.stderr.write(`\n  Failed: ${targetUrl} — ${error}\n`);
+                    logger.fail(`${targetUrl} — ${error}`);
                 }
             },
         });
@@ -122,17 +137,18 @@ async function rumAction(url, options) {
         const succeeded = results.filter((r) => !r.error);
         const failed = results.filter((r) => r.error);
 
-        succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
-        console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
-        console.log(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+        succeeded.forEach((r) => logger.outputPath(r.outputPath));
+        console.log('');
+        logger.summary(succeeded.length, failed.length);
+        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
 
         if (failed.length > 0) {
-            console.error('\nFailed:');
-            failed.forEach((r) => console.error(`  - ${r.url}: ${r.error}`));
+            logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
             process.exit(1);
         }
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
@@ -141,12 +157,17 @@ async function collectAction(url, options) {
     try {
         const { promptCollect } = require('../lib/prompts');
         const { runCollect } = require('../lib/collect');
+        const { formatElapsed } = require('../lib/utils');
+        const logger = require('../lib/logger');
         const resolved = await promptCollect(url, options);
-        console.log(`Collecting CrUX data for: ${resolved.url}`);
+        logger.action(`Collecting CrUX data for: ${resolved.url}`);
+        const startTime = Date.now();
         const outputPath = await runCollect(resolved.url, resolved.cruxAuth);
-        console.log(`Collect results saved to: ${outputPath}`);
+        const elapsed = formatElapsed(Date.now() - startTime);
+        logger.success(`Collect results saved to: ${outputPath} (${elapsed})`);
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
@@ -155,12 +176,17 @@ async function collectHistoryAction(url, options) {
     try {
         const { promptCollectHistory } = require('../lib/prompts');
         const { runCollectHistory } = require('../lib/collect-history');
+        const { formatElapsed } = require('../lib/utils');
+        const logger = require('../lib/logger');
         const resolved = await promptCollectHistory(url, options);
-        console.log(`Collecting historical CrUX data for: ${resolved.url}`);
+        logger.action(`Collecting historical CrUX data for: ${resolved.url}`);
+        const startTime = Date.now();
         const outputPath = await runCollectHistory(resolved.url, resolved.cruxAuth, resolved.since);
-        console.log(`Collect-history results saved to: ${outputPath}`);
+        const elapsed = formatElapsed(Date.now() - startTime);
+        logger.success(`Collect-history results saved to: ${outputPath} (${elapsed})`);
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
@@ -169,12 +195,17 @@ async function sitemapAction(url, options) {
     try {
         const { promptSitemap } = require('../lib/prompts');
         const { runSitemap } = require('../lib/sitemap');
+        const { formatElapsed } = require('../lib/utils');
+        const logger = require('../lib/logger');
         const resolved = await promptSitemap(url, options);
-        console.log(`Extracting sitemap URLs for: ${resolved.url}`);
+        logger.action(`Extracting sitemap URLs for: ${resolved.url}`);
+        const startTime = Date.now();
         const outputPath = await runSitemap(resolved.url, resolved.depth, resolved.sitemapUrl, resolved.delay);
-        console.log(`Sitemap results saved to: ${outputPath}`);
+        const elapsed = formatElapsed(Date.now() - startTime);
+        logger.success(`Sitemap results saved to: ${outputPath} (${elapsed})`);
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
@@ -183,12 +214,17 @@ async function linksAction(url) {
     try {
         const { promptLinks } = require('../lib/prompts');
         const { runLinks } = require('../lib/links');
+        const { formatElapsed } = require('../lib/utils');
+        const logger = require('../lib/logger');
         const resolved = await promptLinks(url);
-        console.log(`Extracting links from: ${resolved}`);
+        logger.action(`Extracting links from: ${resolved}`);
+        const startTime = Date.now();
         const outputPath = await runLinks(resolved);
-        console.log(`Links results saved to: ${outputPath}`);
+        const elapsed = formatElapsed(Date.now() - startTime);
+        logger.success(`Links results saved to: ${outputPath} (${elapsed})`);
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
@@ -207,7 +243,8 @@ async function wizardMode() {
         };
         await actions[command]();
     } catch (err) {
-        console.error(`Error: ${err.message}`);
+        const logger = require('../lib/logger');
+        logger.error(`Error: ${err.message}`);
         process.exit(1);
     }
 }
