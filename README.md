@@ -66,7 +66,7 @@ Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitema
 
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
-| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device` |
+| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file` |
 | `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
 | `collect` | Chrome UX Report via BigQuery (origin-level) | JSON with p75 Web Vitals by device and rank | `--api-key-path` |
 | `collect-history` | Chrome UX Report via BigQuery (monthly snapshots) | JSON with historical p75 Web Vitals over time | `--api-key-path`, `--since` |
@@ -101,14 +101,20 @@ node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 
 # Profile with partial override (low device + wifi network)
 node bin/web-perf.js lab --profile=low --network=wifi <url>
+
+# Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
+node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
+node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<url>` | Yes | Full URL to audit (e.g. `https://example.com`) |
+| `<url>` | Yes* | Full URL to audit (e.g. `https://example.com`). Ignored when `--urls` or `--urls-file` is provided |
 | `--profile <preset>` | No | Simulation profile(s): `low`, `medium`, `high`, `native`, `all` (comma-separated) |
 | `--network <preset>` | No | Network throttling: `3g-slow`, `3g`, `4g`, `4g-fast`, `wifi`, `none` |
 | `--device <preset>` | No | Device emulation: `moto-g-power`, `iphone-12`, `iphone-14`, `ipad`, `desktop`, `desktop-large` |
+| `--urls <urls>` | No | Comma-separated list of URLs to audit |
+| `--urls-file <path>` | No | Path to a file with one URL per line |
 
 Run `list-profiles`, `list-networks`, or `list-devices` to see all available presets:
 
