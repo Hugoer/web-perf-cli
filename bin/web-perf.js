@@ -104,12 +104,15 @@ async function rumAction(url, options) {
         const concurrency = resolved.concurrency || 5;
         const delayMs = resolved.delay || 0;
 
+        const startTime = Date.now();
+        console.log(`Started at ${new Date().toLocaleTimeString()}`);
         console.log(`Processing ${resolved.urls.length} URLs (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
         const results = await runRumBatch(resolved.urls, resolved.apiKey, resolved.categories, {
             concurrency,
             delayMs,
             onProgress(completed, total, targetUrl, error) {
-                process.stderr.write(`\r  Progress: ${completed}/${total} done`);
+                const pct = Math.round((completed / total) * 100);
+                process.stderr.write(`\x1B[2K\r${pct}% [${completed}/${total}] done`);
                 if (error) {
                     process.stderr.write(`\n  Failed: ${targetUrl} — ${error}\n`);
                 }
@@ -122,9 +125,14 @@ async function rumAction(url, options) {
 
         succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
         console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
+        const elapsed = Date.now() - startTime;
+        const mins = Math.floor(elapsed / 60000);
+        const secs = Math.round((elapsed % 60000) / 1000);
+        const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+        console.log(`Finished at ${new Date().toLocaleTimeString()} (${elapsedStr})`);
 
         if (failed.length > 0) {
-            console.error('\nFailed URLs:');
+            console.error('\nFailed:');
             failed.forEach((r) => console.error(`  - ${r.url}: ${r.error}`));
             process.exit(1);
         }
