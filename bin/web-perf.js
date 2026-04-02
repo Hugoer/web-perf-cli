@@ -7,10 +7,11 @@ const { name, version } = require('../package.json');
 async function labAction(url, options) {
     try {
         const chromeLauncher = require('chrome-launcher');
-        const { promptLab } = require('../lib/prompts');
+        const { promptLab, parseSkipAuditsFlag } = require('../lib/prompts');
         const { runLab, CHROME_FLAGS } = require('../lib/lab');
         const { formatElapsed } = require('../lib/utils');
         const resolved = await promptLab(url, options);
+        const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
 
         const totalUrls = resolved.urls.length;
         const totalRuns = totalUrls * resolved.runs.length;
@@ -40,7 +41,7 @@ async function labAction(url, options) {
                     }
                     try {
                         // eslint-disable-next-line no-await-in-loop
-                        const outputPath = await runLab(targetUrl, { ...run, port: chrome.port, silent: isBatch });
+                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, port: chrome.port, silent: isBatch });
                         results.push({ url: targetUrl, profile: label, outputPath });
                         if (!isBatch) {
                             console.log(`Lab results saved to: ${outputPath}`);
@@ -240,6 +241,7 @@ program
     .option('--device <preset>', 'Device emulation: moto-g-power, iphone-12, iphone-14, ipad, desktop, desktop-large')
     .option('--urls <urls>', 'Comma-separated list of URLs')
     .option('--urls-file <path>', 'Path to a file with one URL per line')
+    .option('--skip-audits <audits>', 'Comma-separated audits to skip (default: full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps)')
     .action(labAction);
 
 program
