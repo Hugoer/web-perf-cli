@@ -11,20 +11,75 @@ async function labAction(url, options) {
         const { runLab, CHROME_FLAGS } = require('../lib/lab');
         const resolved = await promptLab(url, options);
 
+        const totalUrls = resolved.urls.length;
+        const totalRuns = totalUrls * resolved.runs.length;
+        const isBatch = totalUrls > 1;
+
+        const startTime = Date.now();
+        if (isBatch) {
+            console.log(`Started at ${new Date().toLocaleTimeString()}`);
+            console.log(`Processing ${totalUrls} URLs × ${resolved.runs.length} profile(s) = ${totalRuns} total runs\n`);
+        }
+
         const chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
+        const results = [];
+        let runIndex = 0;
+
         try {
-            for (const run of resolved.runs) {
-                const label = run.profile || 'custom';
-                console.log(`\nRunning Lighthouse audit for: ${resolved.url} [profile: ${label}]`);
-                // eslint-disable-next-line no-await-in-loop
-                const outputPath = await runLab(resolved.url, { ...run, port: chrome.port });
-                console.log(`Lab results saved to: ${outputPath}`);
+            for (let urlIdx = 0; urlIdx < totalUrls; urlIdx++) {
+                const targetUrl = resolved.urls[urlIdx];
+                for (const run of resolved.runs) {
+                    runIndex++;
+                    const label = run.profile || 'custom';
+                    if (isBatch) {
+                        const pct = Math.round((runIndex / totalRuns) * 100);
+                        process.stderr.write(`\x1B[2K\r${pct}% [URL ${urlIdx + 1}/${totalUrls}] [Run ${runIndex}/${totalRuns}] ${targetUrl} [profile: ${label}]`);
+                    } else {
+                        console.log(`\nRunning Lighthouse audit for: ${targetUrl} [profile: ${label}]`);
+                    }
+                    try {
+                        // eslint-disable-next-line no-await-in-loop
+                        const outputPath = await runLab(targetUrl, { ...run, port: chrome.port, silent: isBatch });
+                        results.push({ url: targetUrl, profile: label, outputPath });
+                        if (!isBatch) {
+                            console.log(`Lab results saved to: ${outputPath}`);
+                        }
+                    } catch (err) {
+                        results.push({ url: targetUrl, profile: label, error: err.message });
+                        if (isBatch) {
+                            process.stderr.write(`\n  Failed: ${targetUrl} [${label}] — ${err.message}\n`);
+                        } else {
+                            throw err;
+                        }
+                    }
+                }
             }
-            if (resolved.runs.length > 1) {
+
+            if (!isBatch && resolved.runs.length > 1) {
                 console.log(`\nCompleted ${resolved.runs.length} audits.`);
             }
         } finally {
             await chrome.kill();
+        }
+
+        if (isBatch) {
+            process.stderr.write('\n');
+            const succeeded = results.filter((r) => !r.error);
+            const failed = results.filter((r) => r.error);
+
+            succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
+            console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
+            const elapsed = Date.now() - startTime;
+            const mins = Math.floor(elapsed / 60000);
+            const secs = Math.round((elapsed % 60000) / 1000);
+            const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+            console.log(`Finished at ${new Date().toLocaleTimeString()} (${elapsedStr})`);
+
+            if (failed.length > 0) {
+                console.error('\nFailed:');
+                failed.forEach((r) => console.error(`  - ${r.url} [${r.profile}]: ${r.error}`));
+                process.exit(1);
+            }
         }
     } catch (err) {
         console.error(`Error: ${err.message}`);
@@ -181,6 +236,8 @@ program
     .option('--profile <preset>', 'Simulation profile(s): low, medium, high, native, all (comma-separated)')
     .option('--network <preset>', 'Network throttling: 3g-slow, 3g, 4g, 4g-fast, wifi, none')
     .option('--device <preset>', 'Device emulation: moto-g-power, iphone-12, iphone-14, ipad, desktop, desktop-large')
+    .option('--urls <urls>', 'Comma-separated list of URLs')
+    .option('--urls-file <path>', 'Path to a file with one URL per line')
     .action(labAction);
 
 program

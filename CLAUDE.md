@@ -15,6 +15,10 @@ node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 node bin/web-perf.js lab --profile=low --network=wifi <url>   # override parcial
 node bin/web-perf.js list-profiles
 
+# Lab: Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
+node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
+node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
+
 # RUM: PageSpeed Insights API (single URL)
 node bin/web-perf.js rum --api-key=<PSI_KEY> <url>
 node bin/web-perf.js rum --api-key-path=<key-file.txt> <url>
