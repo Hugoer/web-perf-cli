@@ -9,6 +9,7 @@ async function labAction(url, options) {
         const chromeLauncher = require('chrome-launcher');
         const { promptLab } = require('../lib/prompts');
         const { runLab, CHROME_FLAGS } = require('../lib/lab');
+        const { formatElapsed } = require('../lib/utils');
         const resolved = await promptLab(url, options);
 
         const totalUrls = resolved.urls.length;
@@ -69,11 +70,7 @@ async function labAction(url, options) {
 
             succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
             console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
-            const elapsed = Date.now() - startTime;
-            const mins = Math.floor(elapsed / 60000);
-            const secs = Math.round((elapsed % 60000) / 1000);
-            const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-            console.log(`Finished at ${new Date().toLocaleTimeString()} (${elapsedStr})`);
+            console.log(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
 
             if (failed.length > 0) {
                 console.error('\nFailed:');
@@ -90,6 +87,7 @@ async function labAction(url, options) {
 async function rumAction(url, options) {
     try {
         const { promptRum } = require('../lib/prompts');
+        const { formatElapsed } = require('../lib/utils');
         const resolved = await promptRum(url, options);
 
         if (resolved.urls.length === 1) {
@@ -125,11 +123,7 @@ async function rumAction(url, options) {
 
         succeeded.forEach((r) => console.log(`  ${r.outputPath}`));
         console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
-        const elapsed = Date.now() - startTime;
-        const mins = Math.floor(elapsed / 60000);
-        const secs = Math.round((elapsed % 60000) / 1000);
-        const elapsedStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-        console.log(`Finished at ${new Date().toLocaleTimeString()} (${elapsedStr})`);
+        console.log(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
 
         if (failed.length > 0) {
             console.error('\nFailed:');
