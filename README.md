@@ -52,7 +52,7 @@ Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitema
 
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
-| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file` |
+| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns` |
 | `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
 | `collect` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
 | `collect-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
@@ -88,6 +88,13 @@ node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 # Profile with partial override (low device + wifi network)
 node bin/web-perf.js lab --profile=low --network=wifi <url>
 
+# Skip specific audits
+node bin/web-perf.js lab --skip-audits=full-page-screenshot,screenshot-thumbnails <url>
+
+# Block URL patterns (prevent asset downloads during audit, e.g. analytics, ads)
+node bin/web-perf.js lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
+node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
+
 # Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
 node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
@@ -101,6 +108,8 @@ node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
 | `--device <preset>` | No | Device emulation: `moto-g-power`, `iphone-12`, `iphone-14`, `ipad`, `desktop`, `desktop-large` |
 | `--urls <urls>` | No | Comma-separated list of URLs to audit |
 | `--urls-file <path>` | No | Path to a file with one URL per line |
+| `--skip-audits <audits>` | No | Comma-separated Lighthouse audits to skip. Default: `full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps` |
+| `--blocked-url-patterns <patterns>` | No | Comma-separated URL patterns to block during the audit (e.g. `*.google-analytics.com,*.facebook.net`). Uses Chrome DevTools Protocol to prevent matching assets from being downloaded |
 
 Run `list-profiles`, `list-networks`, or `list-devices` to see all available presets:
 
