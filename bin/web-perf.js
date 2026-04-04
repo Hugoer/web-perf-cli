@@ -90,7 +90,7 @@ async function labAction(url, options) {
 
 async function rumAction(url, options) {
     try {
-        const { promptRum } = require('../lib/prompts');
+        const { promptRum, DEFAULT_CONCURRENCY } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
         const resolved = await promptRum(url, options);
@@ -111,7 +111,7 @@ async function rumAction(url, options) {
         }
 
         const { runRumBatch } = require('../lib/rum');
-        const concurrency = resolved.concurrency || 5;
+        const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
 
         const startTime = Date.now();
@@ -153,18 +153,74 @@ async function rumAction(url, options) {
     }
 }
 
+function normalizeUrlsForOriginScope(logger, resolved) {
+    if (resolved.scope !== 'origin') {
+        return;
+    }
+    const { normalizeOrigin } = require('../lib/collect');
+    resolved.urls = resolved.urls.map((u) => {
+        const origin = normalizeOrigin(u);
+        const full = u.startsWith('http') ? u : `https://${u}`;
+        if (full.replace(/\/+$/, '') !== origin) {
+            logger.info(`URL normalized to origin: ${u} → ${origin}`);
+        }
+        return origin;
+    });
+}
+
 async function collectAction(url, options) {
     try {
-        const { promptCollect } = require('../lib/prompts');
-        const { runCollect } = require('../lib/collect');
+        const { promptCollect, DEFAULT_CONCURRENCY } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
         const resolved = await promptCollect(url, options);
-        logger.action(`Collecting CrUX data for: ${resolved.url}`);
+
+        normalizeUrlsForOriginScope(logger, resolved);
+
         const startTime = Date.now();
-        const outputPath = await runCollect(resolved.url, resolved.cruxAuth);
-        const elapsed = formatElapsed(Date.now() - startTime);
-        logger.success(`Collect results saved to: ${outputPath} (${elapsed})`);
+
+        if (resolved.urls.length === 1) {
+            const { runCruxApi } = require('../lib/collect');
+            logger.action(`Querying CrUX API (${resolved.scope}) for: ${resolved.urls[0]}`);
+            const outputPath = await runCruxApi(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
+            const elapsed = formatElapsed(Date.now() - startTime);
+            logger.success(`Collect results saved to: ${outputPath} (${elapsed})`);
+            return;
+        }
+
+        const { runCruxApiBatch } = require('../lib/collect');
+        const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
+        const delayMs = resolved.delay || 0;
+
+        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+        logger.header(`Processing ${resolved.urls.length} URLs via CrUX API [${resolved.scope}] (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        console.log('');
+        const results = await runCruxApiBatch(resolved.urls, resolved.apiKey, {
+            scope: resolved.scope,
+            concurrency,
+            delayMs,
+            onProgress(completed, total, targetUrl, error) {
+                const pct = Math.round((completed / total) * 100);
+                logger.progress(pct, completed, total, targetUrl);
+                if (error) {
+                    logger.fail(`${targetUrl} — ${error}`);
+                }
+            },
+        });
+        process.stderr.write('\n');
+
+        const succeeded = results.filter((r) => !r.error);
+        const failed = results.filter((r) => r.error);
+
+        succeeded.forEach((r) => logger.outputPath(r.outputPath));
+        console.log('');
+        logger.summary(succeeded.length, failed.length);
+        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+
+        if (failed.length > 0) {
+            logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
+            process.exit(1);
+        }
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -174,16 +230,57 @@ async function collectAction(url, options) {
 
 async function collectHistoryAction(url, options) {
     try {
-        const { promptCollectHistory } = require('../lib/prompts');
-        const { runCollectHistory } = require('../lib/collect-history');
+        const { promptCollectHistory, DEFAULT_CONCURRENCY } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
         const resolved = await promptCollectHistory(url, options);
-        logger.action(`Collecting historical CrUX data for: ${resolved.url}`);
+
+        normalizeUrlsForOriginScope(logger, resolved);
+
         const startTime = Date.now();
-        const outputPath = await runCollectHistory(resolved.url, resolved.cruxAuth, resolved.since);
-        const elapsed = formatElapsed(Date.now() - startTime);
-        logger.success(`Collect-history results saved to: ${outputPath} (${elapsed})`);
+
+        if (resolved.urls.length === 1) {
+            const { runCruxHistoryApi } = require('../lib/collect');
+            logger.action(`Querying CrUX History API (${resolved.scope}) for: ${resolved.urls[0]}`);
+            const outputPath = await runCruxHistoryApi(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
+            const elapsed = formatElapsed(Date.now() - startTime);
+            logger.success(`Collect-history results saved to: ${outputPath} (${elapsed})`);
+            return;
+        }
+
+        const { runCruxHistoryApiBatch } = require('../lib/collect');
+        const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
+        const delayMs = resolved.delay || 0;
+
+        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+        logger.header(`Processing ${resolved.urls.length} URLs via CrUX History API [${resolved.scope}] (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        console.log('');
+        const results = await runCruxHistoryApiBatch(resolved.urls, resolved.apiKey, {
+            scope: resolved.scope,
+            concurrency,
+            delayMs,
+            onProgress(completed, total, targetUrl, error) {
+                const pct = Math.round((completed / total) * 100);
+                logger.progress(pct, completed, total, targetUrl);
+                if (error) {
+                    logger.fail(`${targetUrl} — ${error}`);
+                }
+            },
+        });
+        process.stderr.write('\n');
+
+        const succeeded = results.filter((r) => !r.error);
+        const failed = results.filter((r) => r.error);
+
+        succeeded.forEach((r) => logger.outputPath(r.outputPath));
+        console.log('');
+        logger.summary(succeeded.length, failed.length);
+        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+
+        if (failed.length > 0) {
+            logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
+            process.exit(1);
+        }
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -252,19 +349,18 @@ async function wizardMode() {
 program
     .name(name)
     .version(version)
-    .description('Analyze web performance via Lighthouse, PageSpeed Insights, CrUX BigQuery, or sitemap extraction')
+    .description('Analyze web performance via Lighthouse, PageSpeed Insights, CrUX API, or sitemap extraction')
     .addHelpText('after', `
 Environment variables:
-  WEB_PERF_PSI_API_KEY       PageSpeed Insights API key (for rum)
-  WEB_PERF_PSI_API_KEY_PATH  Path to file containing the PSI API key (for rum)
-  WEB_PERF_CRUX_KEY_PATH     Path to BigQuery service account JSON (for collect/collect-history)
-  WEB_PERF_CRUX_KEY          BigQuery service account JSON content (for collect/collect-history)
+  WEB_PERF_PSI_API_KEY       API key for PageSpeed Insights / CrUX API (for rum, collect, collect-history)
+  WEB_PERF_PSI_API_KEY_PATH  Path to file containing the API key (for rum, collect, collect-history)
 
 Examples:
   $ web-perf lab https://example.com
   $ web-perf lab --profile=low https://example.com
   $ web-perf rum --api-key=KEY https://example.com
-  $ web-perf collect --api-key-path=sa.json https://example.com
+  $ web-perf collect --api-key=KEY https://example.com
+  $ web-perf collect-history --api-key=KEY https://example.com
   $ web-perf sitemap https://example.com
   $ web-perf                              (interactive wizard)
 `);
@@ -296,17 +392,28 @@ program
 
 program
     .command('collect')
-    .description('Extract CrUX data from BigQuery (origin-level)')
-    .argument('[url]', 'Domain or origin to query (e.g. https://example.com)')
-    .option('--api-key-path <path>', 'Path to BigQuery service account JSON (overrides WEB_PERF_CRUX_KEY_PATH/WEB_PERF_CRUX_KEY)')
+    .description('Extract CrUX data via CrUX API (origin or page-level, 28-day rolling average)')
+    .argument('[url]', 'URL or origin to query')
+    .option('--scope <scope>', 'Query scope: origin or page (default: origin)', 'origin')
+    .option('--api-key <key>', 'CrUX API key (overrides WEB_PERF_PSI_API_KEY)')
+    .option('--api-key-path <path>', 'Path to plain text file containing the API key')
+    .option('--urls <urls>', 'Comma-separated URLs (page scope)')
+    .option('--urls-file <path>', 'Path to file with one URL per line (page scope)')
+    .option('--concurrency <n>', 'Max parallel requests (default: 5)', parseInt)
+    .option('--delay <ms>', 'Delay between requests in ms (default: 0)', parseInt)
     .action(collectAction);
 
 program
     .command('collect-history')
-    .description('Extract historical CrUX data from BigQuery')
-    .argument('[url]', 'Domain or origin to query (e.g. https://example.com)')
-    .option('--api-key-path <path>', 'Path to BigQuery service account JSON (overrides WEB_PERF_CRUX_KEY_PATH/WEB_PERF_CRUX_KEY)')
-    .option('--since <date>', 'Start date YYYY-MM-DD (default: 12 months ago)')
+    .description('Extract historical CrUX data via CrUX API (~6 months of weekly data points)')
+    .argument('[url]', 'URL or origin to query (e.g. https://example.com)')
+    .option('--scope <scope>', 'Query scope: origin or page (default: origin)', 'origin')
+    .option('--api-key <key>', 'CrUX API key (overrides WEB_PERF_PSI_API_KEY)')
+    .option('--api-key-path <path>', 'Path to plain text file containing the API key')
+    .option('--urls <urls>', 'Comma-separated URLs (page scope)')
+    .option('--urls-file <path>', 'Path to file with one URL per line (page scope)')
+    .option('--concurrency <n>', 'Max parallel requests (default: 5)', parseInt)
+    .option('--delay <ms>', 'Delay between requests in ms (default: 0)', parseInt)
     .action(collectHistoryAction);
 
 program

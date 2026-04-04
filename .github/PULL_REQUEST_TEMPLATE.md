@@ -12,7 +12,7 @@
 ## Scope
 - [ ] `lab`: Lighthouse lab audits (local, headless Chrome)
 - [ ] `rum`: PageSpeed Insights API (RUM data)
-- [ ] `collect`: CrUX BigQuery data collection
+- [ ] `collect`: CrUX API data collection
 - [ ] `sitemap`: Sitemap.xml parsing and URL extraction
 - [ ] `links`: Internal link extraction from rendered DOM
 - [ ] `cli`: CLI entrypoint and argument parsing

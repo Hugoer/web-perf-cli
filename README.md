@@ -1,23 +1,28 @@
 # web-perf
 
-Node.js CLI tool for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via BigQuery, or sitemap URL extraction.
+Node.js CLI tool for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via CrUX API, or sitemap URL extraction.
 
 ## Requirements
 
 - **Node.js** >= 18
 - **Google Chrome** installed locally (required for `lab`)
-- **PageSpeed Insights API key** (required for `rum`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
-- **Google Cloud service account JSON** with BigQuery User role (required for `collect` and `collect-history`) — pass via `--api-key-path`, or set `WEB_PERF_CRUX_KEY_PATH` (file path) or `WEB_PERF_CRUX_KEY` (JSON content) environment variable
+- **Google Cloud API key** with PageSpeed Insights API and/or CrUX API enabled (required for `rum`, `collect`, `collect-history`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
 
 ## Setup
 
-### PageSpeed Insights API key (for `rum`)
+### Google Cloud API key (for `rum`, `collect`, `collect-history`)
 
-Create an API key in the [Google Cloud Console](https://console.cloud.google.com/) under **APIs & Services > Credentials**, with the **PageSpeed Insights API** enabled.
+Create an API key in the [Google Cloud Console](https://console.cloud.google.com/) under **APIs & Services > Credentials**, with the following APIs enabled:
+
+- **PageSpeed Insights API** — required for `rum`
+- **Chrome UX Report API** — required for `collect` and `collect-history`
+
+> **Note:** After enabling the Chrome UX Report API, it may take a few minutes for the API key to become effective.
 
 ```bash
 # Inline
 node bin/web-perf.js rum --api-key=<YOUR_KEY> <url>
+node bin/web-perf.js collect --api-key=<YOUR_KEY> <url>
 
 # From file (plain text, key only)
 node bin/web-perf.js rum --api-key-path=<path-to-file> <url>
@@ -28,27 +33,8 @@ node bin/web-perf.js rum <url>
 
 # Via environment variable (file path)
 export WEB_PERF_PSI_API_KEY_PATH=<path-to-key-file>
-node bin/web-perf.js rum <url>
-```
-
-### Google Cloud service account JSON (for `collect` and `collect-history`)
-
-Create a service account in the [Google Cloud Console](https://console.cloud.google.com/) under **IAM & Admin > Service Accounts** with the **BigQuery User** role (`roles/bigquery.user`), then export a JSON key.
-
-```bash
-# From file
-node bin/web-perf.js collect --api-key-path=<service-account.json> <url>
-
-# Via environment variable (file path)
-export WEB_PERF_CRUX_KEY_PATH=<path-to-file.json>
-node bin/web-perf.js collect <url>
-
-# Via environment variable (JSON content)
-export WEB_PERF_CRUX_KEY='{"type":"service_account",...}'
 node bin/web-perf.js collect <url>
 ```
-
-> **Note:** The BigQuery API is enabled by default in new projects. The service account only needs the **BigQuery User** role to query the public `chrome-ux-report` dataset.
 
 ## Installation
 
@@ -68,8 +54,8 @@ Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitema
 |---------|--------|--------|---------|
 | `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file` |
 | `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
-| `collect` | Chrome UX Report via BigQuery (origin-level) | JSON with p75 Web Vitals by device and rank | `--api-key-path` |
-| `collect-history` | Chrome UX Report via BigQuery (monthly snapshots) | JSON with historical p75 Web Vitals over time | `--api-key-path`, `--since` |
+| `collect` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
+| `collect-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
 | `sitemap` | Domain's `sitemap.xml` (recursive) | JSON list of all URLs found | `--depth`, `--sitemap-url` |
 | `links` | Rendered DOM via headless Chrome (SPA-compatible) | JSON list of internal links | — |
 | `list-profiles` | — | Prints available simulation profiles | — |
@@ -196,49 +182,71 @@ node bin/web-perf.js rum --category=performance,seo --api-key-path=<key-file> <u
 
 ---
 
-### `collect` — CrUX via BigQuery
+### `collect` — CrUX data (28-day rolling average)
 
-Queries the Chrome UX Report materialized dataset in BigQuery for origin-level performance data. Note: CrUX only provides **origin-level** (domain) data, not per-page URL metrics.
+Queries Chrome UX Report data via the CrUX REST API. Returns a 28-day rolling average of Web Vitals metrics. Supports both origin-level and page-level queries via `--scope`. Pages need ~300+ monthly visits to have data.
 
 ```bash
-node bin/web-perf.js collect --api-key-path=<service-account.json> <url>
+# Origin-level (default)
+node bin/web-perf.js collect --api-key=<KEY> <url>
+
+# Page-level
+node bin/web-perf.js collect --scope=page --api-key=<KEY> <url>
+
+# Multiple URLs (page scope)
+node bin/web-perf.js collect --scope=page --urls=<url1>,<url2> --api-key=<KEY>
+node bin/web-perf.js collect --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<url>` | Yes | Domain or origin to query (e.g. `https://example.com` or `example.com`) |
-| `--api-key-path <path>` | No\* | Path to a Google Cloud service account JSON file with BigQuery User role |
+| `<url>` | Yes\* | URL or origin to query |
+| `--scope <scope>` | No | Query scope: `origin` (default) or `page` |
+| `--api-key <key>` | No\*\* | CrUX API key |
+| `--api-key-path <path>` | No\*\* | Path to plain text file containing the API key |
+| `--urls <urls>` | No | Comma-separated URLs (page scope) |
+| `--urls-file <path>` | No | Path to file with one URL per line (page scope) |
+| `--concurrency <n>` | No | Max parallel requests. Default: `5` |
+| `--delay <ms>` | No | Delay between requests in ms. Default: `0` |
 
-\* BigQuery credentials are required. Provide them via `--api-key-path`, `WEB_PERF_CRUX_KEY_PATH` (file path), or `WEB_PERF_CRUX_KEY` (JSON content) environment variable. CLI flags take precedence.
+\* Not required when `--urls` or `--urls-file` is provided.
+\*\* A CrUX API key is required. Provide via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables.
 
-#### Credential resolution order
-
-1. `--api-key-path` flag (file path)
-2. `WEB_PERF_CRUX_KEY_PATH` env var (file path)
-3. `WEB_PERF_CRUX_KEY` env var (JSON content)
-4. Interactive prompt
-
-**Output:** `results/collect/collect-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/collect/collect-<hostname>-YYYY-MM-DD-HHMM-crux-api.json`
 
 ---
 
-### `collect-history` — Historical CrUX data via BigQuery
+### `collect-history` — Historical CrUX data
 
-Queries the Chrome UX Report materialized dataset for all monthly snapshots within a date range. By default, retrieves the last 12 months of data. CrUX data is available as monthly snapshots since 2017.
+Queries the CrUX History API for ~6 months of weekly data points. Each data point represents a 28-day rolling average. Supports both origin-level and page-level queries.
 
 ```bash
-node bin/web-perf.js collect-history --api-key-path=<service-account.json> [--since=YYYY-MM-DD] <url>
+# Origin-level (default)
+node bin/web-perf.js collect-history --api-key=<KEY> <url>
+
+# Page-level
+node bin/web-perf.js collect-history --scope=page --api-key=<KEY> <url>
+
+# Multiple URLs (page scope)
+node bin/web-perf.js collect-history --scope=page --urls=<url1>,<url2> --api-key=<KEY>
+node bin/web-perf.js collect-history --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<url>` | Yes | Domain or origin to query (e.g. `https://example.com` or `example.com`) |
-| `--api-key-path <path>` | No\* | Path to a Google Cloud service account JSON file with BigQuery User role |
-| `--since <date>` | No | Start date in `YYYY-MM-DD` format. Default: 12 months ago |
+| `<url>` | Yes\* | URL or origin to query (e.g. `https://example.com`) |
+| `--scope <scope>` | No | Query scope: `origin` (default) or `page` |
+| `--api-key <key>` | No\*\* | CrUX API key |
+| `--api-key-path <path>` | No\*\* | Path to plain text file containing the API key |
+| `--urls <urls>` | No | Comma-separated URLs (page scope) |
+| `--urls-file <path>` | No | Path to file with one URL per line (page scope) |
+| `--concurrency <n>` | No | Max parallel requests. Default: `5` |
+| `--delay <ms>` | No | Delay between requests in ms. Default: `0` |
 
-\* BigQuery credentials are required. Credential resolution is identical to `collect` (see above).
+\* Not required when `--urls` or `--urls-file` is provided.
+\*\* A CrUX API key is required. Credential resolution is identical to `collect` (see above).
 
-**Output:** `results/collect-history/collect-history-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/collect-history/collect-history-<hostname>-YYYY-MM-DD-HHMM-crux-api.json`
 
 ---
 
@@ -262,10 +270,8 @@ node bin/web-perf.js sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
 
 | Variable | Command | Description |
 |---|---|---|
-| `WEB_PERF_PSI_API_KEY` | `rum` | PageSpeed Insights API key |
-| `WEB_PERF_PSI_API_KEY_PATH` | `rum` | Path to file containing the PSI API key |
-| `WEB_PERF_CRUX_KEY_PATH` | `collect`, `collect-history` | Path to BigQuery service account JSON file |
-| `WEB_PERF_CRUX_KEY` | `collect`, `collect-history` | BigQuery service account JSON content (full JSON string) |
+| `WEB_PERF_PSI_API_KEY` | `rum`, `collect`, `collect-history` | API key for PageSpeed Insights / CrUX API |
+| `WEB_PERF_PSI_API_KEY_PATH` | `rum`, `collect`, `collect-history` | Path to file containing the API key |
 
 CLI flags (`--api-key`, `--api-key-path`) always take precedence over environment variables.
 
