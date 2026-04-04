@@ -7,12 +7,13 @@ const { name, version } = require('../package.json');
 async function labAction(url, options) {
     try {
         const chromeLauncher = require('chrome-launcher');
-        const { promptLab, parseSkipAuditsFlag } = require('../lib/prompts');
+        const { promptLab, parseSkipAuditsFlag, parseBlockedUrlPatternsFlag } = require('../lib/prompts');
         const { runLab, CHROME_FLAGS } = require('../lib/lab');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
         const resolved = await promptLab(url, options);
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
+        const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
 
         const totalUrls = resolved.urls.length;
         const totalRuns = totalUrls * resolved.runs.length;
@@ -42,7 +43,7 @@ async function labAction(url, options) {
                     }
                     try {
                         // eslint-disable-next-line no-await-in-loop
-                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, port: chrome.port, silent: isBatch });
+                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, port: chrome.port, silent: isBatch });
                         results.push({ url: targetUrl, profile: label, outputPath });
                         if (!isBatch) {
                             const elapsed = formatElapsed(Date.now() - startTime);
@@ -375,6 +376,7 @@ program
     .option('--urls <urls>', 'Comma-separated list of URLs')
     .option('--urls-file <path>', 'Path to a file with one URL per line')
     .option('--skip-audits <audits>', 'Comma-separated audits to skip (default: full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps)')
+    .option('--blocked-url-patterns <patterns>', 'Comma-separated URL patterns to block during audit (e.g. *.google-analytics.com,*.facebook.net)')
     .action(labAction);
 
 program

@@ -15,6 +15,10 @@ node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 node bin/web-perf.js lab --profile=low --network=wifi <url>   # override parcial
 node bin/web-perf.js list-profiles
 
+# Lab: Block URL patterns (prevent asset downloads during audit)
+node bin/web-perf.js lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
+node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
+
 # Lab: Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
 node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
