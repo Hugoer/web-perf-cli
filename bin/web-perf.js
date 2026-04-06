@@ -89,29 +89,29 @@ async function labAction(url, options) {
     }
 }
 
-async function rumAction(url, options) {
+async function psiAction(url, options) {
     try {
-        const { promptRum, DEFAULT_CONCURRENCY } = require('../lib/prompts');
+        const { promptPsi, DEFAULT_CONCURRENCY } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
-        const resolved = await promptRum(url, options);
+        const resolved = await promptPsi(url, options);
 
         const categoryLabels = (resolved.categories || []).map((c) => c.toLowerCase().replace(/_/g, '-'));
 
         if (resolved.urls.length === 1) {
-            const { runRum } = require('../lib/rum');
+            const { runPsi } = require('../lib/psi');
             logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]}`);
             if (categoryLabels.length > 0) {
                 logger.info(`Categories: ${categoryLabels.join(', ')}`);
             }
             const startTime = Date.now();
-            const outputPath = await runRum(resolved.urls[0], resolved.apiKey, resolved.categories);
+            const outputPath = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories);
             const elapsed = formatElapsed(Date.now() - startTime);
-            logger.success(`RUM results saved to: ${outputPath} (${elapsed})`);
+            logger.success(`PSI results saved to: ${outputPath} (${elapsed})`);
             return;
         }
 
-        const { runRumBatch } = require('../lib/rum');
+        const { runPsiBatch } = require('../lib/psi');
         const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
 
@@ -122,7 +122,7 @@ async function rumAction(url, options) {
             logger.info(`Categories: ${categoryLabels.join(', ')}`);
         }
         console.log('');
-        const results = await runRumBatch(resolved.urls, resolved.apiKey, resolved.categories, {
+        const results = await runPsiBatch(resolved.urls, resolved.apiKey, resolved.categories, {
             concurrency,
             delayMs,
             onProgress(completed, total, targetUrl, error) {
@@ -158,7 +158,7 @@ function normalizeUrlsForOriginScope(logger, resolved) {
     if (resolved.scope !== 'origin') {
         return;
     }
-    const { normalizeOrigin } = require('../lib/collect');
+    const { normalizeOrigin } = require('../lib/utils');
     resolved.urls = resolved.urls.map((u) => {
         const origin = normalizeOrigin(u);
         const full = u.startsWith('http') ? u : `https://${u}`;
@@ -169,34 +169,34 @@ function normalizeUrlsForOriginScope(logger, resolved) {
     });
 }
 
-async function collectAction(url, options) {
+async function cruxAction(url, options) {
     try {
-        const { promptCollect, DEFAULT_CONCURRENCY } = require('../lib/prompts');
+        const { promptCrux, DEFAULT_CONCURRENCY } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
-        const resolved = await promptCollect(url, options);
+        const resolved = await promptCrux(url, options);
 
         normalizeUrlsForOriginScope(logger, resolved);
 
         const startTime = Date.now();
 
         if (resolved.urls.length === 1) {
-            const { runCruxApi } = require('../lib/collect');
+            const { runCrux } = require('../lib/crux');
             logger.action(`Querying CrUX API (${resolved.scope}) for: ${resolved.urls[0]}`);
-            const outputPath = await runCruxApi(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
+            const outputPath = await runCrux(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
             const elapsed = formatElapsed(Date.now() - startTime);
-            logger.success(`Collect results saved to: ${outputPath} (${elapsed})`);
+            logger.success(`CrUX results saved to: ${outputPath} (${elapsed})`);
             return;
         }
 
-        const { runCruxApiBatch } = require('../lib/collect');
+        const { runCruxBatch } = require('../lib/crux');
         const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
 
         logger.header(`Started at ${new Date().toLocaleTimeString()}`);
         logger.header(`Processing ${resolved.urls.length} URLs via CrUX API [${resolved.scope}] (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
         console.log('');
-        const results = await runCruxApiBatch(resolved.urls, resolved.apiKey, {
+        const results = await runCruxBatch(resolved.urls, resolved.apiKey, {
             scope: resolved.scope,
             concurrency,
             delayMs,
@@ -229,34 +229,34 @@ async function collectAction(url, options) {
     }
 }
 
-async function collectHistoryAction(url, options) {
+async function cruxHistoryAction(url, options) {
     try {
-        const { promptCollectHistory, DEFAULT_CONCURRENCY } = require('../lib/prompts');
+        const { promptCruxHistory, DEFAULT_CONCURRENCY } = require('../lib/prompts');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
-        const resolved = await promptCollectHistory(url, options);
+        const resolved = await promptCruxHistory(url, options);
 
         normalizeUrlsForOriginScope(logger, resolved);
 
         const startTime = Date.now();
 
         if (resolved.urls.length === 1) {
-            const { runCruxHistoryApi } = require('../lib/collect');
+            const { runCruxHistory } = require('../lib/crux-history');
             logger.action(`Querying CrUX History API (${resolved.scope}) for: ${resolved.urls[0]}`);
-            const outputPath = await runCruxHistoryApi(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
+            const outputPath = await runCruxHistory(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
             const elapsed = formatElapsed(Date.now() - startTime);
-            logger.success(`Collect-history results saved to: ${outputPath} (${elapsed})`);
+            logger.success(`CrUX History results saved to: ${outputPath} (${elapsed})`);
             return;
         }
 
-        const { runCruxHistoryApiBatch } = require('../lib/collect');
+        const { runCruxHistoryBatch } = require('../lib/crux-history');
         const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
 
         logger.header(`Started at ${new Date().toLocaleTimeString()}`);
         logger.header(`Processing ${resolved.urls.length} URLs via CrUX History API [${resolved.scope}] (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
         console.log('');
-        const results = await runCruxHistoryApiBatch(resolved.urls, resolved.apiKey, {
+        const results = await runCruxHistoryBatch(resolved.urls, resolved.apiKey, {
             scope: resolved.scope,
             concurrency,
             delayMs,
@@ -293,14 +293,18 @@ async function sitemapAction(url, options) {
     try {
         const { promptSitemap } = require('../lib/prompts');
         const { runSitemap } = require('../lib/sitemap');
-        const { formatElapsed } = require('../lib/utils');
+        const { formatElapsed, writeAiOutput } = require('../lib/utils');
         const logger = require('../lib/logger');
         const resolved = await promptSitemap(url, options);
         logger.action(`Extracting sitemap URLs for: ${resolved.url}`);
         const startTime = Date.now();
-        const outputPath = await runSitemap(resolved.url, resolved.depth, resolved.sitemapUrl, resolved.delay);
+        const { outputPath, urls } = await runSitemap(resolved.url, resolved.depth, resolved.delay);
         const elapsed = formatElapsed(Date.now() - startTime);
         logger.success(`Sitemap results saved to: ${outputPath} (${elapsed})`);
+        if (resolved.outputAi) {
+            const aiPath = writeAiOutput(urls, resolved.url, 'sitemap');
+            logger.success(`AI-friendly output saved to: ${aiPath}`);
+        }
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -308,18 +312,23 @@ async function sitemapAction(url, options) {
     }
 }
 
-async function linksAction(url) {
+async function linksAction(url, options) {
     try {
         const { promptLinks } = require('../lib/prompts');
         const { runLinks } = require('../lib/links');
-        const { formatElapsed } = require('../lib/utils');
+        const { formatElapsed, writeAiOutput } = require('../lib/utils');
         const logger = require('../lib/logger');
-        const resolved = await promptLinks(url);
-        logger.action(`Extracting links from: ${resolved}`);
+        const resolved = await promptLinks(url, options);
+        logger.action(`Extracting links from: ${resolved.url}`);
         const startTime = Date.now();
-        const outputPath = await runLinks(resolved);
+        const { outputPath, links } = await runLinks(resolved.url);
         const elapsed = formatElapsed(Date.now() - startTime);
         logger.success(`Links results saved to: ${outputPath} (${elapsed})`);
+        if (resolved.outputAi) {
+            const urls = links.map((l) => l.href);
+            const aiPath = writeAiOutput(urls, resolved.url, 'links');
+            logger.success(`AI-friendly output saved to: ${aiPath}`);
+        }
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -333,9 +342,9 @@ async function wizardMode() {
         const command = await promptForSubcommand();
         const actions = {
             lab: () => labAction(undefined, {}),
-            rum: () => rumAction(undefined, {}),
-            collect: () => collectAction(undefined, {}),
-            'collect-history': () => collectHistoryAction(undefined, {}),
+            psi: () => psiAction(undefined, {}),
+            crux: () => cruxAction(undefined, {}),
+            'crux-history': () => cruxHistoryAction(undefined, {}),
             sitemap: () => sitemapAction(undefined, {}),
             links: () => linksAction(undefined),
         };
@@ -353,15 +362,15 @@ program
     .description('Analyze web performance via Lighthouse, PageSpeed Insights, CrUX API, or sitemap extraction')
     .addHelpText('after', `
 Environment variables:
-  WEB_PERF_PSI_API_KEY       API key for PageSpeed Insights / CrUX API (for rum, collect, collect-history)
-  WEB_PERF_PSI_API_KEY_PATH  Path to file containing the API key (for rum, collect, collect-history)
+  WEB_PERF_PSI_API_KEY       API key for PageSpeed Insights / CrUX API (for psi, crux, crux-history)
+  WEB_PERF_PSI_API_KEY_PATH  Path to file containing the API key (for psi, crux, crux-history)
 
 Examples:
   $ web-perf lab https://example.com
   $ web-perf lab --profile=low https://example.com
-  $ web-perf rum --api-key=KEY https://example.com
-  $ web-perf collect --api-key=KEY https://example.com
-  $ web-perf collect-history --api-key=KEY https://example.com
+  $ web-perf psi --api-key=KEY https://example.com
+  $ web-perf crux --api-key=KEY https://example.com
+  $ web-perf crux-history --api-key=KEY https://example.com
   $ web-perf sitemap https://example.com
   $ web-perf                              (interactive wizard)
 `);
@@ -380,7 +389,7 @@ program
     .action(labAction);
 
 program
-    .command('rum')
+    .command('psi')
     .description('Fetch data from PageSpeed Insights API')
     .argument('[url]', 'URL to analyze (ignored when --urls or --urls-file is provided)')
     .option('--api-key <key>', 'PSI API key inline (overrides WEB_PERF_PSI_API_KEY)')
@@ -390,10 +399,10 @@ program
     .option('--category <categories>', 'Lighthouse categories, comma-separated (default: all)')
     .option('--concurrency <n>', 'Max parallel API requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests per worker in ms (default: 0)', parseInt)
-    .action(rumAction);
+    .action(psiAction);
 
 program
-    .command('collect')
+    .command('crux')
     .description('Extract CrUX data via CrUX API (origin or page-level, 28-day rolling average)')
     .argument('[url]', 'URL or origin to query')
     .option('--scope <scope>', 'Query scope: origin or page (default: origin)', 'origin')
@@ -403,10 +412,10 @@ program
     .option('--urls-file <path>', 'Path to file with one URL per line (page scope)')
     .option('--concurrency <n>', 'Max parallel requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests in ms (default: 0)', parseInt)
-    .action(collectAction);
+    .action(cruxAction);
 
 program
-    .command('collect-history')
+    .command('crux-history')
     .description('Extract historical CrUX data via CrUX API (~6 months of weekly data points)')
     .argument('[url]', 'URL or origin to query (e.g. https://example.com)')
     .option('--scope <scope>', 'Query scope: origin or page (default: origin)', 'origin')
@@ -416,21 +425,22 @@ program
     .option('--urls-file <path>', 'Path to file with one URL per line (page scope)')
     .option('--concurrency <n>', 'Max parallel requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests in ms (default: 0)', parseInt)
-    .action(collectHistoryAction);
+    .action(cruxHistoryAction);
 
 program
     .command('sitemap')
-    .description('Extract all URLs from domain sitemap.xml')
-    .argument('[url]', 'Domain or URL to extract URLs from (e.g. example.com)')
+    .description('Extract all URLs from sitemap.xml')
+    .argument('[url]', 'Domain or sitemap URL (e.g. example.com or example.com/sitemap-pages.xml)')
     .option('--depth <n>', 'Max recursion depth for sitemap indexes (default: 3)', parseInt)
-    .option('--sitemap-url <url>', 'Custom sitemap URL (default: <url>/sitemap.xml)')
     .option('--delay <ms>', 'Delay between requests in ms (randomized ±50ms)', parseInt)
+    .option('--output-ai', 'Generate AI-friendly .txt output (one URL per line, normalized)')
     .action(sitemapAction);
 
 program
     .command('links')
     .description('Extract internal links from rendered DOM (SPA-compatible)')
     .argument('[url]', 'URL to extract links from')
+    .option('--output-ai', 'Generate AI-friendly .txt output (one URL per line, normalized)')
     .action(linksAction);
 
 program.command('list-profiles').description('List available simulation profiles').action(() => {

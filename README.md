@@ -6,34 +6,34 @@ Node.js CLI tool for web performance auditing. Analyze any website using local L
 
 - **Node.js** >= 18
 - **Google Chrome** installed locally (required for `lab`)
-- **Google Cloud API key** with PageSpeed Insights API and/or CrUX API enabled (required for `rum`, `collect`, `collect-history`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
+- **Google Cloud API key** with PageSpeed Insights API and/or CrUX API enabled (required for `psi`, `crux`, `crux-history`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
 
 ## Setup
 
-### Google Cloud API key (for `rum`, `collect`, `collect-history`)
+### Google Cloud API key (for `psi`, `crux`, `crux-history`)
 
 Create an API key in the [Google Cloud Console](https://console.cloud.google.com/) under **APIs & Services > Credentials**, with the following APIs enabled:
 
-- **PageSpeed Insights API** — required for `rum`
-- **Chrome UX Report API** — required for `collect` and `collect-history`
+- **PageSpeed Insights API** — required for `psi`
+- **Chrome UX Report API** — required for `crux` and `crux-history`
 
 > **Note:** After enabling the Chrome UX Report API, it may take a few minutes for the API key to become effective.
 
 ```bash
 # Inline
-node bin/web-perf.js rum --api-key=<YOUR_KEY> <url>
-node bin/web-perf.js collect --api-key=<YOUR_KEY> <url>
+node bin/web-perf.js psi --api-key=<YOUR_KEY> <url>
+node bin/web-perf.js crux --api-key=<YOUR_KEY> <url>
 
 # From file (plain text, key only)
-node bin/web-perf.js rum --api-key-path=<path-to-file> <url>
+node bin/web-perf.js psi --api-key-path=<path-to-file> <url>
 
 # Via environment variable (inline key)
 export WEB_PERF_PSI_API_KEY=<YOUR_KEY>
-node bin/web-perf.js rum <url>
+node bin/web-perf.js psi <url>
 
 # Via environment variable (file path)
 export WEB_PERF_PSI_API_KEY_PATH=<path-to-key-file>
-node bin/web-perf.js collect <url>
+node bin/web-perf.js crux <url>
 ```
 
 ## Installation
@@ -48,16 +48,16 @@ npm install
 node bin/web-perf.js <command> [options] <url>
 ```
 
-Available commands: `lab`, `rum`, `collect`, `collect-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
+Available commands: `lab`, `psi`, `crux`, `crux-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
 
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
 | `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns` |
-| `rum` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
-| `collect` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
-| `collect-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
-| `sitemap` | Domain's `sitemap.xml` (recursive) | JSON list of all URLs found | `--depth`, `--sitemap-url` |
-| `links` | Rendered DOM via headless Chrome (SPA-compatible) | JSON list of internal links | — |
+| `psi` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
+| `crux` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
+| `crux-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
+| `sitemap` | Domain's `sitemap.xml` (recursive, auto-detects sitemap URLs) | JSON list of all URLs found | `--depth`, `--delay`, `--output-ai` |
+| `links` | Rendered DOM via headless Chrome (SPA-compatible) | JSON list of internal links | `--output-ai` |
 | `list-profiles` | — | Prints available simulation profiles | — |
 | `list-networks` | — | Prints available network presets | — |
 | `list-devices` | — | Prints available device presets | — |
@@ -136,25 +136,25 @@ node bin/web-perf.js list-devices
 
 ---
 
-### `rum` — PageSpeed Insights (real-user data)
+### `psi` — PageSpeed Insights (real-user data)
 
 Fetches real-user metrics and Lighthouse results from the PageSpeed Insights API.
 
 ```bash
 # Single URL with inline API key
-node bin/web-perf.js rum --api-key=<PSI_KEY> <url>
+node bin/web-perf.js psi --api-key=<PSI_KEY> <url>
 
 # Single URL with API key from file (plain text, key only)
-node bin/web-perf.js rum --api-key-path=<path-to-key-file> <url>
+node bin/web-perf.js psi --api-key-path=<path-to-key-file> <url>
 
 # Multiple URLs (comma-separated) — <url> argument is ignored if present
-node bin/web-perf.js rum --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
+node bin/web-perf.js psi --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
 
 # Multiple URLs from file (one URL per line) — <url> argument is ignored if present
-node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY>
+node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 # Parallel processing (10 concurrent requests, 100ms delay between each)
-node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
+node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -173,10 +173,10 @@ node bin/web-perf.js rum --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrenc
 
 ```bash
 # Only performance
-node bin/web-perf.js rum --category=performance --api-key-path=<key-file> <url>
+node bin/web-perf.js psi --category=performance --api-key-path=<key-file> <url>
 
 # Performance and SEO only
-node bin/web-perf.js rum --category=performance,seo --api-key-path=<key-file> <url>
+node bin/web-perf.js psi --category=performance,seo --api-key-path=<key-file> <url>
 ```
 
 #### Credential resolution order
@@ -187,24 +187,24 @@ node bin/web-perf.js rum --category=performance,seo --api-key-path=<key-file> <u
 4. `WEB_PERF_PSI_API_KEY_PATH` env var (file path)
 5. Interactive prompt
 
-**Output:** `results/rum/rum-<hostname>-YYYY-MM-DD-HHMM.json` (one file per URL)
+**Output:** `results/psi/psi-<hostname>-YYYY-MM-DD-HHMM.json` (one file per URL)
 
 ---
 
-### `collect` — CrUX data (28-day rolling average)
+### `crux` — CrUX data (28-day rolling average)
 
 Queries Chrome UX Report data via the CrUX REST API. Returns a 28-day rolling average of Web Vitals metrics. Supports both origin-level and page-level queries via `--scope`. Pages need ~300+ monthly visits to have data.
 
 ```bash
 # Origin-level (default)
-node bin/web-perf.js collect --api-key=<KEY> <url>
+node bin/web-perf.js crux --api-key=<KEY> <url>
 
 # Page-level
-node bin/web-perf.js collect --scope=page --api-key=<KEY> <url>
+node bin/web-perf.js crux --scope=page --api-key=<KEY> <url>
 
 # Multiple URLs (page scope)
-node bin/web-perf.js collect --scope=page --urls=<url1>,<url2> --api-key=<KEY>
-node bin/web-perf.js collect --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
+node bin/web-perf.js crux --scope=page --urls=<url1>,<url2> --api-key=<KEY>
+node bin/web-perf.js crux --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -221,24 +221,24 @@ node bin/web-perf.js collect --scope=page --urls-file=<urls.txt> --api-key=<KEY>
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Provide via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables.
 
-**Output:** `results/collect/collect-<hostname>-YYYY-MM-DD-HHMM-crux-api.json`
+**Output:** `results/crux/crux-<hostname>-YYYY-MM-DD-HHMM.json`
 
 ---
 
-### `collect-history` — Historical CrUX data
+### `crux-history` — Historical CrUX data
 
 Queries the CrUX History API for ~6 months of weekly data points. Each data point represents a 28-day rolling average. Supports both origin-level and page-level queries.
 
 ```bash
 # Origin-level (default)
-node bin/web-perf.js collect-history --api-key=<KEY> <url>
+node bin/web-perf.js crux-history --api-key=<KEY> <url>
 
 # Page-level
-node bin/web-perf.js collect-history --scope=page --api-key=<KEY> <url>
+node bin/web-perf.js crux-history --scope=page --api-key=<KEY> <url>
 
 # Multiple URLs (page scope)
-node bin/web-perf.js collect-history --scope=page --urls=<url1>,<url2> --api-key=<KEY>
-node bin/web-perf.js collect-history --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
+node bin/web-perf.js crux-history --scope=page --urls=<url1>,<url2> --api-key=<KEY>
+node bin/web-perf.js crux-history --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -253,34 +253,56 @@ node bin/web-perf.js collect-history --scope=page --urls-file=<urls.txt> --api-k
 | `--delay <ms>` | No | Delay between requests in ms. Default: `0` |
 
 \* Not required when `--urls` or `--urls-file` is provided.
-\*\* A CrUX API key is required. Credential resolution is identical to `collect` (see above).
+\*\* A CrUX API key is required. Credential resolution is identical to `crux` (see above).
 
-**Output:** `results/collect-history/collect-history-<hostname>-YYYY-MM-DD-HHMM-crux-api.json`
+**Output:** `results/crux-history/crux-history-<hostname>-YYYY-MM-DD-HHMM.json`
 
 ---
 
 ### `sitemap` — Sitemap URL extraction
 
-Parses a domain's `sitemap.xml` (including sitemap indexes) and extracts all URLs.
+Parses a domain's `sitemap.xml` (including sitemap indexes) and extracts all URLs. Auto-detects if the URL points to a sitemap (`.xml` extension) or uses `<url>/sitemap.xml` by default.
 
 ```bash
-node bin/web-perf.js sitemap [--depth=<n>] [--sitemap-url=<url>] <url>
+node bin/web-perf.js sitemap <url>
+node bin/web-perf.js sitemap --depth=3 <url>
+node bin/web-perf.js sitemap https://example.com/custom-sitemap.xml
+node bin/web-perf.js sitemap --output-ai <url>
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `<url>` | Yes | Domain or URL to extract URLs from (e.g. `example.com` or `https://example.com`) |
+| `<url>` | Yes | Domain or sitemap URL (e.g. `example.com` or `example.com/sitemap-pages.xml`) |
 | `--depth <n>` | No | Max recursion depth for sitemap indexes. Default: `3` |
-| `--sitemap-url <url>` | No | Custom sitemap URL. Default: `<url>/sitemap.xml` |
+| `--delay <ms>` | No | Delay between requests in ms (randomized ±50ms). Default: `0` |
+| `--output-ai` | No | Generate AI-friendly `.txt` output (one URL per line, normalized) |
 
 **Output:** `results/sitemap/sitemap-<hostname>-YYYY-MM-DD-HHMM.json`
+
+---
+
+### `links` — Internal link extraction
+
+Extracts internal links from the rendered DOM using headless Chrome. SPA-compatible (waits for JavaScript rendering).
+
+```bash
+node bin/web-perf.js links <url>
+node bin/web-perf.js links --output-ai <url>
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<url>` | Yes | URL to extract links from |
+| `--output-ai` | No | Generate AI-friendly `.txt` output (one URL per line, normalized) |
+
+**Output:** `results/links/links-<hostname>-YYYY-MM-DD-HHMM.json`
 
 ## Environment variables
 
 | Variable | Command | Description |
 |---|---|---|
-| `WEB_PERF_PSI_API_KEY` | `rum`, `collect`, `collect-history` | API key for PageSpeed Insights / CrUX API |
-| `WEB_PERF_PSI_API_KEY_PATH` | `rum`, `collect`, `collect-history` | Path to file containing the API key |
+| `WEB_PERF_PSI_API_KEY` | `psi`, `crux`, `crux-history` | API key for PageSpeed Insights / CrUX API |
+| `WEB_PERF_PSI_API_KEY_PATH` | `psi`, `crux`, `crux-history` | Path to file containing the API key |
 
 CLI flags (`--api-key`, `--api-key-path`) always take precedence over environment variables.
 
@@ -292,12 +314,12 @@ All results are saved as JSON files under the `results/` directory, organized by
 results/
 ├── lab/
 │   └── lab-example.com-2026-03-29-1430.json
-├── rum/
-│   └── rum-example.com-2026-03-29-1430.json
-├── collect/
-│   └── collect-www.example.com-2026-03-29-1430.json
-├── collect-history/
-│   └── collect-history-www.example.com-2026-03-29-1430.json
+├── psi/
+│   └── psi-example.com-2026-03-29-1430.json
+├── crux/
+│   └── crux-www.example.com-2026-03-29-1430.json
+├── crux-history/
+│   └── crux-history-www.example.com-2026-03-29-1430.json
 ├── links/
 │   └── links-www.example.com-2026-03-29-1430.json
 └── sitemap/
