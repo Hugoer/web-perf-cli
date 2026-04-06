@@ -1,4 +1,7 @@
 {
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.postCommitCommand": "none",
     "github.copilot.chat.commitMessageGeneration.instructions": [
         {
             "text": "Prefix: use conventional commit format: '<type>(<scope>):' Type must be one of the following: build, ci, docs, feat, fix, perf, refactor, test. Scope is optional and must be (if present) one of the following: lab, rum, collect, sitemap, links, cli, prompts, profiles, utils."
