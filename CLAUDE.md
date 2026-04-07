@@ -106,3 +106,104 @@ CLI flags (`--api-key`, `--api-key-path`) take precedence over environment varia
 ```bash
 npm test  # vitest
 ```
+
+<!-- rtk-instructions v2 -->
+# RTK (Rust Token Killer) - Token-Optimized Commands
+
+## Golden Rule
+
+**Always prefix commands with `rtk`**. If RTK has a dedicated filter, it uses it. If not, it passes through unchanged. This means RTK is always safe to use.
+
+**Important**: Even in command chains with `&&`, use `rtk`:
+```bash
+# ❌ Wrong
+git add . && git commit -m "msg" && git push
+
+# ✅ Correct
+rtk git add . && rtk git commit -m "msg" && rtk git push
+```
+
+## RTK Commands by Workflow
+
+### Build & Compile (80-90% savings)
+```bash
+rtk tsc
+rtk lint
+rtk prettier --check
+```
+
+### Test (90-99% savings)
+```bash
+rtk vitest run
+rtk playwright test
+rtk test <cmd>
+```
+
+### Git (59-80% savings)
+```bash
+rtk git status
+rtk git log
+rtk git diff
+rtk git show
+rtk git add
+rtk git commit
+rtk git push
+rtk git pull
+rtk git branch
+rtk git fetch
+rtk git stash
+rtk git worktree
+```
+
+Note: Git passthrough works for ALL subcommands, even those not explicitly listed.
+
+### GitHub (26-87% savings)
+```bash
+rtk gh pr view <num>
+rtk gh pr checks
+rtk gh run list
+rtk gh issue list
+rtk gh api
+```
+
+### JavaScript/TypeScript Tooling (70-90% savings)
+```bash
+rtk npm run <script>
+rtk npx <cmd>
+```
+
+### Files & Search (60-75% savings)
+```bash
+rtk ls <path>
+rtk read <file>
+rtk grep <pattern>
+rtk find <pattern>
+```
+
+### Analysis & Debug (70-90% savings)
+```bash
+rtk err <cmd>
+rtk log <file>
+rtk json <file>
+rtk deps
+rtk env
+rtk summary <cmd>
+rtk diff
+```
+
+### Network (65-70% savings)
+```bash
+rtk curl <url>
+rtk wget <url>
+```
+
+### Meta Commands
+```bash
+rtk gain
+rtk gain --history
+rtk discover
+rtk proxy <cmd>
+rtk init
+rtk init --global
+```
+<!-- /rtk-instructions -->
