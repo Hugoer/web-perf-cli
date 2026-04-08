@@ -168,6 +168,8 @@ node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrenc
 | `--concurrency <n>` | No | Max parallel API requests when processing multiple URLs. Default: `5` |
 | `--delay <ms>` | No | Delay in ms between requests per worker. Default: `0` (no delay) |
 
+Built-in quota protection: PSI request starts are capped at 4 requests/second globally during batch runs, regardless of `--concurrency`.
+
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables. CLI flags take precedence.
 
@@ -203,20 +205,22 @@ node bin/web-perf.js crux --api-key=<KEY> <url>
 node bin/web-perf.js crux --scope=page --api-key=<KEY> <url>
 
 # Multiple URLs (page scope)
-node bin/web-perf.js crux --scope=page --urls=<url1>,<url2> --api-key=<KEY>
-node bin/web-perf.js crux --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
+node bin/web-perf.js crux --urls=<url1>,<url2> --api-key=<KEY>
+node bin/web-perf.js crux --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `<url>` | Yes\* | URL or origin to query |
-| `--scope <scope>` | No | Query scope: `origin` (default) or `page` |
+| `--scope <scope>` | No | Query scope: `origin` or `page`. Default is `origin` for single URL input, and `page` when using `--urls` or `--urls-file` |
 | `--api-key <key>` | No\*\* | CrUX API key |
 | `--api-key-path <path>` | No\*\* | Path to plain text file containing the API key |
 | `--urls <urls>` | No | Comma-separated URLs (page scope) |
 | `--urls-file <path>` | No | Path to file with one URL per line (page scope) |
 | `--concurrency <n>` | No | Max parallel requests. Default: `5` |
 | `--delay <ms>` | No | Delay between requests in ms. Default: `0` |
+
+Built-in quota protection: CrUX request starts are capped at 2.5 requests/second globally during batch runs, regardless of `--concurrency`.
 
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Provide via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables.
@@ -237,20 +241,22 @@ node bin/web-perf.js crux-history --api-key=<KEY> <url>
 node bin/web-perf.js crux-history --scope=page --api-key=<KEY> <url>
 
 # Multiple URLs (page scope)
-node bin/web-perf.js crux-history --scope=page --urls=<url1>,<url2> --api-key=<KEY>
-node bin/web-perf.js crux-history --scope=page --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
+node bin/web-perf.js crux-history --urls=<url1>,<url2> --api-key=<KEY>
+node bin/web-perf.js crux-history --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `<url>` | Yes\* | URL or origin to query (e.g. `https://example.com`) |
-| `--scope <scope>` | No | Query scope: `origin` (default) or `page` |
+| `--scope <scope>` | No | Query scope: `origin` or `page`. Default is `origin` for single URL input, and `page` when using `--urls` or `--urls-file` |
 | `--api-key <key>` | No\*\* | CrUX API key |
 | `--api-key-path <path>` | No\*\* | Path to plain text file containing the API key |
 | `--urls <urls>` | No | Comma-separated URLs (page scope) |
 | `--urls-file <path>` | No | Path to file with one URL per line (page scope) |
 | `--concurrency <n>` | No | Max parallel requests. Default: `5` |
 | `--delay <ms>` | No | Delay between requests in ms. Default: `0` |
+
+Built-in quota protection: CrUX History request starts are capped at 2.5 requests/second globally during batch runs, regardless of `--concurrency`.
 
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Credential resolution is identical to `crux` (see above).
