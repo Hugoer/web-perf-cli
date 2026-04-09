@@ -52,7 +52,7 @@ Available commands: `lab`, `psi`, `crux`, `crux-history`, `links`, `sitemap`, `l
 
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
-| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns` |
+| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns`, `--no-strip-json-props` |
 | `psi` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
 | `crux` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
 | `crux-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
@@ -95,6 +95,10 @@ node bin/web-perf.js lab --skip-audits=full-page-screenshot,screenshot-thumbnail
 node bin/web-perf.js lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
 node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
 
+# Strip unneeded properties (i18n, timing) from JSON output (default: enabled)
+node bin/web-perf.js lab --profile=low <url>  # JSON excludes i18n, timing
+node bin/web-perf.js lab --no-strip-json-props <url>  # JSON includes all properties (raw Lighthouse output)
+
 # Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
 node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
@@ -110,6 +114,7 @@ node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
 | `--urls-file <path>` | No | Path to a file with one URL per line |
 | `--skip-audits <audits>` | No | Comma-separated Lighthouse audits to skip. Default: `full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps` |
 | `--blocked-url-patterns <patterns>` | No | Comma-separated URL patterns to block during the audit (e.g. `*.google-analytics.com,*.facebook.net`). Uses Chrome DevTools Protocol to prevent matching assets from being downloaded |
+| `--no-strip-json-props` | No | Disable stripping of unneeded properties (`i18n`, `timing`) from JSON output. Omit or leave blank to strip (default). See [ADR-001](docs/decisions/ADR-001-strip-json-props.md) for rationale |
 
 Run `list-profiles`, `list-networks`, or `list-devices` to see all available presets:
 
