@@ -14,7 +14,7 @@ async function labAction(url, options) {
         const resolved = await promptLab(url, options);
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
         const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
-        const stripJsonProps = resolved.stripJsonProps !== undefined ? resolved.stripJsonProps : options.stripJsonProps;
+        const stripJsonProps = resolved.stripJsonProps ?? options.stripJsonProps;
 
         const totalUrls = resolved.urls.length;
         const totalRuns = totalUrls * resolved.runs.length;
