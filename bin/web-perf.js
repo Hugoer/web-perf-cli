@@ -14,6 +14,7 @@ async function labAction(url, options) {
         const resolved = await promptLab(url, options);
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
         const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
+        const stripJsonProps = resolved.stripJsonProps !== undefined ? resolved.stripJsonProps : options.stripJsonProps;
 
         const totalUrls = resolved.urls.length;
         const totalRuns = totalUrls * resolved.runs.length;
@@ -43,7 +44,7 @@ async function labAction(url, options) {
                     }
                     try {
                         // eslint-disable-next-line no-await-in-loop
-                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, port: chrome.port, silent: isBatch });
+                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, stripJsonProps, port: chrome.port, silent: isBatch });
                         results.push({ url: targetUrl, profile: label, outputPath });
                         if (!isBatch) {
                             const elapsed = formatElapsed(Date.now() - startTime);
@@ -386,6 +387,7 @@ program
     .option('--urls-file <path>', 'Path to a file with one URL per line')
     .option('--skip-audits <audits>', 'Comma-separated audits to skip (default: full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps)')
     .option('--blocked-url-patterns <patterns>', 'Comma-separated URL patterns to block during audit (e.g. *.google-analytics.com,*.facebook.net)')
+    .option('--no-strip-json-props', 'Disable stripping of unneeded properties (i18n, timing) from JSON output')
     .action(labAction);
 
 program
