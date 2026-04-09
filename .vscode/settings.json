@@ -9,5 +9,8 @@
         {
             "text": "<short summary> Summary must be in present tense, not capitalized, no period at the end. Max 100 characters for the full header."
         }
-    ]
+    ],
+    "chat.tools.terminal.autoApprove": {
+        "rtk": true
+    }
 }
