@@ -4,14 +4,15 @@ const { program } = require('commander');
 
 const { name, version } = require('../package.json');
 
-async function labAction(url, options) {
+async function labAction(url, options, cmd) {
     try {
         const chromeLauncher = require('chrome-launcher');
         const { promptLab, parseSkipAuditsFlag, parseBlockedUrlPatternsFlag } = require('../lib/prompts');
         const { runLab, CHROME_FLAGS } = require('../lib/lab');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
-        const resolved = await promptLab(url, options);
+        const stripJsonPropsOpt = cmd.getOptionValueSource('stripJsonProps') === 'cli' ? options.stripJsonProps : undefined;
+        const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt });
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
         const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
         const stripJsonProps = resolved.stripJsonProps ?? options.stripJsonProps;
