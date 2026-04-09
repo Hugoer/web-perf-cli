@@ -5,3 +5,5 @@ web-perf-cli-*.json
 .pagespeed-apikey
 urls.txt
 tasks
+.claude/subagent-log.txt
+.ai/screenshots/screenshot-log.txt
