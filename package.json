@@ -3,13 +3,41 @@
   "version": "1.0.0",
   "description": "CLI tool to analyze web performance via Lighthouse (lab) and PageSpeed Insights (RUM)",
   "main": "bin/web-perf.js",
+  "types": "types/lib/index.d.ts",
   "bin": {
     "web-perf": "bin/web-perf.js"
+  },
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "types": "./types/lib/index.d.ts"
+    },
+    "./lab": {
+      "require": "./lib/lab.js",
+      "types": "./types/lib/lab.d.ts"
+    },
+    "./psi": {
+      "require": "./lib/psi.js",
+      "types": "./types/lib/psi.d.ts"
+    },
+    "./crux": {
+      "require": "./lib/crux.js",
+      "types": "./types/lib/crux.d.ts"
+    },
+    "./crux-history": {
+      "require": "./lib/crux-history.js",
+      "types": "./types/lib/crux-history.d.ts"
+    },
+    "./utils": {
+      "require": "./lib/utils.js",
+      "types": "./types/lib/utils.d.ts"
+    }
   },
   "scripts": {
     "start": "node bin/web-perf.js",
     "lint": "eslint . --fix",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate-types": "tsc --project tsconfig.types.json"
   },
   "dependencies": {
     "chalk": "^4.1.2",
@@ -27,6 +55,7 @@
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "typescript": "6.0.2",
     "vitest": "^3.0.0"
   },
   "engines": {

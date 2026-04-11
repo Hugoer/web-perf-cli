@@ -1,14 +1,28 @@
 # web-perf
 
-Node.js CLI tool for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via CrUX API, or sitemap URL extraction.
+Node.js CLI and library for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via the CrUX API, or extract URLs from sitemaps and rendered pages.
 
 ## Requirements
 
 - **Node.js** >= 18
-- **Google Chrome** installed locally (required for `lab`)
+- **Google Chrome** installed locally (required for `lab` and `links`)
 - **Google Cloud API key** with PageSpeed Insights API and/or CrUX API enabled (required for `psi`, `crux`, `crux-history`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
 
-## Setup
+## Quick Start
+
+```bash
+# Local Lighthouse audit
+web-perf lab https://example.com
+
+# PageSpeed Insights (real-user data)
+web-perf psi --api-key=<YOUR_KEY> https://example.com
+
+# CrUX data (28-day rolling average)
+web-perf crux --api-key=<YOUR_KEY> https://example.com
+
+# Historical CrUX trends (~6 months)
+web-perf crux-history --api-key=<YOUR_KEY> https://example.com
+```
 
 ### Google Cloud API key (for `psi`, `crux`, `crux-history`)
 
@@ -21,31 +35,25 @@ Create an API key in the [Google Cloud Console](https://console.cloud.google.com
 
 ```bash
 # Inline
-node bin/web-perf.js psi --api-key=<YOUR_KEY> <url>
-node bin/web-perf.js crux --api-key=<YOUR_KEY> <url>
+web-perf psi --api-key=<YOUR_KEY> <url>
+web-perf crux --api-key=<YOUR_KEY> <url>
 
 # From file (plain text, key only)
-node bin/web-perf.js psi --api-key-path=<path-to-file> <url>
+web-perf psi --api-key-path=<path-to-file> <url>
 
 # Via environment variable (inline key)
 export WEB_PERF_PSI_API_KEY=<YOUR_KEY>
-node bin/web-perf.js psi <url>
+web-perf psi <url>
 
 # Via environment variable (file path)
 export WEB_PERF_PSI_API_KEY_PATH=<path-to-key-file>
-node bin/web-perf.js crux <url>
+web-perf crux <url>
 ```
 
-## Installation
+## CLI Usage
 
 ```bash
-npm install
-```
-
-## Usage
-
-```bash
-node bin/web-perf.js <command> [options] <url>
+web-perf <command> [options] <url>
 ```
 
 Available commands: `lab`, `psi`, `crux`, `crux-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
@@ -70,38 +78,38 @@ Runs a full Lighthouse audit in headless Chrome and saves the JSON report. Suppo
 
 ```bash
 # Default (Lighthouse defaults: Moto G Power on Slow 4G)
-node bin/web-perf.js lab <url>
+web-perf lab <url>
 
 # Single profile
-node bin/web-perf.js lab --profile=low <url>
-node bin/web-perf.js lab --profile=high <url>
+web-perf lab --profile=low <url>
+web-perf lab --profile=high <url>
 
 # Multiple profiles (comma-separated)
-node bin/web-perf.js lab --profile=low,high <url>
+web-perf lab --profile=low,high <url>
 
 # All profiles (low, medium, high)
-node bin/web-perf.js lab --profile=all <url>
+web-perf lab --profile=all <url>
 
 # Granular control
-node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
+web-perf lab --network=3g --device=iphone-12 <url>
 
 # Profile with partial override (low device + wifi network)
-node bin/web-perf.js lab --profile=low --network=wifi <url>
+web-perf lab --profile=low --network=wifi <url>
 
 # Skip specific audits
-node bin/web-perf.js lab --skip-audits=full-page-screenshot,screenshot-thumbnails <url>
+web-perf lab --skip-audits=full-page-screenshot,screenshot-thumbnails <url>
 
 # Block URL patterns (prevent asset downloads during audit, e.g. analytics, ads)
-node bin/web-perf.js lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
-node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
+web-perf lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
+web-perf lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
 
 # Strip unneeded properties (i18n, timing) from JSON output (default: enabled)
-node bin/web-perf.js lab --profile=low <url>  # JSON excludes i18n, timing
-node bin/web-perf.js lab --no-strip-json-props <url>  # JSON includes all properties (raw Lighthouse output)
+web-perf lab --profile=low <url>  # JSON excludes i18n, timing
+web-perf lab --no-strip-json-props <url>  # JSON includes all properties (raw Lighthouse output)
 
 # Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
-node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
-node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
+web-perf lab --urls=<url1>,<url2> --profile=low
+web-perf lab --urls-file=<urls.txt> --profile=all
 ```
 
 | Parameter | Required | Description |
@@ -132,9 +140,9 @@ Chrome must be installed on the machine.
 When `--network` or `--device` are used together with `--profile`, the granular flags override the corresponding part of the profile. For example, `--profile=low --network=wifi` keeps the Moto G Power device but switches the network to WiFi.
 
 ```bash
-node bin/web-perf.js list-profiles
-node bin/web-perf.js list-networks
-node bin/web-perf.js list-devices
+web-perf list-profiles
+web-perf list-networks
+web-perf list-devices
 ```
 
 **Output:** `results/lab/lab-<hostname>-YYYY-MM-DD-HHMM.json`
@@ -147,19 +155,19 @@ Fetches real-user metrics and Lighthouse results from the PageSpeed Insights API
 
 ```bash
 # Single URL with inline API key
-node bin/web-perf.js psi --api-key=<PSI_KEY> <url>
+web-perf psi --api-key=<PSI_KEY> <url>
 
 # Single URL with API key from file (plain text, key only)
-node bin/web-perf.js psi --api-key-path=<path-to-key-file> <url>
+web-perf psi --api-key-path=<path-to-key-file> <url>
 
 # Multiple URLs (comma-separated) — <url> argument is ignored if present
-node bin/web-perf.js psi --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
+web-perf psi --urls=<url1>,<url2>,<url3> --api-key=<PSI_KEY>
 
 # Multiple URLs from file (one URL per line) — <url> argument is ignored if present
-node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY>
+web-perf psi --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 # Parallel processing (10 concurrent requests, 100ms delay between each)
-node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
+web-perf psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -180,10 +188,10 @@ Built-in quota protection: PSI request starts are capped at 4 requests/second gl
 
 ```bash
 # Only performance
-node bin/web-perf.js psi --category=performance --api-key-path=<key-file> <url>
+web-perf psi --category=performance --api-key-path=<key-file> <url>
 
 # Performance and SEO only
-node bin/web-perf.js psi --category=performance,seo --api-key-path=<key-file> <url>
+web-perf psi --category=performance,seo --api-key-path=<key-file> <url>
 ```
 
 #### Credential resolution order
@@ -204,14 +212,14 @@ Queries Chrome UX Report data via the CrUX REST API. Returns a 28-day rolling av
 
 ```bash
 # Origin-level (default)
-node bin/web-perf.js crux --api-key=<KEY> <url>
+web-perf crux --api-key=<KEY> <url>
 
 # Page-level
-node bin/web-perf.js crux --scope=page --api-key=<KEY> <url>
+web-perf crux --scope=page --api-key=<KEY> <url>
 
 # Multiple URLs (page scope)
-node bin/web-perf.js crux --urls=<url1>,<url2> --api-key=<KEY>
-node bin/web-perf.js crux --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
+web-perf crux --urls=<url1>,<url2> --api-key=<KEY>
+web-perf crux --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -240,14 +248,14 @@ Queries the CrUX History API for ~6 months of weekly data points. Each data poin
 
 ```bash
 # Origin-level (default)
-node bin/web-perf.js crux-history --api-key=<KEY> <url>
+web-perf crux-history --api-key=<KEY> <url>
 
 # Page-level
-node bin/web-perf.js crux-history --scope=page --api-key=<KEY> <url>
+web-perf crux-history --scope=page --api-key=<KEY> <url>
 
 # Multiple URLs (page scope)
-node bin/web-perf.js crux-history --urls=<url1>,<url2> --api-key=<KEY>
-node bin/web-perf.js crux-history --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
+web-perf crux-history --urls=<url1>,<url2> --api-key=<KEY>
+web-perf crux-history --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=100
 ```
 
 | Parameter | Required | Description |
@@ -275,10 +283,10 @@ Built-in quota protection: CrUX History request starts are capped at 2.5 request
 Parses a domain's `sitemap.xml` (including sitemap indexes) and extracts all URLs. Auto-detects if the URL points to a sitemap (`.xml` extension) or uses `<url>/sitemap.xml` by default.
 
 ```bash
-node bin/web-perf.js sitemap <url>
-node bin/web-perf.js sitemap --depth=3 <url>
-node bin/web-perf.js sitemap https://example.com/custom-sitemap.xml
-node bin/web-perf.js sitemap --output-ai <url>
+web-perf sitemap <url>
+web-perf sitemap --depth=3 <url>
+web-perf sitemap https://example.com/custom-sitemap.xml
+web-perf sitemap --output-ai <url>
 ```
 
 | Parameter | Required | Description |
@@ -297,8 +305,8 @@ node bin/web-perf.js sitemap --output-ai <url>
 Extracts internal links from the rendered DOM using headless Chrome. SPA-compatible (waits for JavaScript rendering).
 
 ```bash
-node bin/web-perf.js links <url>
-node bin/web-perf.js links --output-ai <url>
+web-perf links <url>
+web-perf links --output-ai <url>
 ```
 
 | Parameter | Required | Description |
@@ -337,6 +345,104 @@ results/
     └── sitemap-www.example.com-2026-03-29-1430.json
 ```
 
+## Library API
+
+`web-perf` can be used as a Node.js library. The pure audit functions return data directly — no files written, no disk I/O — making them safe for use in servers and backends.
+
+```js
+// CommonJS
+const { runCruxAudit, runPsiAudit, runLabAudit } = require('web-perf');
+
+// Subpath imports (load only what you need)
+const { runCruxAudit, runCruxAuditBatch } = require('web-perf/crux');
+const { runPsiAudit, runPsiAuditBatch }   = require('web-perf/psi');
+const { runLabAudit }                      = require('web-perf/lab');
+```
+
+### Available functions
+
+| Function | Module | Returns |
+|----------|--------|---------|
+| `runLabAudit(url, options?)` | `web-perf/lab` | `Promise<LabReport>` |
+| `runPsiAudit(url, apiKey, categories?)` | `web-perf/psi` | `Promise<PsiReport>` |
+| `runPsiAuditBatch(urls, apiKey, categories, options?)` | `web-perf/psi` | `Promise<PsiBatchResult[]>` |
+| `runCruxAudit(url, apiKey, options?)` | `web-perf/crux` | `Promise<CruxReport>` |
+| `runCruxAuditBatch(urls, apiKey, options?)` | `web-perf/crux` | `Promise<CruxBatchResult[]>` |
+| `runCruxHistoryAudit(url, apiKey, options?)` | `web-perf/crux-history` | `Promise<CruxHistoryReport>` |
+| `runCruxHistoryAuditBatch(urls, apiKey, options?)` | `web-perf/crux-history` | `Promise<CruxHistoryBatchResult[]>` |
+
+```js
+// Single URL
+const report = await runCruxAudit('https://example.com', apiKey, { scope: 'origin' });
+console.log(report.metrics);
+
+// Batch with progress
+const results = await runCruxAuditBatch(urls, apiKey, {
+  scope: 'page',
+  concurrency: 5,
+  onProgress: (done, total, url) => console.log(`${done}/${total}: ${url}`),
+});
+```
+
+The CLI wrapper functions (`runLab`, `runPsi`, `runCrux`, `runCruxHistory`, …) are also exported and behave identically to the CLI commands — they write JSON to disk and return the output file path.
+
+## TypeScript
+
+TypeScript type declarations are included and resolve automatically when you install the package. No `@types/` package needed.
+
+```ts
+import { runCruxAudit, runPsiAudit } from 'web-perf';
+import type { CruxReport, PsiReport, LabReport } from 'web-perf';
+
+// Subpath imports also carry types
+import { runCruxHistoryAudit } from 'web-perf/crux-history';
+import type { CruxHistoryReport } from 'web-perf/crux-history';
+```
+
+Key exported types:
+
+| Type | Description |
+|------|-------------|
+| `LabReport` | Stripped Lighthouse JSON (categories, audits, formFactor, timing) |
+| `PsiReport` | PageSpeed Insights API response (loadingExperience, lighthouseResult) |
+| `CruxReport` | CrUX 28-day snapshot (metrics, collectionPeriod, scope, key) |
+| `CruxHistoryReport` | CrUX historical snapshot (metrics, collectionPeriods array) |
+| `CruxMetric` | Single CrUX metric (histogram bins, p75 percentile) |
+| `PsiBatchResult` | `{ url, data: PsiReport \| null, error: string \| null }` |
+| `CruxBatchResult` | `{ url, data: CruxReport \| null, error: string \| null }` |
+| `CruxHistoryBatchResult` | `{ url, data: CruxHistoryReport \| null, error: string \| null }` |
+
+## Development
+
+```bash
+# Clone and install dependencies
+git clone https://github.com/your-org/web-perf-cli.git
+cd web-perf-cli
+npm install
+
+# Run the CLI locally
+node bin/web-perf.js lab https://example.com
+```
+
+### Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm test` | Run all tests (vitest) |
+| `npm run lint` | Lint and auto-fix with ESLint |
+| `npm run generate-types` | Regenerate `types/lib/*.d.ts` from JSDoc annotations |
+
+### Regenerating types
+
+Type declarations in `types/lib/` are generated from JSDoc `@typedef` annotations in `lib/`. Run `npm run generate-types` after changing any return shape in a `run*Audit` function, then commit the updated `types/` alongside the code change.
+
+```bash
+npm run generate-types
+git add types/ lib/
+git commit -m "feat: update CruxReport shape"
+```
+
 ## License
 
 ISC
+
