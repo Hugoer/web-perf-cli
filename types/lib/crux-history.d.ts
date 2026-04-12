@@ -1,15 +1,8 @@
-export type CruxDate = import("./crux").CruxDate;
-export type CruxCollectionPeriod = import("./crux").CruxCollectionPeriod;
-export type CruxMetric = import("./crux").CruxMetric;
-export type CruxKey = import("./crux").CruxKey;
-export type CruxHistoryReport = {
+export type CruxHistoryReport = chromeuxreport_v1.Schema$HistoryRecord & {
     source: "crux-api";
     scope: "origin" | "page";
     url: string;
-    collectionPeriods: CruxCollectionPeriod[];
     extractedAt: string;
-    metrics: Record<string, CruxMetric>;
-    key: CruxKey;
 };
 export type CruxHistoryBatchResult = {
     url: string;
@@ -24,23 +17,15 @@ export function runCruxHistoryBatch(urls: any, apiKey: any, { scope, concurrency
     concurrency?: number | undefined;
     delayMs?: number | undefined;
 }): Promise<any[]>;
+/** @import { chromeuxreport_v1 } from '@googleapis/chromeuxreport' */
 /**
- * @typedef {import('./crux').CruxDate} CruxDate
- * @typedef {import('./crux').CruxCollectionPeriod} CruxCollectionPeriod
- * @typedef {import('./crux').CruxMetric} CruxMetric
- * @typedef {import('./crux').CruxKey} CruxKey
- */
-/**
- * @typedef {Object} CruxHistoryReport
- * @property {'crux-api'} source
- * @property {'origin'|'page'} scope
- * @property {string} url
- * @property {CruxCollectionPeriod[]} collectionPeriods
- * @property {string} extractedAt
- * @property {Record<string, CruxMetric>} metrics
- * @property {CruxKey} key
- */
-/**
+ * @typedef {chromeuxreport_v1.Schema$HistoryRecord & {
+ *   source: 'crux-api',
+ *   scope: 'origin' | 'page',
+ *   url: string,
+ *   extractedAt: string
+ * }} CruxHistoryReport
+ *
  * @typedef {{ url: string, data: CruxHistoryReport|null, error: string|null }} CruxHistoryBatchResult
  */
 /**
@@ -65,3 +50,4 @@ export function runCruxHistoryAuditBatch(urls: string[], apiKey: string, { scope
     onProgress?: (completed: number, total: number, url: string, error: string | null) => void;
 }): Promise<CruxHistoryBatchResult[]>;
 export const CRUX_HISTORY_MAX_REQUESTS_PER_SECOND: 2.5;
+import type { chromeuxreport_v1 } from '@googleapis/chromeuxreport';
