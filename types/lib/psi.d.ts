@@ -1,42 +1,11 @@
-export type PsiDistribution = {
-    start: number;
-    end?: number;
-    proportion: number;
-};
-export type PsiExperienceMetric = {
-    percentile: number;
-    distributions: PsiDistribution[];
-    category: "FAST" | "AVERAGE" | "SLOW";
-};
-export type PsiLoadingExperience = {
-    metrics: Record<string, PsiExperienceMetric>;
-    initial_url: string;
-    overall_category: "FAST" | "AVERAGE" | "SLOW" | "NONE";
-    id: string;
-};
-export type PsiCategoryScore = {
-    id: string;
-    title: string;
-    score: number;
-};
-export type PsiReport = {
-    id: string;
-    kind: string;
-    analysisUTCTimestamp: string;
-    loadingExperience: PsiLoadingExperience;
-    originLoadingExperience: PsiLoadingExperience;
-    lighthouseResult: {
-        lighthouseVersion: string;
-        requestedUrl: string;
-        finalUrl: string;
-        fetchTime: string;
-        categories: Record<string, PsiCategoryScore>;
-        audits: Record<string, unknown>;
-    };
-};
+export type PsiResponse = pagespeedonline_v5.Schema$PagespeedApiPagespeedResponseV5;
+/**
+ * -
+ */
+export type PsiReport = PsiResponse;
 export type PsiBatchResult = {
     url: string;
-    data: PsiReport | null;
+    data: PsiResponse | null;
     error: string | null;
 };
 export function runPsi(url: any, apiKey: any, categories?: string[]): Promise<string>;
@@ -44,36 +13,19 @@ export function runPsiBatch(urls: any, apiKey: any, categories: any, { concurren
     concurrency?: number | undefined;
     delayMs?: number | undefined;
 }): Promise<any[]>;
+/** @import { pagespeedonline_v5 } from '@googleapis/pagespeedonline' */
 /**
- * @typedef {{ start: number, end?: number, proportion: number }} PsiDistribution
- * @typedef {{ percentile: number, distributions: PsiDistribution[], category: 'FAST'|'AVERAGE'|'SLOW' }} PsiExperienceMetric
- * @typedef {{ metrics: Record<string, PsiExperienceMetric>, initial_url: string, overall_category: 'FAST'|'AVERAGE'|'SLOW'|'NONE', id: string }} PsiLoadingExperience
- */
-/**
- * @typedef {Object} PsiCategoryScore
- * @property {string} id
- * @property {string} title
- * @property {number} score
- */
-/**
- * @typedef {Object} PsiReport
- * @property {string} id
- * @property {string} kind
- * @property {string} analysisUTCTimestamp
- * @property {PsiLoadingExperience} loadingExperience
- * @property {PsiLoadingExperience} originLoadingExperience
- * @property {{ lighthouseVersion: string, requestedUrl: string, finalUrl: string, fetchTime: string, categories: Record<string, PsiCategoryScore>, audits: Record<string, unknown> }} lighthouseResult
- */
-/**
- * @typedef {{ url: string, data: PsiReport|null, error: string|null }} PsiBatchResult
+ * @typedef {pagespeedonline_v5.Schema$PagespeedApiPagespeedResponseV5} PsiResponse
+ * @typedef {PsiResponse} PsiReport - @deprecated Use PsiResponse instead.
+ * @typedef {{ url: string, data: PsiResponse|null, error: string|null }} PsiBatchResult
  */
 /**
  * @param {string} url
  * @param {string} apiKey
  * @param {string[]} [categories]
- * @returns {Promise<PsiReport>}
+ * @returns {Promise<PsiResponse>}
  */
-export function runPsiAudit(url: string, apiKey: string, categories?: string[]): Promise<PsiReport>;
+export function runPsiAudit(url: string, apiKey: string, categories?: string[]): Promise<PsiResponse>;
 /**
  * @param {string[]} urls
  * @param {string} apiKey
@@ -87,3 +39,4 @@ export function runPsiAuditBatch(urls: string[], apiKey: string, categories: str
     onProgress?: (completed: number, total: number, url: string, error: string | null) => void;
 }): Promise<PsiBatchResult[]>;
 export const PSI_MAX_REQUESTS_PER_SECOND: 4;
+import type { pagespeedonline_v5 } from '@googleapis/pagespeedonline';

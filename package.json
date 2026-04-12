@@ -51,6 +51,8 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
+    "@googleapis/chromeuxreport": "^7.0.1",
+    "@googleapis/pagespeedonline": "^5.0.1",
     "@netcentric/eslint-config": "^1.0.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
