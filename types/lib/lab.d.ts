@@ -1,3 +1,6 @@
+/**
+ * // eslint-disable-next-line max-len
+ */
 export type LighthouseAudit = {
     id: string;
     title: string;
@@ -9,6 +12,9 @@ export type LighthouseAudit = {
     numericUnit?: string;
     details?: unknown;
 };
+/**
+ * // eslint-disable-next-line max-len
+ */
 export type LighthouseCategory = {
     id: string;
     title: string;
@@ -50,6 +56,7 @@ export function runLabAudit(url: string, labOptions?: {
     silent?: boolean;
 }): Promise<LabReport>;
 /**
+ // eslint-disable-next-line max-len
  * @typedef {{ id: string, title: string, description: string, score: number|null, scoreDisplayMode: string, displayValue?: string, numericValue?: number, numericUnit?: string, details?: unknown }} LighthouseAudit
  * @typedef {{ id: string, title: string, description: string, score: number|null, auditRefs: { id: string, weight: number, group?: string }[] }} LighthouseCategory
  */
