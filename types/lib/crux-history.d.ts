@@ -12,11 +12,22 @@ export type CruxHistoryBatchResult = {
 export function runCruxHistory(rawUrl: any, apiKey: any, { scope }?: {
     scope?: string | undefined;
 }): Promise<string>;
-export function runCruxHistoryBatch(urls: any, apiKey: any, { scope, concurrency, delayMs, onProgress }?: {
-    scope?: string | undefined;
-    concurrency?: number | undefined;
-    delayMs?: number | undefined;
-}): Promise<any[]>;
+/**
+ * @param {string[]} urls
+ * @param {string} apiKey
+ * @param {{ scope?: 'origin'|'page', concurrency?: number, delayMs?: number, onProgress?: (completed: number, total: number, url: string, error: string|null) => void }} [options]
+ * @returns {Promise<Array<{url: string, outputPath: string|null, error: string|null}>>}
+ */
+export function runCruxHistoryBatch(urls: string[], apiKey: string, { scope, concurrency, delayMs, onProgress }?: {
+    scope?: "origin" | "page";
+    concurrency?: number;
+    delayMs?: number;
+    onProgress?: (completed: number, total: number, url: string, error: string | null) => void;
+}): Promise<Array<{
+    url: string;
+    outputPath: string | null;
+    error: string | null;
+}>>;
 /** @import { chromeuxreport_v1 } from '@googleapis/chromeuxreport' */
 /**
  * @typedef {chromeuxreport_v1.Schema$HistoryRecord & {

@@ -125,21 +125,28 @@ export const DEVICE_PRESETS: {
 };
 export const MOBILE_UA: "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36";
 export const DESKTOP_UA: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
-export function resolveProfileSettings({ profile, network, device }?: {}): {
+/**
+ * @param {{ profile?: string, network?: string, device?: string }} [options]
+ */
+export function resolveProfileSettings({ profile, network, device }?: {
+    profile?: string;
+    network?: string;
+    device?: string;
+}): {
     throttlingMethod: string;
     throttling: {
-        rttMs: any;
-        throughputKbps: any;
+        rttMs: number;
+        throughputKbps: number;
         requestLatencyMs: number;
         downloadThroughputKbps: number;
         uploadThroughputKbps: number;
-        cpuSlowdownMultiplier: any;
+        cpuSlowdownMultiplier: number;
     };
     screenEmulation: {
-        mobile: any;
-        width: any;
-        height: any;
-        deviceScaleFactor: any;
+        mobile: boolean;
+        width: number;
+        height: number;
+        deviceScaleFactor: number;
         disabled: boolean;
     } | {
         disabled: boolean;
@@ -147,19 +154,35 @@ export function resolveProfileSettings({ profile, network, device }?: {}): {
     formFactor: any;
     emulatedUserAgent: string;
 };
-export function buildThrottling(preset: any): {
-    rttMs: any;
-    throughputKbps: any;
+/**
+ * @param {{ rttMs: number, throughputKbps: number, uploadKbps: number, cpuSlowdownMultiplier: number }} preset
+ */
+export function buildThrottling(preset: {
+    rttMs: number;
+    throughputKbps: number;
+    uploadKbps: number;
+    cpuSlowdownMultiplier: number;
+}): {
+    rttMs: number;
+    throughputKbps: number;
     requestLatencyMs: number;
     downloadThroughputKbps: number;
     uploadThroughputKbps: number;
-    cpuSlowdownMultiplier: any;
+    cpuSlowdownMultiplier: number;
 };
-export function buildScreenEmulation(preset: any): {
-    mobile: any;
-    width: any;
-    height: any;
-    deviceScaleFactor: any;
+/**
+ * @param {{ mobile: boolean, width: number, height: number, deviceScaleFactor: number }} preset
+ */
+export function buildScreenEmulation(preset: {
+    mobile: boolean;
+    width: number;
+    height: number;
+    deviceScaleFactor: number;
+}): {
+    mobile: boolean;
+    width: number;
+    height: number;
+    deviceScaleFactor: number;
     disabled: boolean;
 };
 export function printProfiles(): void;

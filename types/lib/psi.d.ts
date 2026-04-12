@@ -5,7 +5,14 @@ export type PsiBatchResult = {
     data: PsiResponse | null;
     error: string | null;
 };
-export function runPsi(url: any, apiKey: any, categories?: string[]): Promise<string>;
+/**
+ * Runs a PageSpeed Insights audit for a single URL and writes the result to disk.
+ * @param {string} url - The URL to audit.
+ * @param {string} apiKey - PageSpeed Insights API key.
+ * @param {string[]} [categories] - Lighthouse categories to evaluate.
+ * @returns {Promise<string>} The file path where the result was written.
+ */
+export function runPsi(url: string, apiKey: string, categories?: string[]): Promise<string>;
 /**
  * @param {string[]} urls
  * @param {string} apiKey
