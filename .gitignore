@@ -5,5 +5,10 @@ web-perf-cli-*.json
 .pagespeed-apikey
 urls.txt
 tasks
-.claude/subagent-log.txt
-.ai/screenshots/screenshot-log.txt
+.claude/*-log.txt
+.ai/screenshots/*-log.txt
+docs/
+.rtk/
+.ai/
+# Added by code-review-graph
+.code-review-graph/
