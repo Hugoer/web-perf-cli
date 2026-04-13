@@ -27,6 +27,10 @@ export function buildRequestBody(url: any, scope: any): {
     url: any;
     origin?: undefined;
 };
+export function callCruxApi(endpointUrl: any, body: any, apiKey: any, { scope, dataLabel }?: {
+    scope?: string | undefined;
+    dataLabel?: string | undefined;
+}): Promise<any>;
 export function runCrux(rawUrl: any, apiKey: any, { scope }?: {
     scope?: string | undefined;
 }): Promise<string>;
@@ -34,7 +38,12 @@ export function runCruxBatch(urls: any, apiKey: any, { scope, concurrency, delay
     scope?: string | undefined;
     concurrency?: number | undefined;
     delayMs?: number | undefined;
-}): Promise<any[]>;
+}): Promise<{
+    url: string;
+    data?: any;
+    outputPath?: string;
+    error: string | null;
+}[]>;
 /**
  * @param {string} rawUrl
  * @param {string} apiKey
