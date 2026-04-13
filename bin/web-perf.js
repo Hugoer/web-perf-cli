@@ -4,6 +4,34 @@ const { program } = require('commander');
 
 const { name, version } = require('../package.json');
 
+function withCatch(fn) {
+    return async (...args) => {
+        try {
+            return await fn(...args);
+        } catch (err) {
+            const logger = require('../lib/logger');
+            logger.error(`Error: ${err.message}`);
+            process.exit(1);
+        }
+    };
+}
+
+function runBatchAction(results, startTime) {
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    process.stderr.write('\n');
+    const succeeded = results.filter((r) => !r.error);
+    const failed = results.filter((r) => r.error);
+    succeeded.forEach((r) => logger.outputPath(r.outputPath));
+    console.log('');
+    logger.summary(succeeded.length, failed.length);
+    logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+    if (failed.length > 0) {
+        logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
+        process.exit(1);
+    }
+}
+
 async function labAction(url, options, cmd) {
     try {
         const chromeLauncher = require('chrome-launcher');
@@ -135,20 +163,7 @@ async function psiAction(url, options) {
                 }
             },
         });
-        process.stderr.write('\n');
-
-        const succeeded = results.filter((r) => !r.error);
-        const failed = results.filter((r) => r.error);
-
-        succeeded.forEach((r) => logger.outputPath(r.outputPath));
-        console.log('');
-        logger.summary(succeeded.length, failed.length);
-        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
-
-        if (failed.length > 0) {
-            logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
-            process.exit(1);
-        }
+        runBatchAction(results, startTime);
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -210,20 +225,7 @@ async function cruxAction(url, options) {
                 }
             },
         });
-        process.stderr.write('\n');
-
-        const succeeded = results.filter((r) => !r.error);
-        const failed = results.filter((r) => r.error);
-
-        succeeded.forEach((r) => logger.outputPath(r.outputPath));
-        console.log('');
-        logger.summary(succeeded.length, failed.length);
-        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
-
-        if (failed.length > 0) {
-            logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
-            process.exit(1);
-        }
+        runBatchAction(results, startTime);
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -270,20 +272,7 @@ async function cruxHistoryAction(url, options) {
                 }
             },
         });
-        process.stderr.write('\n');
-
-        const succeeded = results.filter((r) => !r.error);
-        const failed = results.filter((r) => r.error);
-
-        succeeded.forEach((r) => logger.outputPath(r.outputPath));
-        console.log('');
-        logger.summary(succeeded.length, failed.length);
-        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
-
-        if (failed.length > 0) {
-            logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
-            process.exit(1);
-        }
+        runBatchAction(results, startTime);
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
