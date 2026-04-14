@@ -7,7 +7,7 @@ const { name, version } = require('../package.json');
 function withCatch(fn) {
     return async (...args) => {
         try {
-            return await fn(...args);
+            await fn(...args);
         } catch (err) {
             const logger = require('../lib/logger');
             logger.error(`Error: ${err.message}`);
@@ -378,7 +378,7 @@ program
     .option('--skip-audits <audits>', 'Comma-separated audits to skip (default: full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps)')
     .option('--blocked-url-patterns <patterns>', 'Comma-separated URL patterns to block during audit (e.g. *.google-analytics.com,*.facebook.net)')
     .option('--no-strip-json-props', 'Disable stripping of unneeded properties (i18n, timing) from JSON output')
-    .action(labAction);
+    .action(withCatch(labAction));
 
 program
     .command('psi')
@@ -391,7 +391,7 @@ program
     .option('--category <categories>', 'Lighthouse categories, comma-separated (default: all)')
     .option('--concurrency <n>', 'Max parallel API requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests per worker in ms (default: 0)', parseInt)
-    .action(psiAction);
+    .action(withCatch(psiAction));
 
 program
     .command('crux')
@@ -404,7 +404,7 @@ program
     .option('--urls-file <path>', 'Path to file with one URL per line (page scope)')
     .option('--concurrency <n>', 'Max parallel requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests in ms (default: 0)', parseInt)
-    .action(cruxAction);
+    .action(withCatch(cruxAction));
 
 program
     .command('crux-history')
@@ -417,7 +417,7 @@ program
     .option('--urls-file <path>', 'Path to file with one URL per line (page scope)')
     .option('--concurrency <n>', 'Max parallel requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests in ms (default: 0)', parseInt)
-    .action(cruxHistoryAction);
+    .action(withCatch(cruxHistoryAction));
 
 program
     .command('sitemap')
@@ -426,14 +426,14 @@ program
     .option('--depth <n>', 'Max recursion depth for sitemap indexes (default: 3)', parseInt)
     .option('--delay <ms>', 'Delay between requests in ms (randomized ±50ms)', parseInt)
     .option('--output-ai', 'Generate AI-friendly .txt output (one URL per line, normalized)')
-    .action(sitemapAction);
+    .action(withCatch(sitemapAction));
 
 program
     .command('links')
     .description('Extract internal links from rendered DOM (SPA-compatible)')
     .argument('[url]', 'URL to extract links from')
     .option('--output-ai', 'Generate AI-friendly .txt output (one URL per line, normalized)')
-    .action(linksAction);
+    .action(withCatch(linksAction));
 
 program.command('list-profiles').description('List available simulation profiles').action(() => {
     const { printProfiles } = require('../lib/profiles');
@@ -448,8 +448,6 @@ program.command('list-devices').description('List available device presets').act
     printDevices();
 });
 
-program.action(() => {
-    wizardMode();
-});
+program.action(withCatch(wizardMode));
 
 program.parse(process.argv);

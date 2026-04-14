@@ -103,7 +103,9 @@ describe('runBatch', () => {
         const auditFn = async () => {
             concurrent++;
             maxConcurrent = Math.max(maxConcurrent, concurrent);
-            await new Promise((r) => setTimeout(r, 10));
+            await new Promise((r) => {
+                setTimeout(r, 10); 
+            });
             concurrent--;
             return {};
         };
@@ -114,7 +116,7 @@ describe('runBatch', () => {
 
     it('calls writeFn and includes outputPath in result when provided', async () => {
         const auditFn = vi.fn((url) => Promise.resolve({ data: url }));
-        const writeFn = vi.fn((url, data) => `/results/${new URL(url).hostname}.json`);
+        const writeFn = vi.fn((url, _data) => `/results/${new URL(url).hostname}.json`);
         const urls = ['https://a.com', 'https://b.com'];
         const results = await runBatch(urls, auditFn, { maxRequestsPerSecond: HIGH_RPS, writeFn });
         expect(writeFn).toHaveBeenCalledTimes(2);
