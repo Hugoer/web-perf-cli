@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 760" width="960" height="760">
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+  </style>
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <filter id="sh">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#0000001a"/>
+    </filter>
+  </defs>
+  <rect width="960" height="760" fill="#f8f6f3"/>
+  <text x="480" y="44" text-anchor="middle" fill="#1a1a1a" font-size="22" font-weight="700">web-perf-cli</text>
+  <text x="480" y="66" text-anchor="middle" fill="#6a6a6a" font-size="14">System Architecture</text>
+  <text x="22" y="120" fill="#6a6a6a" font-size="12" font-weight="600">Input</text>
+  <text x="22" y="243" fill="#6a6a6a" font-size="12" font-weight="600">CLI</text>
+  <text x="22" y="370" fill="#6a6a6a" font-size="12" font-weight="600">Commands</text>
+  <text x="22" y="498" fill="#6a6a6a" font-size="12" font-weight="600">Dependencies</text>
+  <text x="22" y="630" fill="#6a6a6a" font-size="12" font-weight="600">Output</text>
+  <rect x="380" y="88" width="200" height="62" rx="12" ry="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="480" y="114" text-anchor="middle" fill="#1a1a1a" font-size="16" font-weight="600">User</text>
+  <text x="480" y="135" text-anchor="middle" fill="#3a3a3a" font-size="13">npx web-perf &lt;cmd&gt; [flags]</text>
+  <line x1="480" y1="150" x2="480" y2="196" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="278" y="200" width="404" height="78" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="480" y="228" text-anchor="middle" fill="#1a1a1a" font-size="16" font-weight="600">bin/web-perf.js</text>
+  <text x="480" y="249" text-anchor="middle" fill="#3a3a3a" font-size="13">Commander.js router</text>
+  <text x="480" y="267" text-anchor="middle" fill="#5a5a5a" font-size="12">--profile  --urls  --urls-file  --api-key  --concurrency</text>
+  <rect x="69" y="330" width="120" height="72" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="129" y="356" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="600">lab</text>
+  <text x="129" y="376" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/lab.js</text>
+  <rect x="209" y="330" width="120" height="72" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="271" y="356" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="600">psi</text>
+  <text x="271" y="376" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/psi.js</text>
+  <rect x="349" y="330" width="120" height="72" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="413" y="356" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="600">crux</text>
+  <text x="413" y="376" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/crux.js</text>
+  <rect x="489" y="330" width="120" height="72" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="555" y="356" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="600">crux-history</text>
+  <text x="555" y="376" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/crux-history.js</text>
+  <rect x="629" y="330" width="120" height="72" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="697" y="356" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="600">links</text>
+  <text x="697" y="376" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/links.js</text>
+  <rect x="769" y="330" width="120" height="72" rx="12" ry="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="839" y="356" text-anchor="middle" fill="#1a1a1a" font-size="14" font-weight="600">sitemap</text>
+  <text x="839" y="376" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/sitemap.js</text>
+  <line x1="480" y1="278" x2="129" y2="330" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="480" y1="278" x2="271" y2="330" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="480" y1="278" x2="413" y2="330" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="480" y1="278" x2="555" y2="330" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="480" y1="278" x2="697" y2="330" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="480" y1="278" x2="839" y2="330" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <rect x="50" y="458" width="140" height="72" rx="12" ry="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="120" y="482" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">profiles.js</text>
+  <text x="120" y="500" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/profiles.js</text>
+  <text x="120" y="518" text-anchor="middle" fill="#5a5a5a" font-size="10">Lab simulation presets</text>
+  <rect x="212" y="458" width="172" height="72" rx="12" ry="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="298" y="482" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">utils.js</text>
+  <text x="298" y="500" text-anchor="middle" fill="#3a3a3a" font-size="11">lib/utils.js</text>
+  <text x="298" y="518" text-anchor="middle" fill="#5a5a5a" font-size="10">Shared by all commands</text>
+  <rect x="410" y="458" width="168" height="72" rx="12" ry="12" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="494" y="482" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">Chrome + Lighthouse</text>
+  <text x="494" y="500" text-anchor="middle" fill="#3a3a3a" font-size="11">chrome-launcher + lighthouse</text>
+  <text x="494" y="518" text-anchor="middle" fill="#5a5a5a" font-size="10">Headless audit engine</text>
+  <rect x="604" y="458" width="126" height="72" rx="12" ry="12" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="667" y="482" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">PSI API</text>
+  <text x="667" y="500" text-anchor="middle" fill="#3a3a3a" font-size="11">pagespeedonline REST</text>
+  <text x="667" y="518" text-anchor="middle" fill="#5a5a5a" font-size="10">PageSpeed Insights</text>
+  <rect x="754" y="458" width="132" height="72" rx="12" ry="12" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="820" y="482" text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="600">CrUX API</text>
+  <text x="820" y="500" text-anchor="middle" fill="#3a3a3a" font-size="11">chromeuxreport REST</text>
+  <text x="820" y="518" text-anchor="middle" fill="#5a5a5a" font-size="10">28-day + history data</text>
+  <line x1="129" y1="402" x2="120" y2="458" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="145" y1="402" x2="444" y2="458" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="685" y1="402" x2="542" y2="458" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="271" y1="402" x2="636" y2="458" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="413" y1="402" x2="792" y2="458" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="555" y1="402" x2="812" y2="458" stroke="#5a5a5a" stroke-width="1.8" marker-end="url(#arr)"/>
+  <line x1="480" y1="402" x2="318" y2="458" stroke="#5a5a5a" stroke-width="1.6" stroke-dasharray="6,3" marker-end="url(#arr)"/>
+  <rect x="155" y="586" width="650" height="72" rx="12" ry="12" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="480" y="612" text-anchor="middle" fill="#1a1a1a" font-size="16" font-weight="600">results/</text>
+  <text x="480" y="633" text-anchor="middle" fill="#3a3a3a" font-size="13">lab/  psi/  crux/  crux-history/  links/  sitemap/</text>
+  <text x="480" y="650" text-anchor="middle" fill="#5a5a5a" font-size="12">JSON per URL — hostname-YYYY-MM-DD-HHMM.json</text>
+  <line x1="480" y1="530" x2="480" y2="586" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="718" y="686" width="224" height="62" rx="8" ry="8" fill="#ffffff" stroke="#c8c6c3" stroke-width="1.5"/>
+  <text x="733" y="704" fill="#1a1a1a" font-size="12" font-weight="700">Legend</text>
+  <line x1="733" y1="717" x2="758" y2="717" stroke="#5a5a5a" stroke-width="2"/>
+  <polygon points="754,713 762,717 754,721" fill="#5a5a5a"/>
+  <text x="766" y="721" fill="#5a5a5a" font-size="11">Direct data flow</text>
+  <line x1="733" y1="734" x2="758" y2="734" stroke="#5a5a5a" stroke-width="1.8" stroke-dasharray="5,3"/>
+  <polygon points="754,730 762,734 754,738" fill="#5a5a5a"/>
+  <text x="766" y="738" fill="#5a5a5a" font-size="11">Shared utility (all cmds)</text>
+  <rect x="18" y="686" width="286" height="62" rx="8" ry="8" fill="#ffffff" stroke="#c8c6c3" stroke-width="1.5"/>
+  <text x="33" y="704" fill="#1a1a1a" font-size="12" font-weight="700">Color Key</text>
+  <rect x="33" y="712" width="12" height="10" rx="2" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="50" y="721" fill="#5a5a5a" font-size="11">User input</text>
+  <rect x="118" y="712" width="12" height="10" rx="2" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="135" y="721" fill="#5a5a5a" font-size="11">CLI / Commands</text>
+  <rect x="33" y="729" width="12" height="10" rx="2" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="50" y="738" fill="#5a5a5a" font-size="11">Shared utilities</text>
+  <rect x="153" y="729" width="12" height="10" rx="2" fill="#e8e6e3" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="170" y="738" fill="#5a5a5a" font-size="11">External / Output</text>
+</svg>
