@@ -8,7 +8,7 @@
 
 Node.js CLI and library for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via the CrUX API, or extract URLs from sitemaps and rendered pages.
 
-<img src="docs/web-perf-cli-arch.svg" alt="Architecture" width="800" />
+<img src="https://raw.githubusercontent.com/Hugoer/web-perf-cli/main/docs/web-perf-cli-arch.svg" alt="Architecture" width="800" />
 
 ## Requirements
 
