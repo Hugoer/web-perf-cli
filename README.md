@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/%40hugoer%2Fweb-perf-cli)](https://www.npmjs.com/package/@hugoer/web-perf-cli)
 [![npm downloads](https://img.shields.io/npm/dm/%40hugoer%2Fweb-perf-cli)](https://www.npmjs.com/package/@hugoer/web-perf-cli)
 [![Node.js](https://img.shields.io/node/v/%40hugoer%2Fweb-perf-cli)](https://nodejs.org)
-[![License](https://img.shields.io/npm/l/%40hugoer%2Fweb-perf-cli)](./LICENSE)
+[![License](https://img.shields.io/github/license/Hugoer/web-perf-cli)](https://github.com/Hugoer/web-perf-cli/blob/main/LICENSE)
 [![Tests](https://github.com/Hugoer/web-perf-cli/actions/workflows/test.yml/badge.svg)](https://github.com/Hugoer/web-perf-cli/actions/workflows/test.yml)
 
 Node.js CLI and library for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via the CrUX API, or extract URLs from sitemaps and rendered pages.

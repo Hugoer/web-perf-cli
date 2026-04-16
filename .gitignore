@@ -16,3 +16,4 @@ tasks
 .docs/plans/
 .docs/specs/
 results/
+docs/specs/*.md
