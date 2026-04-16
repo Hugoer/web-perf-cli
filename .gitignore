@@ -8,9 +8,7 @@ tasks
 .agents/
 .ai/
 .claude/
-.github/workflows/
 .github/agents/
-.github/
 .rtk/
 .vscode/
 .docs/decisions/
