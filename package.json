@@ -66,6 +66,7 @@
     "typescript": "6.0.2",
     "vitest": "^3.0.0"
   },
+  "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   }
