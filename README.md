@@ -1,9 +1,9 @@
 # web-perf-cli
 
-[![npm version](https://img.shields.io/npm/v/web-perf-cli)](https://www.npmjs.com/package/web-perf-cli)
-[![npm downloads](https://img.shields.io/npm/dm/web-perf-cli)](https://www.npmjs.com/package/web-perf-cli)
-[![Node.js](https://img.shields.io/node/v/web-perf-cli)](https://nodejs.org)
-[![License](https://img.shields.io/npm/l/web-perf-cli)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/%40hugoer%2Fweb-perf-cli)](https://www.npmjs.com/package/@hugoer/web-perf-cli)
+[![npm downloads](https://img.shields.io/npm/dm/%40hugoer%2Fweb-perf-cli)](https://www.npmjs.com/package/@hugoer/web-perf-cli)
+[![Node.js](https://img.shields.io/node/v/%40hugoer%2Fweb-perf-cli)](https://nodejs.org)
+[![License](https://img.shields.io/npm/l/%40hugoer%2Fweb-perf-cli)](./LICENSE)
 [![Tests](https://github.com/Hugoer/web-perf-cli/actions/workflows/test.yml/badge.svg)](https://github.com/Hugoer/web-perf-cli/actions/workflows/test.yml)
 
 Node.js CLI and library for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via the CrUX API, or extract URLs from sitemaps and rendered pages.
@@ -359,12 +359,12 @@ results/
 
 ```js
 // CommonJS
-const { runCruxAudit, runPsiAudit, runLabAudit } = require('web-perf');
+const { runCruxAudit, runPsiAudit, runLabAudit } = require('@hugoer/web-perf-cli');
 
 // Subpath imports (load only what you need)
-const { runCruxAudit, runCruxAuditBatch } = require('web-perf/crux');
-const { runPsiAudit, runPsiAuditBatch }   = require('web-perf/psi');
-const { runLabAudit }                      = require('web-perf/lab');
+const { runCruxAudit, runCruxAuditBatch } = require('@hugoer/web-perf/crux');
+const { runPsiAudit, runPsiAuditBatch }   = require('@hugoer/web-perf/psi');
+const { runLabAudit }                      = require('@hugoer/web-perf/lab');
 ```
 
 ### Available functions
@@ -399,12 +399,12 @@ The CLI wrapper functions (`runLab`, `runPsi`, `runCrux`, `runCruxHistory`, …)
 TypeScript type declarations are included and resolve automatically when you install the package. No `@types/` package needed.
 
 ```ts
-import { runCruxAudit, runPsiAudit } from 'web-perf';
-import type { CruxReport, PsiReport, LabReport } from 'web-perf';
+import { runCruxAudit, runPsiAudit } from '@hugoer/web-perf-cli';
+import type { CruxReport, PsiReport, LabReport } from '@hugoer/web-perf-cli';
 
 // Subpath imports also carry types
-import { runCruxHistoryAudit } from 'web-perf/crux-history';
-import type { CruxHistoryReport } from 'web-perf/crux-history';
+import { runCruxHistoryAudit } from '@hugoer/web-perf/crux-history';
+import type { CruxHistoryReport } from '@hugoer/web-perf/crux-history';
 ```
 
 Key exported types:

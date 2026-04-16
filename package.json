@@ -1,16 +1,17 @@
 {
-  "name": "web-perf-cli",
+  "name": "@hugoer/web-perf-cli",
   "version": "0.1.0",
   "description": "CLI tool to analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM) and Chrome UX Report (CrUX)",
-  "main": "bin/web-perf-cli.js",
+  "main": "bin/web-perf.js",
   "types": "types/lib/index.d.ts",
   "files": [
     "bin/",
     "lib/",
-    "types/"
+    "types/",
+    "docs/web-perf-cli-arch.svg"
   ],
   "bin": {
-    "web-perf-cli": "bin/web-perf-cli.js"
+    "web-perf": "bin/web-perf.js"
   },
   "exports": {
     ".": {
@@ -39,7 +40,7 @@
     }
   },
   "scripts": {
-    "start": "node bin/web-perf-cli.js",
+    "start": "node bin/web-perf.js",
     "lint": "eslint . --fix",
     "test": "vitest run",
     "generate-types": "tsc --project tsconfig.types.json"
