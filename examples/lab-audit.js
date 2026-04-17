@@ -11,7 +11,7 @@
 
 const { runLabAudit } = require('../lib/index');
 
-const URL = 'https://example.com';
+const URL = 'https://web.dev';
 
 async function main() {
     console.log(`Running Lighthouse audit on ${URL}...\n`);

@@ -12,7 +12,7 @@
 
 const { runPsi } = require('../lib/index');
 
-const URL = 'https://example.com';
+const URL = 'https://web.dev';
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;
 
 if (!API_KEY) {

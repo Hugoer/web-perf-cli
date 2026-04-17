@@ -12,7 +12,7 @@
 
 const { runLabAudit } = require('../lib/index');
 
-const URL = 'https://example.com';
+const URL = 'https://web.dev';
 
 async function main() {
     console.log(`Auditing ${URL} on iPhone 12 over 4G, blocking analytics...\n`);

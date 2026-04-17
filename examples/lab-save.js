@@ -9,7 +9,7 @@
 
 const { runLab } = require('../lib/index');
 
-const URL = 'https://example.com';
+const URL = 'https://web.dev';
 
 async function main() {
     console.log(`Auditing ${URL} and saving to disk...\n`);

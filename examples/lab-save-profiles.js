@@ -10,16 +10,17 @@
 
 const { runLab } = require('../lib/index');
 
-const URL = 'https://example.com';
+const URL = 'https://web.dev';
 const PROFILES = ['low', 'medium', 'high'];
 
 async function main() {
-    const results = await Promise.all(
-        PROFILES.map(async (profile) => {
-            const outputPath = await runLab(URL, { profile });
-            return { profile, outputPath };
-        })
-    );
+    // Lighthouse uses global performance.mark() — parallel runs corrupt each other's marks
+    const results = [];
+    for (const profile of PROFILES) {
+        // eslint-disable-next-line no-await-in-loop
+        const outputPath = await runLab(URL, { profile });
+        results.push({ profile, outputPath });
+    }
 
     for (const { profile, outputPath } of results) {
         console.log(`Profile "${profile}": ${outputPath}`);

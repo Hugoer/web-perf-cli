@@ -13,7 +13,7 @@
 
 const { runLabAudit } = require('../lib/index');
 
-const URL = 'https://example.com';
+const URL = 'https://web.dev';
 const PROFILES = ['low', 'medium', 'high'];
 
 async function auditProfile(profile) {
@@ -37,7 +37,12 @@ async function auditProfile(profile) {
 async function main() {
     console.log(`Auditing ${URL} across ${PROFILES.length} profiles...\n`);
 
-    const results = await Promise.all(PROFILES.map((profile) => auditProfile(profile)));
+    // Lighthouse uses global performance.mark() — parallel runs corrupt each other's marks
+    const results = [];
+    for (const profile of PROFILES) {
+        // eslint-disable-next-line no-await-in-loop
+        results.push(await auditProfile(profile));
+    }
 
     // Print comparison table
     const col = 12;
@@ -56,7 +61,7 @@ async function main() {
     console.log('LCP'.padEnd(col) + results.map((r) => r.lcp.padEnd(col)).join(''));
     console.log('TBT'.padEnd(col) + results.map((r) => r.tbt.padEnd(col)).join(''));
     console.log('CLS'.padEnd(col) + results.map((r) => r.cls.padEnd(col)).join(''));
-    console.log('Form factor'.padEnd(col) + results.map((r) => r.formFactor.padEnd(col)).join(''));
+    console.log('Form factor'.padEnd(col) + results.map((r) => r.formFactor?.padEnd(col)).join(''));
 }
 
 main().catch((err) => {
