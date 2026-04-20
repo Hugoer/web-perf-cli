@@ -40,10 +40,12 @@ async function labAction(url, options, cmd) {
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
         const stripJsonPropsOpt = cmd?.getOptionValueSource('stripJsonProps') === 'cli' ? options.stripJsonProps : undefined;
-        const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt });
+        const cleanOpt = cmd?.getOptionValueSource('clean') === 'cli' ? options.clean : undefined;
+        const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt, clean: cleanOpt });
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
         const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
         const stripJsonProps = resolved.stripJsonProps ?? options.stripJsonProps;
+        const clean = resolved.clean ?? false;
 
         const totalUrls = resolved.urls.length;
         const totalRuns = totalUrls * resolved.runs.length;
@@ -73,7 +75,7 @@ async function labAction(url, options, cmd) {
                     }
                     try {
                         // eslint-disable-next-line no-await-in-loop
-                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, stripJsonProps, port: chrome.port, silent: isBatch });
+                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, stripJsonProps, clean, port: chrome.port, silent: isBatch });
                         results.push({ url: targetUrl, profile: label, outputPath });
                         if (!isBatch) {
                             const elapsed = formatElapsed(Date.now() - startTime);
@@ -128,6 +130,8 @@ async function psiAction(url, options) {
 
         const categoryLabels = (resolved.categories || []).map((c) => c.toLowerCase().replace(/_/g, '-'));
 
+        const psiClean = resolved.clean ?? false;
+
         if (resolved.urls.length === 1) {
             const { runPsi } = require('../lib/psi');
             logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]}`);
@@ -135,7 +139,7 @@ async function psiAction(url, options) {
                 logger.info(`Categories: ${categoryLabels.join(', ')}`);
             }
             const startTime = Date.now();
-            const outputPath = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories);
+            const outputPath = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories, { clean: psiClean });
             const elapsed = formatElapsed(Date.now() - startTime);
             logger.success(`PSI results saved to: ${outputPath} (${elapsed})`);
             return;
@@ -155,6 +159,7 @@ async function psiAction(url, options) {
         const results = await runPsiBatch(resolved.urls, resolved.apiKey, resolved.categories, {
             concurrency,
             delayMs,
+            clean: psiClean,
             onProgress(completed, total, targetUrl, error) {
                 const pct = Math.round((completed / total) * 100);
                 logger.progress(pct, completed, total, targetUrl);
@@ -378,6 +383,7 @@ program
     .option('--skip-audits <audits>', 'Comma-separated audits to skip (default: full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps)')
     .option('--blocked-url-patterns <patterns>', 'Comma-separated URL patterns to block during audit (e.g. *.google-analytics.com,*.facebook.net)')
     .option('--no-strip-json-props', 'Disable stripping of unneeded properties (i18n, timing) from JSON output')
+    .option('--clean', 'Write an AI-friendly clean copy to results/lab/clean/ alongside the raw file')
     .action(withCatch(labAction));
 
 program
@@ -391,6 +397,7 @@ program
     .option('--category <categories>', 'Lighthouse categories, comma-separated (default: all)')
     .option('--concurrency <n>', 'Max parallel API requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests per worker in ms (default: 0)', parseInt)
+    .option('--clean', 'Write an AI-friendly clean copy to results/psi/clean/ alongside the raw file')
     .action(withCatch(psiAction));
 
 program
