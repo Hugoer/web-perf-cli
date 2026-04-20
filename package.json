@@ -1,6 +1,6 @@
 {
   "name": "@hugoer/web-perf-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI tool to analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM) and Chrome UX Report (CrUX)",
   "main": "bin/web-perf.js",
   "types": "types/lib/index.d.ts",
@@ -69,5 +69,9 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hugoer/web-perf-cli.git"
   }
 }
