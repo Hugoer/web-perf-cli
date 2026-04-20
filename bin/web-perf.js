@@ -442,6 +442,27 @@ program
     .option('--output-ai', 'Generate AI-friendly .txt output (one URL per line, normalized)')
     .action(withCatch(linksAction));
 
+program
+    .command('clean')
+    .description('Generate AI-friendly .clean.json files from existing lab or psi outputs')
+    .argument('<input>', 'File path, directory, or glob pattern (e.g. results/lab/ or "results/**/*.json")')
+    .addHelpText('after', `
+Examples:
+  $ web-perf clean results/lab/lab-example.com.json
+  $ web-perf clean results/lab/
+  $ web-perf clean 'results/**/*.json'
+`)
+    .action(withCatch(async (input) => {
+        const { runCleanCmd } = require('../lib/clean-cmd');
+        const logger = require('../lib/logger');
+        const { cleaned, skipped, errored } = await runCleanCmd(input);
+        logger.summary(cleaned.length, errored.length);
+        logger.info(`cleaned: ${cleaned.length}, skipped: ${skipped.length}, errored: ${errored.length}`);
+        if (errored.length > 0) {
+            process.exit(1);
+        }
+    }));
+
 program.command('list-profiles').description('List available simulation profiles').action(() => {
     const { printProfiles } = require('../lib/profiles');
     printProfiles();
