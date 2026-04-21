@@ -15,6 +15,10 @@ node bin/web-perf.js lab --network=3g --device=iphone-12 <url>
 node bin/web-perf.js lab --profile=low --network=wifi <url>   # override parcial
 node bin/web-perf.js list-profiles
 
+# Lab: AI-friendly output (--clean writes a stripped copy for pasting into AI prompts)
+node bin/web-perf.js lab --clean <url>
+node bin/web-perf.js lab --profile=low --clean <url>
+
 # Lab: Block URL patterns (prevent asset downloads during audit)
 node bin/web-perf.js lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
 node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
@@ -22,6 +26,9 @@ node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com
 # Lab: Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
 node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
+
+# PSI: AI-friendly output
+node bin/web-perf.js psi --clean --api-key=<PSI_KEY> <url>
 
 # PSI: PageSpeed Insights API (single URL)
 node bin/web-perf.js psi --api-key=<PSI_KEY> <url>
@@ -51,6 +58,11 @@ node bin/web-perf.js sitemap https://example.com/custom-sitemap.xml
 
 # Links: Extract internal links from rendered DOM (SPA-compatible)
 node bin/web-perf.js links <url>
+
+# Clean: Post-process existing raw output into AI-friendly .clean.json files
+node bin/web-perf.js clean results/lab/lab-example.com.json   # single file
+node bin/web-perf.js clean results/lab/                       # directory
+node bin/web-perf.js clean 'results/**/*.json'                # glob
 ```
 
 ## Structure
@@ -72,7 +84,9 @@ lib/utils.js           # Shared helpers (ensureResultsDir, buildFilename, normal
 Each command writes to its own subdirectory under `results/`:
 
 - `results/lab/` — lab (format: `lab-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`)
 - `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMM.clean.json`)
 - `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMM.json`)

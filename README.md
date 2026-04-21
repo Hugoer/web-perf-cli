@@ -326,6 +326,27 @@ web-perf links --output-ai <url>
 
 **Output:** `results/links/links-<hostname>-YYYY-MM-DD-HHMM.json`
 
+### `clean` — AI-friendly output
+
+Strips a Lighthouse or PSI JSON report down to the information an AI needs: failing audits with details, category scores, and CrUX data. Clean files are ≥70% smaller than the raw output, making them practical for pasting into AI prompts.
+
+```bash
+# Generate clean file alongside raw output at run time
+web-perf lab --clean https://example.com
+web-perf psi --clean --api-key=<YOUR_KEY> https://example.com
+
+# Post-process existing raw files
+web-perf clean results/lab/lab-example.com-2026-03-29-1430.json
+web-perf clean results/lab/
+web-perf clean 'results/**/*.json'
+```
+
+Clean files are written to a `clean/` subfolder next to the raw output:
+- `results/lab/clean/lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`
+- `results/psi/clean/psi-<hostname>-YYYY-MM-DD-HHMM.clean.json`
+
+The clean file is self-describing: `JSON.parse(cleanFile)._clean === true`.
+
 ## Environment variables
 
 | Variable | Command | Description |
@@ -342,9 +363,13 @@ All results are saved as JSON files under the `results/` directory, organized by
 ```
 results/
 ├── lab/
-│   └── lab-example.com-2026-03-29-1430.json
+│   ├── lab-example.com-2026-03-29-1430.json
+│   └── clean/
+│       └── lab-example.com-2026-03-29-1430.clean.json  (when --clean is used)
 ├── psi/
-│   └── psi-example.com-2026-03-29-1430.json
+│   ├── psi-example.com-2026-03-29-1430.json
+│   └── clean/
+│       └── psi-example.com-2026-03-29-1430.clean.json  (when --clean is used)
 ├── crux/
 │   └── crux-www.example.com-2026-03-29-1430.json
 ├── crux-history/
