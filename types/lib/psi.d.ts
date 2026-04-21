@@ -10,19 +10,23 @@ export type PsiBatchResult = {
  * @param {string} url - The URL to audit.
  * @param {string} apiKey - PageSpeed Insights API key.
  * @param {string[]} [categories] - Lighthouse categories to evaluate.
+ * @param {{ clean?: boolean }} [options]
  * @returns {Promise<string>} The file path where the result was written.
  */
-export function runPsi(url: string, apiKey: string, categories?: string[]): Promise<string>;
+export function runPsi(url: string, apiKey: string, categories?: string[], { clean }?: {
+    clean?: boolean;
+}): Promise<string>;
 /**
  * @param {string[]} urls
  * @param {string} apiKey
  * @param {string[]} categories
- * @param {{ concurrency?: number, delayMs?: number, onProgress?: (completed: number, total: number, url: string, error: string|null) => void }} [options]
+ * @param {{ concurrency?: number, delayMs?: number, clean?: boolean, onProgress?: (completed: number, total: number, url: string, error: string|null) => void }} [options]
  * @returns {Promise<Array<{ url: string, outputPath: string|null, error: string|null }>>}
  */
-export function runPsiBatch(urls: string[], apiKey: string, categories: string[], { concurrency, delayMs, onProgress }?: {
+export function runPsiBatch(urls: string[], apiKey: string, categories: string[], { concurrency, delayMs, clean, onProgress }?: {
     concurrency?: number;
     delayMs?: number;
+    clean?: boolean;
     onProgress?: (completed: number, total: number, url: string, error: string | null) => void;
 }): Promise<Array<{
     url: string;

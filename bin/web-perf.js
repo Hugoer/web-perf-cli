@@ -332,6 +332,19 @@ async function linksAction(url, options) {
     }
 }
 
+async function cleanAction() {
+    const { promptClean } = require('../lib/prompts');
+    const { runCleanCmd } = require('../lib/clean-cmd');
+    const logger = require('../lib/logger');
+    const { input } = await promptClean();
+    const { cleaned, skipped, errored } = await runCleanCmd(input);
+    logger.summary(cleaned.length, errored.length);
+    logger.info(`cleaned: ${cleaned.length}, skipped: ${skipped.length}, errored: ${errored.length}`);
+    if (errored.length > 0) {
+        process.exit(1);
+    }
+}
+
 async function wizardMode() {
     try {
         const { promptForSubcommand } = require('../lib/prompts');
@@ -343,6 +356,7 @@ async function wizardMode() {
             'crux-history': () => cruxHistoryAction(undefined, {}),
             sitemap: () => sitemapAction(undefined, {}),
             links: () => linksAction(undefined),
+            clean: () => cleanAction(),
         };
         await actions[command]();
     } catch (err) {

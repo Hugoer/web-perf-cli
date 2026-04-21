@@ -121,6 +121,26 @@ CLI flags (`--api-key`, `--api-key-path`) take precedence over environment varia
 npm test  # vitest
 ```
 
+## Development Checklist
+
+Run these in order at the end of every task, without exception:
+
+```bash
+npm run lint          # must pass before running tests
+npm test              # all tests must pass
+npm run generate-types  # regenerate types after any function signature change
+```
+
+### Rules
+
+**JSDoc** — Any change to a function's parameters or return value requires updating its `@param` / `@returns` JSDoc. The generated `.d.ts` is the source of truth for consumers; stale types are bugs.
+
+**New lib modules** — Every new `lib/*.js` file must be added to:
+1. `tsconfig.types.json` → `include` array (so `generate-types` picks it up)
+2. `package.json` → `exports` object (so the module is importable as `web-perf/<name>`)
+
+**New CLI commands** — When a new subcommand is added to `bin/web-perf.js`, update `promptForSubcommand()` in `lib/prompts.js` and the `actions` map in `wizardMode()` so it is reachable from interactive mode.
+
 <!-- rtk-instructions v2 -->
 # RTK (Rust Token Killer) - Token-Optimized Commands
 

@@ -25,7 +25,9 @@
         "lib/logger.js",
         "lib/prompts.js",
         "lib/links.js",
-        "lib/sitemap.js"
+        "lib/sitemap.js",
+        "lib/clean.js",
+        "lib/clean-cmd.js"
     ],
     "exclude": [
         "node_modules",

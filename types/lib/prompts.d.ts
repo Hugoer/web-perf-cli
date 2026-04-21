@@ -41,6 +41,9 @@ export function promptLinks(url: any, options?: {}): Promise<{
     url: any;
     outputAi: any;
 }>;
+export function promptClean(): Promise<{
+    input: any;
+}>;
 export function parseProfileFlag(profileStr: any): any;
 export function parseSkipAuditsFlag(skipAuditsStr: any): any;
 export function parseBlockedUrlPatternsFlag(patternsStr: any): any[] | undefined;

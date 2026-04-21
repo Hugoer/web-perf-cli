@@ -68,5 +68,6 @@ export function buildLighthouseConfig(labOptions: any, profileSettings?: {}): {
     extends: string;
     settings: any;
 } | undefined;
+export function writeLabResult(outputPath: any, data: any, labOptions?: {}): void;
 export const CHROME_FLAGS: string[];
 export const DEFAULT_SKIP_AUDITS: string[];
