@@ -1,14 +1,33 @@
-export function runSitemap(url: any, maxDepth?: number, delayMs?: number): Promise<{
+/**
+ * @param {string} url
+ * @param {number} [maxDepth]
+ * @param {number} [delayMs]
+ * @returns {Promise<{ outputPath: string, urls: string[] }>}
+ */
+export function runSitemap(url: string, maxDepth?: number, delayMs?: number): Promise<{
     outputPath: string;
-    urls: any;
+    urls: string[];
 }>;
-export function resolveSitemapUrl(input: any): {
+/**
+ * @param {string} input
+ * @returns {{ origin: string, sitemapUrl: string }}
+ */
+export function resolveSitemapUrl(input: string): {
     origin: string;
-    sitemapUrl: any;
-} | {
-    origin: any;
     sitemapUrl: string;
 };
-export function extractUrls(xml: any): string[];
-export function isSitemapIndex(xml: any): any;
-export function randomizeDelay(delayMs: any): number;
+/**
+ * @param {string} xml
+ * @returns {string[]}
+ */
+export function extractUrls(xml: string): string[];
+/**
+ * @param {string} xml
+ * @returns {boolean}
+ */
+export function isSitemapIndex(xml: string): boolean;
+/**
+ * @param {number} delayMs
+ * @returns {number}
+ */
+export function randomizeDelay(delayMs: number): number;
