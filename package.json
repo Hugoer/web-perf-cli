@@ -1,6 +1,6 @@
 {
   "name": "@hugoer/web-perf-cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "CLI tool to analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM) and Chrome UX Report (CrUX)",
   "main": "lib/index.js",
   "types": "types/lib/index.d.ts",
@@ -37,6 +37,10 @@
     "./utils": {
       "require": "./lib/utils.js",
       "types": "./types/lib/utils.d.ts"
+    },
+    "./profiles": {
+      "require": "./lib/profiles.js",
+      "types": "./types/lib/profiles.d.ts"
     }
   },
   "scripts": {
