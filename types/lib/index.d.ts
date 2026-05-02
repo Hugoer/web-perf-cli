@@ -18,3 +18,6 @@ export const DEFAULT_SKIP_AUDITS: typeof import("./lab").DEFAULT_SKIP_AUDITS;
 export const sleep: typeof import("./utils").sleep;
 export const createRateLimiter: typeof import("./utils").createRateLimiter;
 export const normalizeOrigin: typeof import("./utils").normalizeOrigin;
+export const PSI_MAX_REQUESTS_PER_SECOND: typeof import("./psi").PSI_MAX_REQUESTS_PER_SECOND;
+export const CRUX_MAX_REQUESTS_PER_SECOND: typeof import("./crux").CRUX_MAX_REQUESTS_PER_SECOND;
+export const CRUX_HISTORY_MAX_REQUESTS_PER_SECOND: typeof import("./crux-history").CRUX_HISTORY_MAX_REQUESTS_PER_SECOND;
