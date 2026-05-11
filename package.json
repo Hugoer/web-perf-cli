@@ -13,46 +13,51 @@
   "bin": {
     "web-perf": "bin/web-perf.js"
   },
-  "typesVersions": {
-    "*": {
-      "lab": ["types/lib/lab.d.ts"],
-      "psi": ["types/lib/psi.d.ts"],
-      "crux": ["types/lib/crux.d.ts"],
-      "crux-history": ["types/lib/crux-history.d.ts"],
-      "utils": ["types/lib/utils.d.ts"],
-      "profiles": ["types/lib/profiles.d.ts"],
-      "links": ["types/lib/links.d.ts"],
-      "sitemap": ["types/lib/sitemap.d.ts"]
-    }
-  },
   "exports": {
     ".": {
       "require": "./lib/index.js",
+      "import": "./lib/index.js",
       "types": "./types/lib/index.d.ts"
     },
     "./lab": {
       "require": "./lib/lab.js",
+      "import": "./lib/lab.js",
       "types": "./types/lib/lab.d.ts"
     },
     "./psi": {
       "require": "./lib/psi.js",
+      "import": "./lib/psi.js",
       "types": "./types/lib/psi.d.ts"
     },
     "./crux": {
       "require": "./lib/crux.js",
+      "import": "./lib/crux.js",
       "types": "./types/lib/crux.d.ts"
     },
     "./crux-history": {
       "require": "./lib/crux-history.js",
+      "import": "./lib/crux-history.js",
       "types": "./types/lib/crux-history.d.ts"
     },
     "./utils": {
       "require": "./lib/utils.js",
+      "import": "./lib/utils.js",
       "types": "./types/lib/utils.d.ts"
     },
     "./profiles": {
       "require": "./lib/profiles.js",
+      "import": "./lib/profiles.js",
       "types": "./types/lib/profiles.d.ts"
+    },
+    "./links": {
+      "require": "./lib/links.js",
+      "import": "./lib/links.js",
+      "types": "./types/lib/links.d.ts"
+    },
+    "./sitemap": {
+      "require": "./lib/sitemap.js",
+      "import": "./lib/sitemap.js",
+      "types": "./types/lib/sitemap.d.ts"
     }
   },
   "scripts": {
