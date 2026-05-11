@@ -18,3 +18,4 @@ tasks
 results/
 docs/specs/*.md
 IDEAS/
+examples/node_modules/

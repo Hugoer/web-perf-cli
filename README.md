@@ -8,7 +8,7 @@
 [![Lint](https://github.com/Hugoer/web-perf-cli/actions/workflows/lint.yml/badge.svg)](https://github.com/Hugoer/web-perf-cli/actions/workflows/lint.yml)
 [![CodeQL](https://github.com/Hugoer/web-perf-cli/actions/workflows/codeql.yml/badge.svg)](https://github.com/Hugoer/web-perf-cli/actions/workflows/codeql.yml)
 
-Node.js CLI and library for web performance auditing. Analyze any website using local Lighthouse audits, real-user metrics from PageSpeed Insights, Chrome UX Report data via the CrUX API, or extract URLs from sitemaps and rendered pages.
+Node.js CLI and library for automated web performance data collection. Gather raw performance signals from local Lighthouse audits, PageSpeed Insights (PSI), and the CrUX API. Features built-in utilities to extract URLs from sitemaps and rendered pages, streamlining the data acquisition process for further analysis.
 
 <img src="https://raw.githubusercontent.com/Hugoer/web-perf-cli/main/docs/web-perf-cli-arch.svg" alt="Architecture" width="800" />
 
@@ -479,5 +479,5 @@ git commit -m "feat: update CruxReport shape"
 
 ## License
 
-ISC
+MIT
 

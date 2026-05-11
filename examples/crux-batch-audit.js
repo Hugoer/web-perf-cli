@@ -10,7 +10,7 @@
  * Run: node examples/crux-batch-audit.js
  */
 
-const { runCruxAuditBatch } = require('../lib/index');
+const { runCruxAuditBatch } = require('@hugoer/web-perf-cli');
 
 const URLS = [
     'https://web.dev',

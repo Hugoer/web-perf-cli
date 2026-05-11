@@ -11,7 +11,7 @@
  * Run: node examples/crux-history-audit.js
  */
 
-const { runCruxHistoryAudit } = require('../lib/index');
+const { runCruxHistoryAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;

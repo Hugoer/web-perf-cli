@@ -11,7 +11,7 @@
  * Run: node examples/psi-batch-audit.js
  */
 
-const { runPsiAuditBatch } = require('../lib/index');
+const { runPsiAuditBatch } = require('@hugoer/web-perf-cli');
 
 const URLS = [
     'https://example.com',

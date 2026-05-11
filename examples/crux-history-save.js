@@ -10,7 +10,7 @@
  * Run: node examples/crux-history-save.js
  */
 
-const { runCruxHistory } = require('../lib/index');
+const { runCruxHistory } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;

@@ -10,7 +10,7 @@
  * Run: node examples/crux-batch-save.js
  */
 
-const { runCruxBatch } = require('../lib/index');
+const { runCruxBatch } = require('@hugoer/web-perf-cli');
 
 const URLS = [
     'https://web.dev',

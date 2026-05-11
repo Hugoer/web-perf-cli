@@ -10,7 +10,7 @@
  * Run: node examples/psi-batch-save.js
  */
 
-const { runPsiBatch } = require('../lib/index');
+const { runPsiBatch } = require('@hugoer/web-perf-cli');
 
 const URLS = [
     'https://example.com',

@@ -11,7 +11,7 @@
  * Run: node examples/crux-history-batch-audit.js
  */
 
-const { runCruxHistoryAuditBatch } = require('../lib/index');
+const { runCruxHistoryAuditBatch } = require('@hugoer/web-perf-cli');
 
 const URLS = [
     'https://web.dev',

@@ -10,7 +10,7 @@
  * Run: node examples/crux-history-batch-save.js
  */
 
-const { runCruxHistoryBatch } = require('../lib/index');
+const { runCruxHistoryBatch } = require('@hugoer/web-perf-cli');
 
 const URLS = [
     'https://web.dev',

@@ -11,14 +11,14 @@
  * Run: node examples/lab-audit-profiles.js
  */
 
-const { runLabAudit } = require('../lib/index');
+const { runLabAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const PROFILES = ['low', 'medium', 'high'];
 
 async function auditProfile(profile) {
     console.log(`  Running profile "${profile}"...`);
-    const report = await runLabAudit(URL, { profile, silent: true });
+    const report = await runLabAudit(URL, { profile, silent: true, stripJsonProps: false });
     return {
         profile,
         formFactor: report.formFactor,

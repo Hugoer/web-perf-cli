@@ -12,7 +12,7 @@
  * Run: node examples/crux-audit.js
  */
 
-const { runCruxAudit } = require('../lib/index');
+const { runCruxAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;

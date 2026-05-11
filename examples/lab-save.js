@@ -7,7 +7,7 @@
  * Run: node examples/lab-save.js
  */
 
-const { runLab } = require('../lib/index');
+const { runLab } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 

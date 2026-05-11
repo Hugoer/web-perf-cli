@@ -8,7 +8,7 @@
  * Run: node examples/lab-save-profiles.js
  */
 
-const { runLab } = require('../lib/index');
+const { runLab } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const PROFILES = ['low', 'medium', 'high'];

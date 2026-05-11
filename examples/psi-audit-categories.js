@@ -12,7 +12,7 @@
  * Run: node examples/psi-audit-categories.js
  */
 
-const { runPsiAudit } = require('../lib/index');
+const { runPsiAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;

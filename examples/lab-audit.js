@@ -9,14 +9,14 @@
  * Run: node examples/lab-audit.js
  */
 
-const { runLabAudit } = require('../lib/index');
+const { runLabAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 
 async function main() {
     console.log(`Running Lighthouse audit on ${URL}...\n`);
 
-    const report = await runLabAudit(URL);
+    const report = await runLabAudit(URL, { stripJsonProps: false });
 
     // Category scores (0–1, multiply by 100 for a percentage)
     console.log('=== Category Scores ===');

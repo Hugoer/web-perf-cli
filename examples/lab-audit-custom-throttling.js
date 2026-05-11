@@ -10,7 +10,7 @@
  * Run: node examples/lab-audit-custom-throttling.js
  */
 
-const { runLabAudit } = require('../lib/index');
+const { runLabAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 
@@ -22,6 +22,7 @@ async function main() {
         device: 'iphone-12',
         blockedUrlPatterns: ['*.google-analytics.com', '*.googletagmanager.com', '*.facebook.net'],
         silent: true,
+        stripJsonProps: false,
     });
 
     console.log('=== Scores ===');

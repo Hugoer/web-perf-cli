@@ -1,7 +1,7 @@
 {
   "name": "@hugoer/web-perf-cli",
   "version": "0.1.6",
-  "description": "CLI tool to analyze web performance via Lighthouse (lab), PageSpeed Insights (RUM) and Chrome UX Report (CrUX)",
+  "description": "Node.js CLI and library for automated web performance data collection. Gather raw performance signals from local Lighthouse audits, PageSpeed Insights (PSI), and the CrUX API",
   "main": "lib/index.js",
   "types": "types/lib/index.d.ts",
   "files": [
@@ -90,5 +90,19 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Hugoer/web-perf-cli.git"
-  }
+  },
+  "keywords": [
+    "web-performance",
+    "data-collection",
+    "web-perf",
+    "lighthouse",
+    "pagespeed-insights",
+    "crux",
+    "sitemap",
+    "automation",
+    "cli",
+    "performance-metrics",
+    "bulk-audit",
+    "data-pipeline"
+  ]
 }
