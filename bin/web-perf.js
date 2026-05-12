@@ -121,6 +121,22 @@ async function labAction(url, options, cmd) {
     }
 }
 
+function runPsiBatchSummary(results, startTime) {
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    process.stderr.write('\n');
+    const succeeded = results.filter((r) => !r.error);
+    const failed = results.filter((r) => r.error);
+    succeeded.forEach((r) => logger.outputPath(r.outputPath));
+    console.log('');
+    logger.summary(succeeded.length, failed.length);
+    logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+    if (failed.length > 0) {
+        logger.failedList(failed.map((r) => `${r.url} [${r.strategy}]: ${r.error}`));
+        process.exit(1);
+    }
+}
+
 async function psiAction(url, options) {
     try {
         const { promptPsi, DEFAULT_CONCURRENCY } = require('../lib/prompts');
@@ -129,29 +145,32 @@ async function psiAction(url, options) {
         const resolved = await promptPsi(url, options);
 
         const categoryLabels = (resolved.categories || []).map((c) => c.toLowerCase().replace(/_/g, '-'));
-
+        const strategies = resolved.strategies;
         const psiClean = resolved.clean ?? false;
 
         if (resolved.urls.length === 1) {
             const { runPsi } = require('../lib/psi');
-            logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]}`);
+            logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]} [${strategies.join(', ')}]`);
             if (categoryLabels.length > 0) {
                 logger.info(`Categories: ${categoryLabels.join(', ')}`);
             }
             const startTime = Date.now();
-            const outputPath = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories, { clean: psiClean });
+            const outputPaths = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories, { clean: psiClean, strategies });
             const elapsed = formatElapsed(Date.now() - startTime);
-            logger.success(`PSI results saved to: ${outputPath} (${elapsed})`);
+            outputPaths.forEach((p) => logger.success(`PSI results saved to: ${p}`));
+            logger.footer(`(${elapsed})`);
             return;
         }
 
         const { runPsiBatch } = require('../lib/psi');
         const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
+        const totalRequests = resolved.urls.length * strategies.length;
 
         const startTime = Date.now();
         logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-        logger.header(`Processing ${resolved.urls.length} URLs (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.header(`Processing ${resolved.urls.length} URLs × ${strategies.length} strategies = ${totalRequests} PSI requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.info(`Strategies: ${strategies.join(', ')}`);
         if (categoryLabels.length > 0) {
             logger.info(`Categories: ${categoryLabels.join(', ')}`);
         }
@@ -160,6 +179,7 @@ async function psiAction(url, options) {
             concurrency,
             delayMs,
             clean: psiClean,
+            strategies,
             onProgress(completed, total, targetUrl, error) {
                 const pct = Math.round((completed / total) * 100);
                 logger.progress(pct, completed, total, targetUrl);
@@ -168,7 +188,7 @@ async function psiAction(url, options) {
                 }
             },
         });
-        runBatchAction(results, startTime);
+        runPsiBatchSummary(results, startTime);
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -408,6 +428,7 @@ program
     .option('--api-key-path <path>', 'Path to plain text file containing only the API key')
     .option('--urls <urls>', 'Comma-separated list of URLs')
     .option('--urls-file <path>', 'Path to a file with one URL per line')
+    .option('--strategy <strategies>', 'Comma-separated PSI strategies: mobile, desktop (default: mobile,desktop)')
     .option('--category <categories>', 'Lighthouse categories, comma-separated (default: all)')
     .option('--concurrency <n>', 'Max parallel API requests (default: 5)', parseInt)
     .option('--delay <ms>', 'Delay between requests per worker in ms (default: 0)', parseInt)
