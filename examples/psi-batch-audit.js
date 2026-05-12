@@ -19,6 +19,8 @@ const URLS = [
     'https://web.dev',
 ];
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;
+// ['mobile'] | ['desktop'] | ['mobile', 'desktop'] — defaults to both when omitted
+const STRATEGIES = ['mobile', 'desktop'];
 
 if (!API_KEY) {
     console.error('Error: WEB_PERF_PSI_API_KEY environment variable is not set.');
@@ -31,10 +33,11 @@ function onProgress(completed, total, url, error) {
 }
 
 async function main() {
-    console.log(`Running PSI batch audit for ${URLS.length} URLs...\n`);
+    console.log(`Running PSI batch audit for ${URLS.length} URLs × ${STRATEGIES.length} strategies...\n`);
 
     const results = await runPsiAuditBatch(URLS, API_KEY, ['PERFORMANCE', 'ACCESSIBILITY', 'BEST_PRACTICES', 'SEO'], {
         concurrency: 2,
+        strategies: STRATEGIES,
         onProgress,
     });
 

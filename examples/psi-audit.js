@@ -14,6 +14,8 @@ const { runPsiAudit } = require('@hugoer/web-perf-cli');
 
 const URL = 'https://web.dev';
 const API_KEY = process.env.WEB_PERF_PSI_API_KEY;
+// 'mobile' | 'desktop' — defaults to 'mobile' when omitted
+const STRATEGY = 'desktop';
 
 if (!API_KEY) {
     console.error('Error: WEB_PERF_PSI_API_KEY environment variable is not set.');
@@ -21,9 +23,9 @@ if (!API_KEY) {
 }
 
 async function main() {
-    console.log(`Running PSI audit on ${URL}...\n`);
+    console.log(`Running PSI audit on ${URL} (${STRATEGY})...\n`);
 
-    const report = await runPsiAudit(URL, API_KEY);
+    const report = await runPsiAudit(URL, API_KEY, ['PERFORMANCE', 'ACCESSIBILITY', 'BEST_PRACTICES', 'SEO'], STRATEGY);
 
     const categories = report.lighthouseResult?.categories ?? {};
     console.log('=== Category Scores ===');
