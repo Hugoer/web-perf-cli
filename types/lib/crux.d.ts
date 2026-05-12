@@ -40,6 +40,7 @@ export function runCruxBatch(urls: any, apiKey: any, { scope, concurrency, delay
     delayMs?: number | undefined;
 }): Promise<{
     url: string;
+    item: any;
     data?: any;
     outputPath?: string;
     error: string | null;

@@ -178,6 +178,11 @@ web-perf psi --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 # Parallel processing (10 concurrent requests, 100ms delay between each)
 web-perf psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
+
+# Strategy selection — default runs both mobile + desktop (two API requests per URL)
+web-perf psi --strategy=mobile --api-key=<PSI_KEY> <url>
+web-perf psi --strategy=desktop --api-key=<PSI_KEY> <url>
+web-perf psi --strategy=mobile,desktop --api-key=<PSI_KEY> <url>
 ```
 
 | Parameter | Required | Description |
@@ -187,11 +192,12 @@ web-perf psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay
 | `--api-key-path <path>` | No\*\* | Path to a plain text file containing only the API key |
 | `--urls <list>` | No | Comma-separated list of URLs. When provided, `<url>` argument is ignored |
 | `--urls-file <path>` | No | Path to a file with one URL per line. When provided, `<url>` argument is ignored |
+| `--strategy <list>` | No | Comma-separated PSI strategies. Values: `mobile`, `desktop`. Default: `mobile,desktop` (both run per URL → two API requests and two output files per URL) |
 | `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
 | `--concurrency <n>` | No | Max parallel API requests when processing multiple URLs. Default: `5` |
 | `--delay <ms>` | No | Delay in ms between requests per worker. Default: `0` (no delay) |
 
-Built-in quota protection: PSI request starts are capped at 4 requests/second globally during batch runs, regardless of `--concurrency`.
+Built-in quota protection: PSI request starts are capped at 4 requests/second globally during batch runs, regardless of `--concurrency`. Total API calls = `urls × strategies`; the PSI free quota is 25,000 queries/day and 240/min — pin `--strategy=mobile` (or `desktop`) when you need to halve consumption.
 
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A PSI API key is required. Provide it via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables. CLI flags take precedence.
@@ -212,7 +218,7 @@ web-perf psi --category=performance,seo --api-key-path=<key-file> <url>
 4. `WEB_PERF_PSI_API_KEY_PATH` env var (file path)
 5. Interactive prompt
 
-**Output:** `results/psi/psi-<hostname>-YYYY-MM-DD-HHMM.json` (one file per URL)
+**Output:** `results/psi/psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.json` (one file per URL per strategy — default produces both `-mobile.json` and `-desktop.json`)
 
 ---
 

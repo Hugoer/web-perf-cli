@@ -45,6 +45,7 @@ export function promptClean(): Promise<{
     input: any;
 }>;
 export function parseProfileFlag(profileStr: any): any;
+export function parsePsiStrategies(strategyStr: any): any[];
 export function parseSkipAuditsFlag(skipAuditsStr: any): any;
 export function parseBlockedUrlPatternsFlag(patternsStr: any): any[] | undefined;
 export function validateUrl(input: any): true | "Please enter a valid URL (e.g. https://example.com)";

@@ -20,28 +20,34 @@ export function withRetry(fn: () => Promise<any>, { maxRetries, baseDelayMs, lab
     _sleep?: (ms: number) => Promise<void>;
 }): Promise<any>;
 /**
- * Runs an audit function over a list of URLs using a worker pool with rate limiting.
- * @template T
- * @param {string[]} urls
- * @param {(url: string) => Promise<T>} auditFn
+ * Runs an audit function over a list of work items using a worker pool with rate limiting.
+ * Items may be plain URL strings or arbitrary objects; supply `urlOf` to extract the URL
+ * string from an object item (used for progress reporting and the `url` field on results).
+ * @template T - the work-item shape (string or object)
+ * @template R - the audit result shape
+ * @param {T[]} items
+ * @param {(item: T) => Promise<R>} auditFn
  * @param {{
  *   maxRequestsPerSecond: number,
  *   concurrency?: number,
  *   delayMs?: number,
  *   onProgress?: (completed: number, total: number, url: string, error: string|null) => void,
- *   writeFn?: (url: string, data: T) => string,
+ *   writeFn?: (item: T, data: R) => string,
+ *   urlOf?: (item: T) => string,
  * }} opts
- * @returns {Promise<Array<{ url: string, data?: T, outputPath?: string, error: string|null }>>}
+ * @returns {Promise<Array<{ url: string, item: T, data?: R, outputPath?: string, error: string|null }>>}
  */
-export function runBatch<T>(urls: string[], auditFn: (url: string) => Promise<T>, { maxRequestsPerSecond, concurrency, delayMs, onProgress, writeFn }?: {
+export function runBatch<T, R>(items: T[], auditFn: (item: T) => Promise<R>, { maxRequestsPerSecond, concurrency, delayMs, onProgress, writeFn, urlOf }?: {
     maxRequestsPerSecond: number;
     concurrency?: number;
     delayMs?: number;
     onProgress?: (completed: number, total: number, url: string, error: string | null) => void;
-    writeFn?: (url: string, data: T) => string;
+    writeFn?: (item: T, data: R) => string;
+    urlOf?: (item: T) => string;
 }): Promise<Array<{
     url: string;
-    data?: T;
+    item: T;
+    data?: R;
     outputPath?: string;
     error: string | null;
 }>>;
