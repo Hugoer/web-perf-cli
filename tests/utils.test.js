@@ -130,4 +130,27 @@ describe('runBatch', () => {
         expect(results).toHaveLength(0);
         expect(auditFn).not.toHaveBeenCalled();
     });
+
+    it('accepts object items via urlOf and passes the full item to callbacks', async () => {
+        const items = [
+            { url: 'https://a.com', strategy: 'mobile' },
+            { url: 'https://a.com', strategy: 'desktop' },
+        ];
+        const auditFn = vi.fn((item) => Promise.resolve({ url: item.url, strategy: item.strategy }));
+        const writeFn = vi.fn((item) => `/results/${new URL(item.url).hostname}-${item.strategy}.json`);
+        const progress = [];
+        const results = await runBatch(items, auditFn, {
+            maxRequestsPerSecond: HIGH_RPS,
+            writeFn,
+            urlOf: (i) => i.url,
+            onProgress: (c, t, u, e) => progress.push({ c, t, u, e }),
+        });
+        expect(auditFn).toHaveBeenCalledTimes(2);
+        expect(writeFn).toHaveBeenCalledTimes(2);
+        expect(results).toHaveLength(2);
+        expect(results.every((r) => r.url === 'https://a.com')).toBe(true);
+        expect(results.map((r) => r.item.strategy).sort()).toEqual(['desktop', 'mobile']);
+        expect(results.find((r) => r.item.strategy === 'mobile').outputPath).toBe('/results/a.com-mobile.json');
+        expect(progress.every((p) => p.u === 'https://a.com')).toBe(true);
+    });
 });
