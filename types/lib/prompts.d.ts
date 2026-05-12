@@ -21,6 +21,7 @@ export function promptCrux(url: any, options: any): Promise<{
     apiKey: null;
     urls: never[];
     scope: any;
+    formFactors: null;
     concurrency: any;
     delay: any;
 }>;
@@ -28,6 +29,7 @@ export function promptCruxHistory(url: any, options: any): Promise<{
     apiKey: null;
     urls: never[];
     scope: any;
+    formFactors: null;
     concurrency: any;
     delay: any;
 }>;
@@ -46,6 +48,7 @@ export function promptClean(): Promise<{
 }>;
 export function parseProfileFlag(profileStr: any): any;
 export function parsePsiStrategies(strategyStr: any): any[];
+export function parseCruxFormFactors(formFactorStr: any): any[];
 export function parseSkipAuditsFlag(skipAuditsStr: any): any;
 export function parseBlockedUrlPatternsFlag(patternsStr: any): any[] | undefined;
 export function validateUrl(input: any): true | "Please enter a valid URL (e.g. https://example.com)";

@@ -16,22 +16,6 @@ function withCatch(fn) {
     };
 }
 
-function runBatchAction(results, startTime) {
-    const { formatElapsed } = require('../lib/utils');
-    const logger = require('../lib/logger');
-    process.stderr.write('\n');
-    const succeeded = results.filter((r) => !r.error);
-    const failed = results.filter((r) => r.error);
-    succeeded.forEach((r) => logger.outputPath(r.outputPath));
-    console.log('');
-    logger.summary(succeeded.length, failed.length);
-    logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
-    if (failed.length > 0) {
-        logger.failedList(failed.map((r) => `${r.url}: ${r.error}`));
-        process.exit(1);
-    }
-}
-
 async function labAction(url, options, cmd) {
     try {
         const chromeLauncher = require('chrome-launcher');
@@ -117,6 +101,22 @@ async function labAction(url, options, cmd) {
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
+        process.exit(1);
+    }
+}
+
+function runCruxBatchSummary(results, startTime) {
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    process.stderr.write('\n');
+    const succeeded = results.filter((r) => !r.error);
+    const failed = results.filter((r) => r.error);
+    succeeded.forEach((r) => logger.outputPath(r.outputPath));
+    console.log('');
+    logger.summary(succeeded.length, failed.length);
+    logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+    if (failed.length > 0) {
+        logger.failedList(failed.map((r) => `${r.url} [${r.formFactor}]: ${r.error}`));
         process.exit(1);
     }
 }
@@ -220,28 +220,37 @@ async function cruxAction(url, options) {
 
         normalizeUrlsForOriginScope(logger, resolved);
 
+        const formFactors = resolved.formFactors;
         const startTime = Date.now();
 
         if (resolved.urls.length === 1) {
             const { runCrux } = require('../lib/crux');
-            logger.action(`Querying CrUX API (${resolved.scope}) for: ${resolved.urls[0]}`);
-            const outputPath = await runCrux(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
+            logger.action(`Querying CrUX API (${resolved.scope}) for: ${resolved.urls[0]} [${formFactors.join(', ')}]`);
+            const outputPaths = await runCrux(resolved.urls[0], resolved.apiKey, {
+                scope: resolved.scope,
+                formFactors,
+                onNoData: (_formFactor, message) => logger.warn(message),
+            });
             const elapsed = formatElapsed(Date.now() - startTime);
-            logger.success(`CrUX results saved to: ${outputPath} (${elapsed})`);
+            outputPaths.forEach((p) => logger.success(`CrUX results saved to: ${p}`));
+            logger.footer(`(${elapsed})`);
             return;
         }
 
         const { runCruxBatch } = require('../lib/crux');
         const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
+        const totalRequests = resolved.urls.length * formFactors.length;
 
         logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-        logger.header(`Processing ${resolved.urls.length} URLs via CrUX API [${resolved.scope}] (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.header(`Processing ${resolved.urls.length} URLs × ${formFactors.length} form factors = ${totalRequests} CrUX requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.info(`Form factors: ${formFactors.join(', ')}`);
         console.log('');
         const results = await runCruxBatch(resolved.urls, resolved.apiKey, {
             scope: resolved.scope,
             concurrency,
             delayMs,
+            formFactors,
             onProgress(completed, total, targetUrl, error) {
                 const pct = Math.round((completed / total) * 100);
                 logger.progress(pct, completed, total, targetUrl);
@@ -250,7 +259,7 @@ async function cruxAction(url, options) {
                 }
             },
         });
-        runBatchAction(results, startTime);
+        runCruxBatchSummary(results, startTime);
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -267,28 +276,37 @@ async function cruxHistoryAction(url, options) {
 
         normalizeUrlsForOriginScope(logger, resolved);
 
+        const formFactors = resolved.formFactors;
         const startTime = Date.now();
 
         if (resolved.urls.length === 1) {
             const { runCruxHistory } = require('../lib/crux-history');
-            logger.action(`Querying CrUX History API (${resolved.scope}) for: ${resolved.urls[0]}`);
-            const outputPath = await runCruxHistory(resolved.urls[0], resolved.apiKey, { scope: resolved.scope });
+            logger.action(`Querying CrUX History API (${resolved.scope}) for: ${resolved.urls[0]} [${formFactors.join(', ')}]`);
+            const outputPaths = await runCruxHistory(resolved.urls[0], resolved.apiKey, {
+                scope: resolved.scope,
+                formFactors,
+                onNoData: (_formFactor, message) => logger.warn(message),
+            });
             const elapsed = formatElapsed(Date.now() - startTime);
-            logger.success(`CrUX History results saved to: ${outputPath} (${elapsed})`);
+            outputPaths.forEach((p) => logger.success(`CrUX History results saved to: ${p}`));
+            logger.footer(`(${elapsed})`);
             return;
         }
 
         const { runCruxHistoryBatch } = require('../lib/crux-history');
         const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
         const delayMs = resolved.delay || 0;
+        const totalRequests = resolved.urls.length * formFactors.length;
 
         logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-        logger.header(`Processing ${resolved.urls.length} URLs via CrUX History API [${resolved.scope}] (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.header(`Processing ${resolved.urls.length} URLs × ${formFactors.length} form factors = ${totalRequests} CrUX History requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+        logger.info(`Form factors: ${formFactors.join(', ')}`);
         console.log('');
         const results = await runCruxHistoryBatch(resolved.urls, resolved.apiKey, {
             scope: resolved.scope,
             concurrency,
             delayMs,
+            formFactors,
             onProgress(completed, total, targetUrl, error) {
                 const pct = Math.round((completed / total) * 100);
                 logger.progress(pct, completed, total, targetUrl);
@@ -297,7 +315,7 @@ async function cruxHistoryAction(url, options) {
                 }
             },
         });
-        runBatchAction(results, startTime);
+        runCruxBatchSummary(results, startTime);
     } catch (err) {
         const logger = require('../lib/logger');
         logger.error(`Error: ${err.message}`);
@@ -440,6 +458,7 @@ program
     .description('Extract CrUX data via CrUX API (origin or page-level, 28-day rolling average)')
     .argument('[url]', 'URL or origin to query')
     .option('--scope <scope>', 'Query scope: origin or page (default: origin; URL lists default to page)')
+    .option('--form-factor <form-factors>', 'Comma-separated form factors: phone, desktop, tablet (default: phone,desktop)')
     .option('--api-key <key>', 'CrUX API key (overrides WEB_PERF_PSI_API_KEY)')
     .option('--api-key-path <path>', 'Path to plain text file containing the API key')
     .option('--urls <urls>', 'Comma-separated URLs (page scope)')
@@ -453,6 +472,7 @@ program
     .description('Extract historical CrUX data via CrUX API (~6 months of weekly data points)')
     .argument('[url]', 'URL or origin to query (e.g. https://example.com)')
     .option('--scope <scope>', 'Query scope: origin or page (default: origin; URL lists default to page)')
+    .option('--form-factor <form-factors>', 'Comma-separated form factors: phone, desktop, tablet (default: phone,desktop)')
     .option('--api-key <key>', 'CrUX API key (overrides WEB_PERF_PSI_API_KEY)')
     .option('--api-key-path <path>', 'Path to plain text file containing the API key')
     .option('--urls <urls>', 'Comma-separated URLs (page scope)')

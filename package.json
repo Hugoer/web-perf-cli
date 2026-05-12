@@ -1,6 +1,6 @@
 {
   "name": "@hugoer/web-perf-cli",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Node.js CLI and library for automated web performance data collection. Gather raw performance signals from local Lighthouse audits, PageSpeed Insights (PSI), and the CrUX API",
   "main": "lib/index.js",
   "types": "types/lib/index.d.ts",

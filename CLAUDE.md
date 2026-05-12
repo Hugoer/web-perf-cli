@@ -47,16 +47,26 @@ node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY>
 node bin/web-perf.js psi --urls-file=<urls.txt> --strategy=mobile --api-key=<PSI_KEY>
 node bin/web-perf.js psi --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
 
-# CrUX: CrUX API (origin-level, default scope)
+# CrUX: CrUX API (origin-level, default scope) — defaults to phone + desktop (2 files per URL)
 node bin/web-perf.js crux --api-key=<PSI_KEY> <url>
 node bin/web-perf.js crux --scope=page --api-key=<PSI_KEY> <url>
 node bin/web-perf.js crux --scope=page --urls=<url1>,<url2> --api-key=<PSI_KEY>
 node bin/web-perf.js crux --scope=page --urls-file=<urls.txt> --api-key=<PSI_KEY> --concurrency=10 --delay=100
 
-# CrUX History: Historical CrUX data via CrUX API (~6 months of weekly data points)
+# CrUX: Form factor selection (default: phone,desktop — each URL produces 2 API requests + 2 files)
+node bin/web-perf.js crux --form-factor=phone --api-key=<PSI_KEY> <url>
+node bin/web-perf.js crux --form-factor=desktop --api-key=<PSI_KEY> <url>
+node bin/web-perf.js crux --form-factor=phone,desktop,tablet --api-key=<PSI_KEY> <url>
+node bin/web-perf.js crux --form-factor=phone --urls-file=<urls.txt> --api-key=<PSI_KEY>
+
+# CrUX History: Historical CrUX data via CrUX API (~6 months of weekly data points) — defaults to phone + desktop
 node bin/web-perf.js crux-history --api-key=<PSI_KEY> <url>
 node bin/web-perf.js crux-history --scope=page --api-key=<PSI_KEY> <url>
 node bin/web-perf.js crux-history --scope=page --urls=<url1>,<url2> --api-key=<PSI_KEY>
+
+# CrUX History: Form factor selection
+node bin/web-perf.js crux-history --form-factor=phone --api-key=<PSI_KEY> <url>
+node bin/web-perf.js crux-history --form-factor=phone,desktop,tablet --scope=page --urls-file=<urls.txt> --api-key=<PSI_KEY>
 
 # Sitemap: Extract URLs from sitemap.xml (auto-detects if URL points to a sitemap)
 node bin/web-perf.js sitemap <url>
@@ -94,8 +104,8 @@ Each command writes to its own subdirectory under `results/`:
 - `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`)
 - `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.json`, one file per strategy)
 - `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.clean.json`)
-- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMM.json`)
-- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json`, one file per form factor)
+- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json`, one file per form factor)
 - `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMM.json`)
 - `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMM.json`)
 

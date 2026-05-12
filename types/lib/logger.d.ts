@@ -1,6 +1,7 @@
 export function action(message: any): void;
 export function success(message: any): void;
 export function error(message: any): void;
+export function warn(message: any): void;
 export function info(message: any): void;
 export function header(message: any): void;
 export function summary(succeeded: any, failed: any): void;
