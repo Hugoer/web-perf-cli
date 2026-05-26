@@ -23,9 +23,11 @@ export type LighthouseCategory = {
 export type LabReport = {
     lighthouseVersion: string;
     requestedUrl: string;
+    mainDocumentUrl?: string | undefined;
+    finalDisplayedUrl?: string | undefined;
     finalUrl: string;
     fetchTime: string;
-    formFactor: "desktop" | "mobile";
+    formFactor?: "desktop" | "mobile" | undefined;
     timing: {
         total: number;
         breakdown: Record<string, number>;
@@ -57,9 +59,11 @@ export function runLabAudit(url: string, labOptions?: {
  * @typedef {Object} LabReport
  * @property {string} lighthouseVersion
  * @property {string} requestedUrl
+ * @property {string} [mainDocumentUrl]
+ * @property {string} [finalDisplayedUrl]
  * @property {string} finalUrl
  * @property {string} fetchTime
- * @property {'desktop'|'mobile'} formFactor
+ * @property {'desktop'|'mobile'} [formFactor]
  * @property {{ total: number, breakdown: Record<string, number> }} timing
  * @property {Record<string, LighthouseCategory>} categories
  * @property {Record<string, LighthouseAudit>} audits

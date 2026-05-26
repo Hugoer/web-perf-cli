@@ -22,9 +22,11 @@ export type LighthouseCategory = {
 export type LabReport = {
     lighthouseVersion: string;
     requestedUrl: string;
+    mainDocumentUrl?: string | undefined;
+    finalDisplayedUrl?: string | undefined;
     finalUrl: string;
     fetchTime: string;
-    formFactor: "desktop" | "mobile";
+    formFactor?: "desktop" | "mobile" | undefined;
     categories: Record<string, LighthouseCategory>;
     audits: Record<string, LighthouseAudit>;
     _clean?: boolean | undefined;
