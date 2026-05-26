@@ -25,11 +25,18 @@ async function labAction(url, options, cmd) {
         const logger = require('../lib/logger');
         const stripJsonPropsOpt = cmd?.getOptionValueSource('stripJsonProps') === 'cli' ? options.stripJsonProps : undefined;
         const cleanOpt = cmd?.getOptionValueSource('clean') === 'cli' ? options.clean : undefined;
+        const { LAB_CATEGORIES } = require('../lib/profiles');
         const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt, clean: cleanOpt });
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
         const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
+        // promptLab always sets resolved.categories (parsed from --category or the checkbox)
+        const categories = resolved.categories || [];
         const stripJsonProps = resolved.stripJsonProps ?? options.stripJsonProps;
         const clean = resolved.clean ?? false;
+
+        if (categories.length > 0 && categories.length < LAB_CATEGORIES.length) {
+            logger.info(`Categories: ${categories.join(', ')}`);
+        }
 
         const totalUrls = resolved.urls.length;
         const totalRuns = totalUrls * resolved.runs.length;
@@ -59,7 +66,7 @@ async function labAction(url, options, cmd) {
                     }
                     try {
                         // eslint-disable-next-line no-await-in-loop
-                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, stripJsonProps, clean, port: chrome.port, silent: isBatch });
+                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, categories, stripJsonProps, clean, port: chrome.port, silent: isBatch });
                         results.push({ url: targetUrl, profile: label, outputPath });
                         if (!isBatch) {
                             const elapsed = formatElapsed(Date.now() - startTime);
@@ -434,6 +441,7 @@ program
     .option('--urls-file <path>', 'Path to a file with one URL per line')
     .option('--skip-audits <audits>', 'Comma-separated audits to skip (default: full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps)')
     .option('--blocked-url-patterns <patterns>', 'Comma-separated URL patterns to block during audit (e.g. *.google-analytics.com,*.facebook.net)')
+    .option('--category <categories>', 'Lighthouse categories, comma-separated: performance, accessibility, best-practices, seo, agentic-browsing (default: all)')
     .option('--no-strip-json-props', 'Disable stripping of unneeded properties (i18n, timing) from JSON output')
     .option('--clean', 'Write an AI-friendly clean copy to results/lab/clean/ alongside the raw file')
     .action(withCatch(labAction));

@@ -38,7 +38,7 @@ export type LabReport = {
 export function runLab(url: any, labOptions?: {}): Promise<string>;
 /**
  * @param {string} url
- * @param {{ port?: number, profile?: string, network?: string, device?: string, skipAudits?: string[], blockedUrlPatterns?: string[], stripJsonProps?: boolean, silent?: boolean }} [labOptions]
+ * @param {{ port?: number, profile?: string, network?: string, device?: string, skipAudits?: string[], blockedUrlPatterns?: string[], categories?: string[], stripJsonProps?: boolean, silent?: boolean }} [labOptions]
  * @returns {Promise<LabReport>}
  */
 export function runLabAudit(url: string, labOptions?: {
@@ -48,6 +48,7 @@ export function runLabAudit(url: string, labOptions?: {
     device?: string;
     skipAudits?: string[];
     blockedUrlPatterns?: string[];
+    categories?: string[];
     stripJsonProps?: boolean;
     silent?: boolean;
 }): Promise<LabReport>;
