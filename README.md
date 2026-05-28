@@ -70,10 +70,10 @@ Available commands: `lab`, `psi`, `crux`, `crux-history`, `links`, `sitemap`, `l
 
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
-| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns`, `--no-strip-json-props` |
-| `psi` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--category`, `--concurrency`, `--delay` |
-| `crux` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
-| `crux-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
+| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--category`, `--clean`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns`, `--no-strip-json-props` |
+| `psi` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--strategy`, `--category`, `--concurrency`, `--delay` |
+| `crux` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--form-factor`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
+| `crux-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--form-factor`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
 | `sitemap` | Domain's `sitemap.xml` (recursive, auto-detects sitemap URLs) | JSON list of all URLs found | `--depth`, `--delay`, `--output-ai` |
 | `links` | Rendered DOM via headless Chrome (SPA-compatible) | JSON list of internal links | `--output-ai` |
 | `list-profiles` | — | Prints available simulation profiles | — |
@@ -130,8 +130,10 @@ web-perf lab --urls-file=<urls.txt> --profile=all
 | `--device <preset>` | No | Device emulation: `moto-g-power`, `iphone-12`, `iphone-14`, `ipad`, `desktop`, `desktop-large` |
 | `--urls <urls>` | No | Comma-separated list of URLs to audit |
 | `--urls-file <path>` | No | Path to a file with one URL per line |
+| `--category <list>` | No | Comma-separated Lighthouse categories to run. Values: `performance`, `accessibility`, `best-practices`, `seo`, `agentic-browsing`. Default: all |
 | `--skip-audits <audits>` | No | Comma-separated Lighthouse audits to skip. Default: `full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps` |
 | `--blocked-url-patterns <patterns>` | No | Comma-separated URL patterns to block during the audit (e.g. `*.google-analytics.com,*.facebook.net`). Uses Chrome DevTools Protocol to prevent matching assets from being downloaded |
+| `--clean` | No | Write an AI-friendly `.clean.json` alongside the raw output |
 | `--no-strip-json-props` | No | Disable stripping of unneeded properties (`i18n`, `timing`) from JSON output. Omit or leave blank to strip (default). See [ADR-001](docs/decisions/ADR-001-strip-json-props.md) for rationale |
 
 Run `list-profiles`, `list-networks`, or `list-devices` to see all available presets:
@@ -242,6 +244,7 @@ web-perf crux --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --delay=10
 |-----------|----------|-------------|
 | `<url>` | Yes\* | URL or origin to query |
 | `--scope <scope>` | No | Query scope: `origin` or `page`. Default is `origin` for single URL input, and `page` when using `--urls` or `--urls-file` |
+| `--form-factor <list>` | No | Comma-separated form factors to query. Values: `phone`, `desktop`, `tablet`. Default: `phone,desktop` (two API requests and two output files per URL) |
 | `--api-key <key>` | No\*\* | CrUX API key |
 | `--api-key-path <path>` | No\*\* | Path to plain text file containing the API key |
 | `--urls <urls>` | No | Comma-separated URLs (page scope) |
@@ -254,7 +257,7 @@ Built-in quota protection: CrUX request starts are capped at 2.5 requests/second
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Provide via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables.
 
-**Output:** `results/crux/crux-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/crux/crux-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
 
 ---
 
@@ -278,6 +281,7 @@ web-perf crux-history --urls-file=<urls.txt> --api-key=<KEY> --concurrency=10 --
 |-----------|----------|-------------|
 | `<url>` | Yes\* | URL or origin to query (e.g. `https://example.com`) |
 | `--scope <scope>` | No | Query scope: `origin` or `page`. Default is `origin` for single URL input, and `page` when using `--urls` or `--urls-file` |
+| `--form-factor <list>` | No | Comma-separated form factors to query. Values: `phone`, `desktop`, `tablet`. Default: `phone,desktop` (two API requests and two output files per URL) |
 | `--api-key <key>` | No\*\* | CrUX API key |
 | `--api-key-path <path>` | No\*\* | Path to plain text file containing the API key |
 | `--urls <urls>` | No | Comma-separated URLs (page scope) |
@@ -290,7 +294,7 @@ Built-in quota protection: CrUX History request starts are capped at 2.5 request
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Credential resolution is identical to `crux` (see above).
 
-**Output:** `results/crux-history/crux-history-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/crux-history/crux-history-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
 
 ---
 
@@ -404,8 +408,8 @@ const { runLabAudit }                      = require('@hugoer/web-perf/lab');
 
 | Function | Module | Returns |
 |----------|--------|---------|
-| `runLabAudit(url, options?)` | `web-perf/lab` | `Promise<LabReport>` |
-| `runPsiAudit(url, apiKey, categories?)` | `web-perf/psi` | `Promise<PsiReport>` |
+| `runLabAudit(url, { profile?, network?, device?, categories?, skipAudits?, blockedUrlPatterns?, clean?, stripJsonProps? }?)` | `web-perf/lab` | `Promise<LabReport>` |
+| `runPsiAudit(url, apiKey, categories?, strategy?)` | `web-perf/psi` | `Promise<PsiReport>` |
 | `runPsiAuditBatch(urls, apiKey, categories, options?)` | `web-perf/psi` | `Promise<PsiBatchResult[]>` |
 | `runCruxAudit(url, apiKey, options?)` | `web-perf/crux` | `Promise<CruxReport>` |
 | `runCruxAuditBatch(urls, apiKey, options?)` | `web-perf/crux` | `Promise<CruxBatchResult[]>` |

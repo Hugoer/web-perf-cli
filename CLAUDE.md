@@ -23,6 +23,12 @@ node bin/web-perf.js lab --profile=low --clean <url>
 node bin/web-perf.js lab --blocked-url-patterns='*.google-analytics.com,*.facebook.net' <url>
 node bin/web-perf.js lab --profile=low --blocked-url-patterns='*.ads.example.com' <url>
 
+# Lab: Filter Lighthouse categories (maps to onlyCategories). Default: all (incl. agentic-browsing).
+# Categories: performance, accessibility, best-practices, seo, agentic-browsing
+node bin/web-perf.js lab --category=agentic-browsing <url>
+node bin/web-perf.js lab --category=performance,seo <url>
+node bin/web-perf.js lab --profile=low --category=agentic-browsing <url>
+
 # Lab: Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
 node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
