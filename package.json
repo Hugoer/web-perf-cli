@@ -76,11 +76,11 @@
     "puppeteer-core": "^25.9.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
-    "@googleapis/chromeuxreport": "^7.0.1",
-    "@googleapis/pagespeedonline": "^5.0.1",
-    "@netcentric/eslint-config": "^1.0.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@googleapis/chromeuxreport": "^8.0.0",
+    "@googleapis/pagespeedonline": "^6.0.0",
+    "@netcentric/eslint-config": "^1.1.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.4.1",
