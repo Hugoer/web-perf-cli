@@ -70,10 +70,9 @@
     "chalk": "^4.1.2",
     "chrome-launcher": "^1.1.0",
     "commander": "^12.1.0",
+    "glob": "^11.0.0",
     "inquirer": "^8.2.7",
     "lighthouse": "^13.3.0",
-    "glob": "^11.0.0",
-    "node-fetch": "^2.7.0",
     "puppeteer-core": "^24.40.0"
   },
   "devDependencies": {
@@ -90,7 +89,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.19"
   },
   "repository": {
     "type": "git",
