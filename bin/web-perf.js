@@ -207,15 +207,13 @@ function normalizeUrlsForOriginScope(logger, resolved) {
     if (resolved.scope !== 'origin') {
         return;
     }
-    const { normalizeOrigin } = require('../lib/utils');
-    resolved.urls = resolved.urls.map((u) => {
-        const origin = normalizeOrigin(u);
-        const full = u.startsWith('http') ? u : `https://${u}`;
-        if (full.replace(/\/+$/, '') !== origin) {
-            logger.info(`URL normalized to origin: ${u} → ${origin}`);
-        }
-        return origin;
-    });
+    const { normalizeUrlsToOrigins } = require('../lib/utils');
+    const { origins, normalized, duplicatesRemoved } = normalizeUrlsToOrigins(resolved.urls);
+    normalized.forEach(({ from, to }) => logger.info(`URL normalized to origin: ${from} → ${to}`));
+    if (duplicatesRemoved > 0) {
+        logger.info(`Origin normalization: ${duplicatesRemoved} duplicate origin(s) removed`);
+    }
+    resolved.urls = origins;
 }
 
 async function cruxAction(url, options) {

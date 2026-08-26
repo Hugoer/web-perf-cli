@@ -3,6 +3,21 @@ export function buildFilename(url: any, command: any, suffix: any, ext?: string)
 export function formatDate(): string;
 export function formatElapsed(ms: any): string;
 export function normalizeOrigin(url: any): string;
+/**
+ * Maps URLs to their origins and removes the duplicates that collapse onto the same origin.
+ * Distinct pages of one site (`https://a.com/x`, `https://a.com/y`) become a single origin,
+ * so origin-scoped commands issue one request instead of N identical ones.
+ * @param {string[]} urls
+ * @returns {{ origins: string[], normalized: Array<{ from: string, to: string }>, duplicatesRemoved: number }}
+ */
+export function normalizeUrlsToOrigins(urls: string[]): {
+    origins: string[];
+    normalized: Array<{
+        from: string;
+        to: string;
+    }>;
+    duplicatesRemoved: number;
+};
 export function normalizeUrlForAi(url: any): string;
 export function writeAiOutput(urls: any, referenceUrl: any, command: any): string;
 export function createRateLimiter({ maxRequestsPerSecond }: {
