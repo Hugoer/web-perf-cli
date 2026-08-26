@@ -68,11 +68,11 @@
   },
   "dependencies": {
     "chalk": "^4.1.2",
-    "chrome-launcher": "^1.1.0",
+    "chrome-launcher": "^1.2.1",
     "commander": "^12.1.0",
     "glob": "^11.0.0",
     "inquirer": "^8.2.7",
-    "lighthouse": "^13.3.0",
+    "lighthouse": "^13.4.1",
     "puppeteer-core": "^24.40.0"
   },
   "devDependencies": {
