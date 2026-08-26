@@ -71,7 +71,7 @@
     "chrome-launcher": "^1.2.1",
     "commander": "^15.0.0",
     "glob": "^13.0.6",
-    "inquirer": "^8.2.7",
+    "inquirer": "^14.1.0",
     "lighthouse": "^13.4.1",
     "puppeteer-core": "^25.9.0"
   },
