@@ -24,6 +24,9 @@
     "default-param-last": "off",
     "no-console": "off",
     "no-prototype-builtins": "off",
+    // chalk 6 ships an "exports" map with no "main" field; eslint-plugin-import's
+    // node resolver reads "main" and cannot follow it. Runtime resolution works.
+    "import/no-unresolved": ["error", { "ignore": ["^chalk$"] }],
     "import/order": [
       "error",
       {

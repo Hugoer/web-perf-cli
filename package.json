@@ -1,6 +1,6 @@
 {
   "name": "@hugoer/web-perf-cli",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Node.js CLI and library for automated web performance data collection. Gather raw performance signals from local Lighthouse audits, PageSpeed Insights (PSI), and the CrUX API",
   "main": "lib/index.js",
   "types": "types/lib/index.d.ts",
@@ -67,30 +67,29 @@
     "generate-types": "tsc --project tsconfig.types.json"
   },
   "dependencies": {
-    "chalk": "^4.1.2",
-    "chrome-launcher": "^1.1.0",
-    "commander": "^12.1.0",
-    "inquirer": "^8.2.7",
-    "lighthouse": "^13.3.0",
-    "glob": "^11.0.0",
-    "node-fetch": "^2.7.0",
-    "puppeteer-core": "^24.40.0"
+    "chalk": "^6.0.0",
+    "chrome-launcher": "^1.2.1",
+    "commander": "^15.0.0",
+    "glob": "^13.0.6",
+    "inquirer": "^14.1.0",
+    "lighthouse": "^13.4.1",
+    "puppeteer-core": "^25.9.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
-    "@googleapis/chromeuxreport": "^7.0.1",
-    "@googleapis/pagespeedonline": "^5.0.1",
-    "@netcentric/eslint-config": "^1.0.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@googleapis/chromeuxreport": "^8.0.0",
+    "@googleapis/pagespeedonline": "^6.0.0",
+    "@netcentric/eslint-config": "^1.1.0",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "typescript": "6.0.2",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.11"
   },
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.19"
   },
   "repository": {
     "type": "git",

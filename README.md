@@ -14,7 +14,7 @@ Node.js CLI and library for automated web performance data collection. Gather ra
 
 ## Requirements
 
-- **Node.js** >= 18
+- **Node.js** >= 22.19
 - **Google Chrome** installed locally (required for `lab` and `links`)
 - **Google Cloud API key** with PageSpeed Insights API and/or CrUX API enabled (required for `psi`, `crux`, `crux-history`) — pass inline with `--api-key`, via a file with `--api-key-path`, or set `WEB_PERF_PSI_API_KEY` (key) or `WEB_PERF_PSI_API_KEY_PATH` (file path) environment variable
 
