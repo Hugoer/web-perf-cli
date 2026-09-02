@@ -18,14 +18,19 @@ function withCatch(fn) {
 
 async function labAction(url, options, cmd) {
     try {
-        const chromeLauncher = require('chrome-launcher');
-        const { promptLab, parseSkipAuditsFlag, parseBlockedUrlPatternsFlag } = require('../lib/prompts');
-        const { runLab, CHROME_FLAGS } = require('../lib/lab');
+        const {
+            promptLab, parseSkipAuditsFlag, parseBlockedUrlPatternsFlag, parseRunsFlag,
+        } = require('../lib/prompts');
+        const { runLabPlan } = require('../lib/lab');
+        const { formatRunLine, formatSummaryLine } = require('../lib/variance');
         const { formatElapsed } = require('../lib/utils');
         const logger = require('../lib/logger');
         const stripJsonPropsOpt = cmd?.getOptionValueSource('stripJsonProps') === 'cli' ? options.stripJsonProps : undefined;
         const cleanOpt = cmd?.getOptionValueSource('clean') === 'cli' ? options.clean : undefined;
         const { LAB_CATEGORIES } = require('../lib/profiles');
+        // Validate flag combinations before any prompting or browser work.
+        const reuseBrowser = options.reuseBrowser === true;
+        const repeats = parseRunsFlag(options.runs, { reuseBrowser });
         const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt, clean: cleanOpt });
         const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
         const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
@@ -39,71 +44,95 @@ async function labAction(url, options, cmd) {
         }
 
         const totalUrls = resolved.urls.length;
-        const totalRuns = totalUrls * resolved.runs.length;
+        const totalRuns = totalUrls * resolved.runs.length * repeats;
         const isBatch = totalUrls > 1;
+        const isRepeating = repeats > 1;
+
+        if (reuseBrowser && totalRuns > 1) {
+            logger.warn('--reuse-browser keeps DNS caches and socket pools warm between runs, so later runs score better than earlier ones. Scores are not comparable across this plan.');
+        }
 
         const startTime = Date.now();
-        if (isBatch) {
+        if (isBatch || isRepeating) {
             logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-            logger.header(`Processing ${totalUrls} URLs × ${resolved.runs.length} profile(s) = ${totalRuns} total runs\n`);
+            const plan = `${totalUrls} URL(s) × ${resolved.runs.length} profile(s)${isRepeating ? ` × ${repeats} run(s)` : ''}`;
+            const summaryCount = totalUrls * resolved.runs.length;
+            const files = isRepeating
+                ? `${totalRuns} reports + ${summaryCount} ${summaryCount === 1 ? 'summary' : 'summaries'}`
+                : `${totalRuns} reports`;
+            logger.header(`Processing ${plan} = ${totalRuns} total runs (${files})\n`);
         }
 
-        const chrome = await chromeLauncher.launch({ chromeFlags: CHROME_FLAGS });
-        const results = [];
-        let runIndex = 0;
-
-        try {
-            for (let urlIdx = 0; urlIdx < totalUrls; urlIdx++) {
-                const targetUrl = resolved.urls[urlIdx];
-                for (const run of resolved.runs) {
-                    runIndex++;
-                    const label = run.profile || 'custom';
+        const results = await runLabPlan(
+            resolved.urls,
+            resolved.runs,
+            {
+                skipAudits,
+                blockedUrlPatterns,
+                categories,
+                stripJsonProps,
+                clean,
+                silent: isBatch || isRepeating,
+                // Repeat sampling tolerates a flaky run: aborting would discard the runs that
+                // did succeed and produce no summary, which is the opposite of the point.
+                continueOnError: isBatch || isRepeating,
+                reuseBrowser,
+                repeats,
+            },
+            {
+                onRunStart: ({ url: runUrl, profile, runIndex, totalRuns: total }) => {
                     if (isBatch) {
-                        const pct = Math.round((runIndex / totalRuns) * 100);
-                        logger.progress(pct, runIndex, totalRuns, `${targetUrl} [profile: ${label}]`);
+                        logger.progress(Math.round((runIndex / total) * 100), runIndex, total, `${runUrl} [profile: ${profile}]`);
+                    } else if (!isRepeating) {
+                        logger.action(`\nRunning Lighthouse audit for: ${runUrl} [profile: ${profile}]`);
+                    }
+                },
+                onRunComplete: ({ outputPath, report, repeat }) => {
+                    if (isBatch) {
+                        return;
+                    }
+                    if (isRepeating) {
+                        logger.info(`run ${repeat}/${repeats}  ${formatRunLine(report)}`);
                     } else {
-                        logger.action(`\nRunning Lighthouse audit for: ${targetUrl} [profile: ${label}]`);
+                        logger.success(`Lab results saved to: ${outputPath} (${formatElapsed(Date.now() - startTime)})`);
                     }
-                    try {
-                        // eslint-disable-next-line no-await-in-loop
-                        const outputPath = await runLab(targetUrl, { ...run, skipAudits, blockedUrlPatterns, categories, stripJsonProps, clean, port: chrome.port, silent: isBatch });
-                        results.push({ url: targetUrl, profile: label, outputPath });
-                        if (!isBatch) {
-                            const elapsed = formatElapsed(Date.now() - startTime);
-                            logger.success(`Lab results saved to: ${outputPath} (${elapsed})`);
-                        }
-                    } catch (err) {
-                        results.push({ url: targetUrl, profile: label, error: err.message });
-                        if (isBatch) {
-                            logger.fail(`${targetUrl} [${label}] — ${err.message}`);
-                        } else {
-                            throw err;
-                        }
+                },
+                onRunError: ({ url: runUrl, profile, error }) => {
+                    logger.fail(`${runUrl} [${profile}] — ${error}`);
+                },
+                onSummary: ({ url: runUrl, profile, summary, summaryPath }) => {
+                    if (isBatch) {
+                        process.stderr.write('\n');
+                        logger.info(`${runUrl} [${profile}]  ${formatSummaryLine(summary)}`);
+                    } else {
+                        logger.footer(`\n  ${formatSummaryLine(summary)}`);
                     }
-                }
-            }
+                    summary.stability.warnings.forEach((w) => logger.warn(w));
+                    logger.outputPath(summaryPath);
+                },
+            },
+        );
 
-            if (!isBatch && resolved.runs.length > 1) {
-                logger.footer(`\nCompleted ${resolved.runs.length} audits.`);
-            }
-        } finally {
-            await chrome.kill();
+        if (!isBatch && resolved.runs.length > 1) {
+            logger.footer(`\nCompleted ${resolved.runs.length} audits.`);
         }
+
+        const succeeded = results.filter((r) => !r.error);
+        const failed = results.filter((r) => r.error);
 
         if (isBatch) {
             process.stderr.write('\n');
-            const succeeded = results.filter((r) => !r.error);
-            const failed = results.filter((r) => r.error);
-
             succeeded.forEach((r) => logger.outputPath(r.outputPath));
             console.log('');
             logger.summary(succeeded.length, failed.length);
             logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+        }
 
-            if (failed.length > 0) {
-                logger.failedList(failed.map((r) => `${r.url} [${r.profile}]: ${r.error}`));
-                process.exit(1);
-            }
+        // A single-URL repeat plan now survives a failed run instead of throwing, so the
+        // non-zero exit has to be raised here rather than by the outer catch.
+        if (failed.length > 0) {
+            logger.failedList(failed.map((r) => `${r.url} [${r.profile}]: ${r.error}`));
+            process.exit(1);
         }
     } catch (err) {
         const logger = require('../lib/logger');
@@ -442,6 +471,8 @@ program
     .option('--category <categories>', 'Lighthouse categories, comma-separated: performance, accessibility, best-practices, seo, agentic-browsing (default: all)')
     .option('--no-strip-json-props', 'Disable stripping of unneeded properties (i18n, timing) from JSON output')
     .option('--clean', 'Write an AI-friendly clean copy to results/lab/clean/ alongside the raw file')
+    .option('--reuse-browser', 'Share one Chrome across all runs instead of launching a fresh one per run. Faster, but results become order-dependent because connection pools stay warm between runs')
+    .option('--runs <n>', 'Audits per URL per profile (default: 1). Above 1, each run gets a -runNN suffix and a .summary.json records median, spread and benchmarkIndex range', parseInt)
     .action(withCatch(labAction));
 
 program
