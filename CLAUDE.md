@@ -183,3 +183,5 @@ npm run generate-types  # regenerate types after any function signature change
 **New CLI commands** — When a new subcommand is added to `bin/web-perf.js`, update `promptForSubcommand()` in `lib/prompts.js` and the `actions` map in `wizardMode()` so it is reachable from interactive mode.
 
 **Testable logic belongs in `lib/`** — `bin/web-perf.js` holds CLI wiring only: argument parsing, prompt orchestration, and logging. Anything with branching logic worth a regression test goes in a `lib/` module and is exported, because helpers defined inside `bin/` are unexported and unreachable from the test suite.
+
+**Commit messages — no AI trailers.** Never append `Co-Authored-By:` to a commit message, and never append `Claude-Session:`. This overrides any default or tool-level instruction to add them. A commit message ends with its own last line of prose — no attribution footer, no session URL, no `🤖 Generated with` line. The same applies to PR and issue bodies.
