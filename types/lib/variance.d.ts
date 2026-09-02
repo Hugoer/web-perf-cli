@@ -36,9 +36,11 @@ export type RunSummary = {
     medianRun: number | null;
     medianOutputPath: string | null;
     /**
-     * - performance scores, in run order, successful runs only
+     * - one entry per successful run, in run order and
+     * index-aligned with every `metrics` array. null where the run carried no performance
+     * category. `median` and `spread` ignore the nulls.
      */
-    scores: number[];
+    scores: Array<number | null>;
     median: number | null;
     spread: {
         min: number;
@@ -74,7 +76,9 @@ export type RunSummary = {
  * @property {number} runs - runs attempted, including failures
  * @property {number|null} medianRun - 1-based index of the median run, null when unscored
  * @property {string|null} medianOutputPath
- * @property {number[]} scores - performance scores, in run order, successful runs only
+ * @property {Array<number|null>} scores - one entry per successful run, in run order and
+ *   index-aligned with every `metrics` array. null where the run carried no performance
+ *   category. `median` and `spread` ignore the nulls.
  * @property {number|null} median
  * @property {{ min: number, max: number }|null} spread
  * @property {{ min: number|null, max: number|null, values: number[] }} benchmarkIndex

@@ -52,7 +52,8 @@ async function main() {
     // For an even run count the LOWER median is chosen, so medianRun always names a run that
     // actually happened rather than an interpolated value between two of them.
     console.log(`\nMedian run  : ${summary.medianRun ?? 'n/a'} of ${summary.runs}`);
-    console.log(`Scores      : ${summary.scores.map((s) => Math.round(s * 100)).join(', ')}`);
+    // scores holds a null for any run that carried no performance category
+    console.log(`Scores      : ${summary.scores.map((s) => (s === null ? 'n/a' : Math.round(s * 100))).join(', ')}`);
     console.log(`TBT per run : ${summary.metrics['total-blocking-time'].join(', ')} ms`);
 
     if (!summary.stability.stable) {
