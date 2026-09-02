@@ -108,7 +108,7 @@ node bin/web-perf.js clean 'results/**/*.json'                # glob
 ```
 bin/web-perf.js    # CLI entrypoint (commander)
 lib/lab.js             # Lighthouse via chrome-launcher
-lib/psi.js             # PageSpeed Insights via node-fetch
+lib/psi.js             # PageSpeed Insights via global fetch
 lib/crux.js            # CrUX REST API (origin/page-level, 28-day rolling average)
 lib/crux-history.js    # CrUX History REST API (~6 months of weekly data points)
 lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
@@ -145,8 +145,7 @@ CLI flags (`--api-key`, `--api-key-path`) take precedence over environment varia
 
 ## Key Dependencies
 
-- `lighthouse` v12 — default export via `.default` (ESM-style in CJS)
-- `node-fetch` v2 — CJS-compatible version
+- `lighthouse` v13 — ESM-only, so it is loaded via dynamic `import()` inside `runLabAudit`
 - `puppeteer-core` — headless Chrome DOM access (connects to chrome-launcher instance)
 
 ## CrUX API
