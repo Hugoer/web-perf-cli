@@ -1,8 +1,9 @@
 /**
  * CrUX History audit — save to disk.
  *
- * Fetches ~6 months of weekly CrUX data for a single URL and writes it
- * to results/crux-history/<filename>.json. Prints the output path when done.
+ * Fetches ~6 months of weekly CrUX data for a single URL and writes one file per form
+ * factor to results/crux-history/crux-history-<hostname>-<timestamp>-<form-factor>.json.
+ * Defaults to phone + desktop, so this writes two files. Prints each path when done.
  *
  * Requires a PSI/CrUX API key:
  *   export WEB_PERF_PSI_API_KEY=your_key_here
@@ -23,8 +24,16 @@ if (!API_KEY) {
 async function main() {
     console.log(`Fetching CrUX history for ${URL} and saving to disk...\n`);
 
-    const outputPath = await runCruxHistory(URL, API_KEY, { scope: 'page' });
-    console.log(`Saved: ${outputPath}`);
+    // runCruxHistory returns ONE PATH PER FORM FACTOR — it defaults to phone + desktop,
+    // so this writes two files. Form factors with no CrUX data are skipped, not thrown.
+    const outputPaths = await runCruxHistory(URL, API_KEY, {
+        scope: 'page',
+        onNoData: (formFactor, message) => console.warn(`  no data for ${formFactor}: ${message}`),
+    });
+
+    for (const p of outputPaths) {
+        console.log(`Saved: ${p}`);
+    }
 }
 
 main().catch((err) => {

@@ -47,7 +47,8 @@ async function main() {
         }
     }
 
-    console.log(`\nForm factor : ${report.formFactor}`);
+    // Lighthouse 13 moved formFactor from the report root into configSettings
+    console.log(`\nForm factor : ${report.configSettings?.formFactor ?? 'n/a'}`);
     console.log(`Total time  : ${report.timing.total}ms`);
 }
 
