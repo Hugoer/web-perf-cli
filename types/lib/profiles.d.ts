@@ -124,6 +124,8 @@ export const DEVICE_PRESETS: {
     };
 };
 export const LAB_CATEGORIES: string[];
+export const DEVTOOLS_RTT_ADJUSTMENT_FACTOR: 3.75;
+export const DEVTOOLS_THROUGHPUT_ADJUSTMENT_FACTOR: 0.9;
 export const MOBILE_UA: "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36";
 export const DESKTOP_UA: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 /**
@@ -156,7 +158,11 @@ export function resolveProfileSettings({ profile, network, device }?: {
     emulatedUserAgent: string;
 };
 /**
+ * Converts a nominal network preset into a Lighthouse `throttling` settings object,
+ * applying the DevTools emulation factors. Callers must pass nominal (pre-adjustment)
+ * `throughputKbps` and `uploadKbps` — see the INVARIANT note on NETWORK_PRESETS.
  * @param {{ rttMs: number, throughputKbps: number, uploadKbps: number, cpuSlowdownMultiplier: number }} preset
+ * @returns {{ rttMs: number, throughputKbps: number, requestLatencyMs: number, downloadThroughputKbps: number, uploadThroughputKbps: number, cpuSlowdownMultiplier: number }}
  */
 export function buildThrottling(preset: {
     rttMs: number;
