@@ -145,12 +145,17 @@ function runCruxBatchSummary(results, startTime) {
     const { formatElapsed } = require('../lib/utils');
     const logger = require('../lib/logger');
     process.stderr.write('\n');
-    const succeeded = results.filter((r) => !r.error);
+    // A CrUX 404 means the page is not in the dataset — reported, but not a failed run.
+    const noData = results.filter((r) => r.noData);
     const failed = results.filter((r) => r.error);
+    const succeeded = results.filter((r) => !r.error && !r.noData);
     succeeded.forEach((r) => logger.outputPath(r.outputPath));
     console.log('');
-    logger.summary(succeeded.length, failed.length);
+    logger.summary(succeeded.length, failed.length, noData.length);
     logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+    if (noData.length > 0) {
+        logger.noDataList(noData.map((r) => `${r.url} [${r.formFactor}]`));
+    }
     if (failed.length > 0) {
         logger.failedList(failed.map((r) => `${r.url} [${r.formFactor}]: ${r.error}`));
         process.exit(1);
@@ -285,10 +290,12 @@ async function cruxAction(url, options) {
             concurrency,
             delayMs,
             formFactors,
-            onProgress(completed, total, targetUrl, error) {
+            onProgress(completed, total, targetUrl, error, statusCode) {
                 const pct = Math.round((completed / total) * 100);
                 logger.progress(pct, completed, total, targetUrl);
-                if (error) {
+                // 404 is "not in the CrUX dataset", reported in the summary rather than
+                // inline as a failure.
+                if (error && statusCode !== 404) {
                     logger.fail(`${targetUrl} — ${error}`);
                 }
             },
@@ -341,10 +348,12 @@ async function cruxHistoryAction(url, options) {
             concurrency,
             delayMs,
             formFactors,
-            onProgress(completed, total, targetUrl, error) {
+            onProgress(completed, total, targetUrl, error, statusCode) {
                 const pct = Math.round((completed / total) * 100);
                 logger.progress(pct, completed, total, targetUrl);
-                if (error) {
+                // 404 is "not in the CrUX dataset", reported in the summary rather than
+                // inline as a failure.
+                if (error && statusCode !== 404) {
                     logger.fail(`${targetUrl} — ${error}`);
                 }
             },

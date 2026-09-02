@@ -14,12 +14,14 @@ export type CruxBatchResult = {
     url: string;
     formFactor: CruxFormFactor;
     data: CruxReport | null;
+    noData: boolean;
     error: string | null;
 };
 export type CruxBatchWriteResult = {
     url: string;
     formFactor: CruxFormFactor;
     outputPath: string | null;
+    noData: boolean;
     error: string | null;
 };
 /** @import { chromeuxreport_v1 } from '@googleapis/chromeuxreport' */
@@ -35,8 +37,8 @@ export type CruxBatchWriteResult = {
  * }} CruxReport
  *
  * @typedef {{ url: string, formFactor: CruxFormFactor }} CruxWorkItem
- * @typedef {{ url: string, formFactor: CruxFormFactor, data: CruxReport|null, error: string|null }} CruxBatchResult
- * @typedef {{ url: string, formFactor: CruxFormFactor, outputPath: string|null, error: string|null }} CruxBatchWriteResult
+ * @typedef {{ url: string, formFactor: CruxFormFactor, data: CruxReport|null, noData: boolean, error: string|null }} CruxBatchResult
+ * @typedef {{ url: string, formFactor: CruxFormFactor, outputPath: string|null, noData: boolean, error: string|null }} CruxBatchWriteResult
  */
 /**
  * @param {string} url
