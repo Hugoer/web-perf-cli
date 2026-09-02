@@ -50,7 +50,7 @@ export function withRetry(fn: () => Promise<any>, { maxRetries, baseDelayMs, lab
  *   writeFn?: (item: T, data: R) => string,
  *   urlOf?: (item: T) => string,
  * }} opts
- * @returns {Promise<Array<{ url: string, item: T, data?: R, outputPath?: string, error: string|null }>>}
+ * @returns {Promise<Array<{ url: string, item: T, data?: R, outputPath?: string, error: string|null, statusCode: number|null }>>}
  */
 export function runBatch<T, R>(items: T[], auditFn: (item: T) => Promise<R>, { maxRequestsPerSecond, concurrency, delayMs, onProgress, writeFn, urlOf }?: {
     maxRequestsPerSecond: number;
@@ -65,6 +65,7 @@ export function runBatch<T, R>(items: T[], auditFn: (item: T) => Promise<R>, { m
     data?: R;
     outputPath?: string;
     error: string | null;
+    statusCode: number | null;
 }>>;
 export function sleep(ms: any): Promise<any>;
 export const RESULTS_DIR: string;

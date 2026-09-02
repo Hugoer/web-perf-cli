@@ -10,12 +10,14 @@ export type CruxHistoryBatchResult = {
     url: string;
     formFactor: CruxFormFactor;
     data: CruxHistoryReport | null;
+    noData: boolean;
     error: string | null;
 };
 export type CruxHistoryBatchWriteResult = {
     url: string;
     formFactor: CruxFormFactor;
     outputPath: string | null;
+    noData: boolean;
     error: string | null;
 };
 /**
@@ -55,8 +57,8 @@ export function runCruxHistoryBatch(urls: string[], apiKey: string, { scope, con
  *   extractedAt: string
  * }} CruxHistoryReport
  *
- * @typedef {{ url: string, formFactor: CruxFormFactor, data: CruxHistoryReport|null, error: string|null }} CruxHistoryBatchResult
- * @typedef {{ url: string, formFactor: CruxFormFactor, outputPath: string|null, error: string|null }} CruxHistoryBatchWriteResult
+ * @typedef {{ url: string, formFactor: CruxFormFactor, data: CruxHistoryReport|null, noData: boolean, error: string|null }} CruxHistoryBatchResult
+ * @typedef {{ url: string, formFactor: CruxFormFactor, outputPath: string|null, noData: boolean, error: string|null }} CruxHistoryBatchWriteResult
  */
 /**
  * @param {string} rawUrl
