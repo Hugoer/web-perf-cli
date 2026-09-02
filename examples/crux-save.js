@@ -1,8 +1,9 @@
 /**
  * CrUX audit — save to disk.
  *
- * Queries the CrUX API for a single URL and writes the result to
- * results/crux/<filename>.json. Prints the output path when done.
+ * Queries the CrUX API for a single URL and writes one file per form factor to
+ * results/crux/crux-<hostname>-<timestamp>-<form-factor>.json. Defaults to phone + desktop,
+ * so this writes two files. Prints each output path when done.
  *
  * Requires a PSI/CrUX API key:
  *   export WEB_PERF_PSI_API_KEY=your_key_here
@@ -23,8 +24,16 @@ if (!API_KEY) {
 async function main() {
     console.log(`Fetching CrUX data for ${URL} and saving to disk...\n`);
 
-    const outputPath = await runCrux(URL, API_KEY, { scope: 'page' });
-    console.log(`Saved: ${outputPath}`);
+    // runCrux returns ONE PATH PER FORM FACTOR — it defaults to phone + desktop,
+    // so this writes two files. Form factors with no CrUX data are skipped, not thrown.
+    const outputPaths = await runCrux(URL, API_KEY, {
+        scope: 'page',
+        onNoData: (formFactor, message) => console.warn(`  no data for ${formFactor}: ${message}`),
+    });
+
+    for (const p of outputPaths) {
+        console.log(`Saved: ${p}`);
+    }
 }
 
 main().catch((err) => {

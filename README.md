@@ -66,16 +66,17 @@ web-perf crux <url>
 web-perf <command> [options] <url>
 ```
 
-Available commands: `lab`, `psi`, `crux`, `crux-history`, `links`, `sitemap`, `list-profiles`, `list-networks`, `list-devices`.
+Available commands: `lab`, `psi`, `crux`, `crux-history`, `links`, `sitemap`, `clean`, `list-profiles`, `list-networks`, `list-devices`.
 
 | Command | Source | Result | Options |
 |---------|--------|--------|---------|
-| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--category`, `--clean`, `--urls`, `--urls-file`, `--skip-audits`, `--blocked-url-patterns`, `--no-strip-json-props` |
-| `psi` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--strategy`, `--category`, `--concurrency`, `--delay` |
+| `lab` | Local Lighthouse audit (headless Chrome) | JSON report with performance scores and Web Vitals | `--profile`, `--network`, `--device`, `--category`, `--clean`, `--urls`, `--urls-file`, `--runs`, `--reuse-browser`, `--skip-audits`, `--blocked-url-patterns`, `--no-strip-json-props` |
+| `psi` | PageSpeed Insights API (real-user data + Lighthouse) | JSON with field metrics and lab scores | `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--strategy`, `--category`, `--clean`, `--concurrency`, `--delay` |
 | `crux` | CrUX API (origin or page, 28-day rolling average) | JSON with p75 Web Vitals and metric distributions | `--scope`, `--form-factor`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
 | `crux-history` | CrUX History API (~6 months of weekly data points) | JSON with historical Web Vitals over time | `--scope`, `--form-factor`, `--api-key`, `--api-key-path`, `--urls`, `--urls-file`, `--concurrency`, `--delay` |
 | `sitemap` | Domain's `sitemap.xml` (recursive, auto-detects sitemap URLs) | JSON list of all URLs found | `--depth`, `--delay`, `--output-ai` |
 | `links` | Rendered DOM via headless Chrome (SPA-compatible) | JSON list of internal links | `--output-ai` |
+| `clean` | Existing `lab` or `psi` JSON on disk | AI-friendly `.clean.json` (>=70% smaller) | — |
 | `list-profiles` | — | Prints available simulation profiles | — |
 | `list-networks` | — | Prints available network presets | — |
 | `list-devices` | — | Prints available device presets | — |
@@ -97,7 +98,7 @@ web-perf lab --profile=high <url>
 # Multiple profiles (comma-separated)
 web-perf lab --profile=low,high <url>
 
-# All profiles (low, medium, high)
+# All profiles (low, medium, high, native)
 web-perf lab --profile=all <url>
 
 # Granular control
@@ -120,6 +121,13 @@ web-perf lab --no-strip-json-props <url>  # JSON includes all properties (raw Li
 # Multiple URLs (<url> argument is ignored when --urls or --urls-file is provided)
 web-perf lab --urls=<url1>,<url2> --profile=low
 web-perf lab --urls-file=<urls.txt> --profile=all
+
+# Repeat runs — audits each (URL x profile) pair N times and writes a variance summary
+web-perf lab --runs=5 --profile=medium <url>
+web-perf lab --runs=3 --profile=low,high --urls-file=<urls.txt>
+
+# Share one Chrome across all runs (faster, but results become order-dependent)
+web-perf lab --urls-file=<urls.txt> --profile=low --reuse-browser
 ```
 
 | Parameter | Required | Description |
@@ -134,6 +142,8 @@ web-perf lab --urls-file=<urls.txt> --profile=all
 | `--skip-audits <audits>` | No | Comma-separated Lighthouse audits to skip. Default: `full-page-screenshot,screenshot-thumbnails,final-screenshot,valid-source-maps` |
 | `--blocked-url-patterns <patterns>` | No | Comma-separated URL patterns to block during the audit (e.g. `*.google-analytics.com,*.facebook.net`). Uses Chrome DevTools Protocol to prevent matching assets from being downloaded |
 | `--clean` | No | Write an AI-friendly `.clean.json` alongside the raw output |
+| `--runs <n>` | No | Audits per URL per profile (default: `1`). Above 1, each run is written with a `-runNN` suffix and a `.summary.json` records the median, spread and `benchmarkIndex` range. Cannot be combined with `--reuse-browser` |
+| `--reuse-browser` | No | Share one Chrome across all runs instead of launching a fresh one per run. ~1s/run faster, but Lighthouse does not clear DNS caches or socket pools between runs, so later runs score better purely by position in the run order |
 | `--no-strip-json-props` | No | Disable stripping of unneeded properties (`i18n`, `timing`) from JSON output. Omit or leave blank to strip (default). See [ADR-001](docs/decisions/ADR-001-strip-json-props.md) for rationale |
 
 Run `list-profiles`, `list-networks`, or `list-devices` to see all available presets:
@@ -157,7 +167,59 @@ web-perf list-networks
 web-perf list-devices
 ```
 
-**Output:** `results/lab/lab-<hostname>-YYYY-MM-DD-HHMM.json`
+#### Run-to-run variance
+
+Lighthouse's Lantern engine does not measure a throttled page load. It records an
+**unthrottled** trace and re-times it, and two parts of that model leak the host machine into
+the score:
+
+- **CPU** — observed task durations are multiplied by the profile's `cpuSlowdownMultiplier`
+  with no correction for how fast the machine was at the time. A busy host produces longer
+  observed tasks, and therefore a worse score, for the same page.
+- **Network** — each origin's *observed* server latency is added on top of the simulated RTT.
+  A cold DNS/TLS/socket pool inflates it; a warm one does not.
+
+Lighthouse records a per-run CPU benchmark in `environment.benchmarkIndex` but does not act on
+it. Two mitigations are built in.
+
+**Every run gets its own browser.** Lighthouse clears storage between runs but not DNS caches,
+TCP/TLS sessions or HTTP/2 connections, so a shared browser makes each run faster than the last
+purely by position in the run order. `--reuse-browser` opts back into sharing (~1s/run faster)
+and is rejected alongside `--runs`, where it would measure the warm-up curve rather than the page.
+
+**`--runs=N` samples instead of guessing.** Each (URL x profile) pair is audited N times. Every
+run is kept, and a `.summary.json` records the median, the spread and the `benchmarkIndex` range:
+
+```jsonc
+{
+  "url": "https://example.com/",
+  "profile": "medium",
+  "runs": 5,
+  "medianRun": 5,
+  "medianOutputPath": "results/lab/lab-example.com-...-medium-run05.json",
+  "scores": [0.56, 0.71, 0.68, 0.70, 0.69],
+  "median": 0.69,
+  "spread": { "min": 0.56, "max": 0.71 },
+  "benchmarkIndex": { "min": 1799, "max": 3010, "values": [1799, 2950, 2880, 3010, 2940] },
+  "metrics": { "total-blocking-time": [275, 92, 96, 88, 90] },
+  "stability": {
+    "stable": false,
+    "warnings": ["benchmarkIndex varied 1.67x across runs (1799-3010) - host was not idle"]
+  }
+}
+```
+
+For an even N the **lower** median is chosen, so `medianRun` always names a run that actually
+happened. Warnings fire when `benchmarkIndex` varies more than **1.5x** across runs (host was
+not idle) or falls below **1000** (host too slow to compare against reference hardware). Runs
+that fail are excluded from the statistics and listed under `errors`.
+
+Scores are never rescaled after the fact: the variance is reported, not corrected.
+
+**Output:** `results/lab/lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.json`
+
+With `--runs=N`, each run is written as `...-<profile>-runNN.json` plus one
+`...-<profile>.summary.json` per (URL x profile) pair, named after the group's first run.
 
 ---
 
@@ -196,6 +258,7 @@ web-perf psi --strategy=mobile,desktop --api-key=<PSI_KEY> <url>
 | `--urls-file <path>` | No | Path to a file with one URL per line. When provided, `<url>` argument is ignored |
 | `--strategy <list>` | No | Comma-separated PSI strategies. Values: `mobile`, `desktop`. Default: `mobile,desktop` (both run per URL → two API requests and two output files per URL) |
 | `--category <list>` | No | Comma-separated Lighthouse categories to include. Values: `performance`, `accessibility`, `best-practices`, `seo`. Default: all four |
+| `--clean` | No | Write an AI-friendly `.clean.json` alongside the raw output |
 | `--concurrency <n>` | No | Max parallel API requests when processing multiple URLs. Default: `5` |
 | `--delay <ms>` | No | Delay in ms between requests per worker. Default: `0` (no delay) |
 
@@ -220,7 +283,7 @@ web-perf psi --category=performance,seo --api-key-path=<key-file> <url>
 4. `WEB_PERF_PSI_API_KEY_PATH` env var (file path)
 5. Interactive prompt
 
-**Output:** `results/psi/psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.json` (one file per URL per strategy — default produces both `-mobile.json` and `-desktop.json`)
+**Output:** `results/psi/psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.json` (one file per URL per strategy — default produces both `-mobile.json` and `-desktop.json`)
 
 ---
 
@@ -257,7 +320,7 @@ Built-in quota protection: CrUX request starts are capped at 2.5 requests/second
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Provide via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables.
 
-**Output:** `results/crux/crux-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
+**Output:** `results/crux/crux-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
 
 ---
 
@@ -294,7 +357,7 @@ Built-in quota protection: CrUX History request starts are capped at 2.5 request
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Credential resolution is identical to `crux` (see above).
 
-**Output:** `results/crux-history/crux-history-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
+**Output:** `results/crux-history/crux-history-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
 
 ---
 
@@ -316,7 +379,7 @@ web-perf sitemap --output-ai <url>
 | `--delay <ms>` | No | Delay between requests in ms (randomized ±50ms). Default: `0` |
 | `--output-ai` | No | Generate AI-friendly `.txt` output (one URL per line, normalized) |
 
-**Output:** `results/sitemap/sitemap-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/sitemap/sitemap-<hostname>-YYYY-MM-DD-HHMMSS.json`
 
 ---
 
@@ -334,7 +397,7 @@ web-perf links --output-ai <url>
 | `<url>` | Yes | URL to extract links from |
 | `--output-ai` | No | Generate AI-friendly `.txt` output (one URL per line, normalized) |
 
-**Output:** `results/links/links-<hostname>-YYYY-MM-DD-HHMM.json`
+**Output:** `results/links/links-<hostname>-YYYY-MM-DD-HHMMSS.json`
 
 ### `clean` — AI-friendly output
 
@@ -346,14 +409,14 @@ web-perf lab --clean https://example.com
 web-perf psi --clean --api-key=<YOUR_KEY> https://example.com
 
 # Post-process existing raw files
-web-perf clean results/lab/lab-example.com-2026-03-29-1430.json
+web-perf clean results/lab/lab-example.com-2026-09-02-094255-medium.json
 web-perf clean results/lab/
 web-perf clean 'results/**/*.json'
 ```
 
 Clean files are written to a `clean/` subfolder next to the raw output:
-- `results/lab/clean/lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`
-- `results/psi/clean/psi-<hostname>-YYYY-MM-DD-HHMM.clean.json`
+- `results/lab/clean/lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.clean.json`
+- `results/psi/clean/psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`
 
 The clean file is self-describing: `JSON.parse(cleanFile)._clean === true`.
 
@@ -373,21 +436,25 @@ All results are saved as JSON files under the `results/` directory, organized by
 ```
 results/
 ├── lab/
-│   ├── lab-example.com-2026-03-29-1430.json
+│   ├── lab-example.com-2026-09-02-094255-medium.json
+│   ├── lab-example.com-2026-09-02-094255-medium-run01.json      (with --runs=N)
+│   ├── lab-example.com-2026-09-02-094255-medium.summary.json    (with --runs=N)
 │   └── clean/
-│       └── lab-example.com-2026-03-29-1430.clean.json  (when --clean is used)
+│       └── lab-example.com-2026-09-02-094255-medium.clean.json  (with --clean)
 ├── psi/
-│   ├── psi-example.com-2026-03-29-1430.json
+│   ├── psi-example.com-2026-09-02-094255-mobile.json            (one per strategy)
+│   ├── psi-example.com-2026-09-02-094255-desktop.json
 │   └── clean/
-│       └── psi-example.com-2026-03-29-1430.clean.json  (when --clean is used)
+│       └── psi-example.com-2026-09-02-094255-mobile.clean.json  (with --clean)
 ├── crux/
-│   └── crux-www.example.com-2026-03-29-1430.json
+│   ├── crux-www.example.com-2026-09-02-094255-phone.json        (one per form factor)
+│   └── crux-www.example.com-2026-09-02-094255-desktop.json
 ├── crux-history/
-│   └── crux-history-www.example.com-2026-03-29-1430.json
+│   └── crux-history-www.example.com-2026-09-02-094255-phone.json
 ├── links/
-│   └── links-www.example.com-2026-03-29-1430.json
+│   └── links-www.example.com-2026-09-02-094255.json
 └── sitemap/
-    └── sitemap-www.example.com-2026-03-29-1430.json
+    └── sitemap-www.example.com-2026-09-02-094255.json
 ```
 
 ## Library API
@@ -399,22 +466,29 @@ results/
 const { runCruxAudit, runPsiAudit, runLabAudit } = require('@hugoer/web-perf-cli');
 
 // Subpath imports (load only what you need)
-const { runCruxAudit, runCruxAuditBatch } = require('@hugoer/web-perf/crux');
-const { runPsiAudit, runPsiAuditBatch }   = require('@hugoer/web-perf/psi');
-const { runLabAudit }                      = require('@hugoer/web-perf/lab');
+const { runCruxAudit, runCruxAuditBatch } = require('@hugoer/web-perf-cli/crux');
+const { runPsiAudit, runPsiAuditBatch }   = require('@hugoer/web-perf-cli/psi');
+const { runLabAudit, runLabPlan }         = require('@hugoer/web-perf-cli/lab');
+const { buildRunSummary }                 = require('@hugoer/web-perf-cli/variance');
 ```
 
 ### Available functions
 
 | Function | Module | Returns |
 |----------|--------|---------|
-| `runLabAudit(url, { profile?, network?, device?, categories?, skipAudits?, blockedUrlPatterns?, clean?, stripJsonProps? }?)` | `web-perf/lab` | `Promise<LabReport>` |
-| `runPsiAudit(url, apiKey, categories?, strategy?)` | `web-perf/psi` | `Promise<PsiReport>` |
-| `runPsiAuditBatch(urls, apiKey, categories, options?)` | `web-perf/psi` | `Promise<PsiBatchResult[]>` |
-| `runCruxAudit(url, apiKey, options?)` | `web-perf/crux` | `Promise<CruxReport>` |
-| `runCruxAuditBatch(urls, apiKey, options?)` | `web-perf/crux` | `Promise<CruxBatchResult[]>` |
-| `runCruxHistoryAudit(url, apiKey, options?)` | `web-perf/crux-history` | `Promise<CruxHistoryReport>` |
-| `runCruxHistoryAuditBatch(urls, apiKey, options?)` | `web-perf/crux-history` | `Promise<CruxHistoryBatchResult[]>` |
+| `runLabAudit(url, { port?, profile?, network?, device?, categories?, skipAudits?, blockedUrlPatterns?, stripJsonProps?, silent? }?)` | `web-perf-cli/lab` | `Promise<LabReport>` |
+| `runPsiAudit(url, apiKey, categories?, strategy?)` | `web-perf-cli/psi` | `Promise<PsiReport>` |
+| `runPsiAuditBatch(urls, apiKey, categories, options?)` | `web-perf-cli/psi` | `Promise<PsiBatchResult[]>` |
+| `runCruxAudit(url, apiKey, options?)` | `web-perf-cli/crux` | `Promise<CruxReport>` |
+| `runCruxAuditBatch(urls, apiKey, options?)` | `web-perf-cli/crux` | `Promise<CruxBatchResult[]>` |
+| `runCruxHistoryAudit(url, apiKey, options?)` | `web-perf-cli/crux-history` | `Promise<CruxHistoryReport>` |
+| `runCruxHistoryAuditBatch(urls, apiKey, options?)` | `web-perf-cli/crux-history` | `Promise<CruxHistoryBatchResult[]>` |
+| `selectMedianRun(scores)` | `web-perf-cli/variance` | `number` (index; lower median, `-1` if empty) |
+| `assessStability(benchmarkIndexes)` | `web-perf-cli/variance` | `{ stable: boolean, warnings: string[] }` |
+| `buildRunSummary(runs, context?)` | `web-perf-cli/variance` | `RunSummary` |
+
+The `variance` helpers are pure too — they take report-shaped plain objects and do no I/O,
+so they can summarise runs collected by any means, not just this CLI's.
 
 ```js
 // Single URL
@@ -431,6 +505,12 @@ const results = await runCruxAuditBatch(urls, apiKey, {
 
 The CLI wrapper functions (`runLab`, `runPsi`, `runCrux`, `runCruxHistory`, …) are also exported and behave identically to the CLI commands — they write JSON to disk and return the output file path.
 
+`runLabPlan(urls, runs, options?, hooks?)` (from `web-perf-cli/lab`) is the orchestrator behind
+`web-perf lab`: it walks every (URL x profile x repeat) combination, owns the browser lifecycle,
+writes each report plus any `.summary.json`, and reports progress through `onRunStart` /
+`onRunComplete` / `onRunError` / `onSummary` callbacks rather than logging. It returns
+`Promise<LabPlanResult[]>`.
+
 ## TypeScript
 
 TypeScript type declarations are included and resolve automatically when you install the package. No `@types/` package needed.
@@ -440,15 +520,15 @@ import { runCruxAudit, runPsiAudit } from '@hugoer/web-perf-cli';
 import type { CruxReport, PsiReport, LabReport } from '@hugoer/web-perf-cli';
 
 // Subpath imports also carry types
-import { runCruxHistoryAudit } from '@hugoer/web-perf/crux-history';
-import type { CruxHistoryReport } from '@hugoer/web-perf/crux-history';
+import { runCruxHistoryAudit } from '@hugoer/web-perf-cli/crux-history';
+import type { CruxHistoryReport } from '@hugoer/web-perf-cli/crux-history';
 ```
 
 Key exported types:
 
 | Type | Description |
 |------|-------------|
-| `LabReport` | Stripped Lighthouse JSON (categories, audits, formFactor, timing) |
+| `LabReport` | Lighthouse JSON with `i18n` and `timing` stripped (categories, audits, environment, configSettings). Pass `--no-strip-json-props` / `stripJsonProps: false` to keep them |
 | `PsiReport` | PageSpeed Insights API response (loadingExperience, lighthouseResult) |
 | `CruxReport` | CrUX 28-day snapshot (metrics, collectionPeriod, scope, key) |
 | `CruxHistoryReport` | CrUX historical snapshot (metrics, collectionPeriods array) |
@@ -456,12 +536,14 @@ Key exported types:
 | `PsiBatchResult` | `{ url, data: PsiReport \| null, error: string \| null }` |
 | `CruxBatchResult` | `{ url, data: CruxReport \| null, error: string \| null }` |
 | `CruxHistoryBatchResult` | `{ url, data: CruxHistoryReport \| null, error: string \| null }` |
+| `LabPlanResult` | `{ url, profile, outputPath?, error? }` — one per run in a `runLabPlan` plan |
+| `RunSummary` | Variance record for one repeated (URL x profile) pair: median, spread, `benchmarkIndex` range, per-metric arrays, stability warnings |
 
 ## Development
 
 ```bash
 # Clone and install dependencies
-git clone https://github.com/your-org/web-perf-cli.git
+git clone https://github.com/Hugoer/web-perf-cli.git
 cd web-perf-cli
 npm install
 
@@ -473,9 +555,12 @@ node bin/web-perf.js lab https://example.com
 
 | Script | Description |
 |--------|-------------|
-| `npm test` | Run all tests (vitest) |
 | `npm run lint` | Lint and auto-fix with ESLint |
+| `npm test` | Run all tests (vitest) |
 | `npm run generate-types` | Regenerate `types/lib/*.d.ts` from JSDoc annotations |
+
+Run them in that order at the end of every change — `lint` must pass before `test`, and
+`generate-types` last so the regenerated `.d.ts` reflects the final JSDoc.
 
 ### Regenerating types
 

@@ -50,6 +50,17 @@ export function parseProfileFlag(profileStr: any): any;
 export function parsePsiStrategies(strategyStr: any): any[];
 export function parseCruxFormFactors(formFactorStr: any): any[];
 export function parseLabCategoriesFlag(categoryStr: any): any[];
+/**
+ * Resolves --runs into a repeat count, rejecting the combination that would make the samples
+ * meaningless: repeats on a shared browser measure the connection pool warming up, not the
+ * page, because Lighthouse does not clear DNS caches or sockets between runs.
+ * @param {number|string|undefined} runsValue
+ * @param {{ reuseBrowser?: boolean }} [options]
+ * @returns {number} repeats per (url, profile) pair; 1 when --runs was not given
+ */
+export function parseRunsFlag(runsValue: number | string | undefined, { reuseBrowser }?: {
+    reuseBrowser?: boolean;
+}): number;
 export function parseSkipAuditsFlag(skipAuditsStr: any): any;
 export function parseBlockedUrlPatternsFlag(patternsStr: any): any[] | undefined;
 export function validateUrl(input: any): true | "Please enter a valid URL (e.g. https://example.com)";

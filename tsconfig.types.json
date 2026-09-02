@@ -27,7 +27,8 @@
         "lib/links.js",
         "lib/sitemap.js",
         "lib/clean.js",
-        "lib/clean-cmd.js"
+        "lib/clean-cmd.js",
+        "lib/variance.js"
     ],
     "exclude": [
         "node_modules",

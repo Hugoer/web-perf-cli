@@ -21,7 +21,8 @@ async function auditProfile(profile) {
     const report = await runLabAudit(URL, { profile, silent: true, stripJsonProps: false });
     return {
         profile,
-        formFactor: report.formFactor,
+        // Lighthouse 13 moved formFactor from the report root into configSettings
+        formFactor: report.configSettings?.formFactor ?? 'n/a',
         scores: Object.fromEntries(
             Object.entries(report.categories).map(([id, cat]) => [
                 id,
@@ -61,7 +62,7 @@ async function main() {
     console.log('LCP'.padEnd(col) + results.map((r) => r.lcp.padEnd(col)).join(''));
     console.log('TBT'.padEnd(col) + results.map((r) => r.tbt.padEnd(col)).join(''));
     console.log('CLS'.padEnd(col) + results.map((r) => r.cls.padEnd(col)).join(''));
-    console.log('Form factor'.padEnd(col) + results.map((r) => r.formFactor?.padEnd(col)).join(''));
+    console.log('Form factor'.padEnd(col) + results.map((r) => r.formFactor.padEnd(col)).join(''));
 }
 
 main().catch((err) => {

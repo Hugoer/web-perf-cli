@@ -33,6 +33,21 @@ node bin/web-perf.js lab --profile=low --category=agentic-browsing <url>
 node bin/web-perf.js lab --urls=<url1>,<url2> --profile=low
 node bin/web-perf.js lab --urls-file=<urls.txt> --profile=all
 
+# Lab: Browser isolation. Every run launches its own Chrome by default, so no run inherits
+# warm DNS caches or socket pools from the run before it (Lighthouse clears storage between
+# runs, but not connections). --reuse-browser shares one Chrome across the whole plan:
+# ~1s/run faster (measured: 18s vs 22s over 4 runs), but scores become dependent on
+# position in the run order.
+node bin/web-perf.js lab --urls-file=<urls.txt> --profile=low --reuse-browser
+
+# Lab: Repeat runs. Lantern bakes host CPU speed and observed server latency into the score,
+# so a busy machine scores worse for reasons unrelated to the page. --runs=N audits each
+# (URL x profile) pair N times and writes a .summary.json with the median, the spread, and
+# the benchmarkIndex range. Warns when benchmarkIndex varies >1.5x (host not idle) or drops
+# below 1000 (host too slow to compare). Mutually exclusive with --reuse-browser.
+node bin/web-perf.js lab --runs=5 --profile=medium <url>
+node bin/web-perf.js lab --runs=3 --profile=low,high --urls-file=<urls.txt>
+
 # PSI: AI-friendly output
 node bin/web-perf.js psi --clean --api-key=<PSI_KEY> <url>
 
@@ -99,6 +114,7 @@ lib/crux-history.js    # CrUX History REST API (~6 months of weekly data points)
 lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
 lib/sitemap.js         # Recursive sitemap parser
 lib/profiles.js        # Lab simulation profiles, network/device presets
+lib/variance.js        # Run-to-run variance: median selection, benchmarkIndex stability
 lib/utils.js           # Shared helpers (ensureResultsDir, buildFilename, normalizeOrigin)
 ```
 
@@ -106,7 +122,10 @@ lib/utils.js           # Shared helpers (ensureResultsDir, buildFilename, normal
 
 Each command writes to its own subdirectory under `results/`:
 
-- `results/lab/` — lab (format: `lab-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/lab/` — lab (format: `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.json`)
+- `results/lab/` — with `--runs=N`, each run gets a `-runNN` suffix plus one
+  `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.summary.json` per (URL x profile) pair.
+  The summary is named after the group's FIRST run, so it sorts alongside `-run01`.
 - `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`)
 - `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.json`, one file per strategy)
 - `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.clean.json`)
@@ -164,103 +183,4 @@ npm run generate-types  # regenerate types after any function signature change
 
 **New CLI commands** — When a new subcommand is added to `bin/web-perf.js`, update `promptForSubcommand()` in `lib/prompts.js` and the `actions` map in `wizardMode()` so it is reachable from interactive mode.
 
-<!-- rtk-instructions v2 -->
-# RTK (Rust Token Killer) - Token-Optimized Commands
-
-## Golden Rule
-
-**Always prefix commands with `rtk`**. If RTK has a dedicated filter, it uses it. If not, it passes through unchanged. This means RTK is always safe to use.
-
-**Important**: Even in command chains with `&&`, use `rtk`:
-```bash
-# ❌ Wrong
-git add . && git commit -m "msg" && git push
-
-# ✅ Correct
-rtk git add . && rtk git commit -m "msg" && rtk git push
-```
-
-## RTK Commands by Workflow
-
-### Build & Compile (80-90% savings)
-```bash
-rtk tsc
-rtk lint
-rtk prettier --check
-```
-
-### Test (90-99% savings)
-```bash
-rtk vitest run
-rtk playwright test
-rtk test <cmd>
-```
-
-### Git (59-80% savings)
-```bash
-rtk git status
-rtk git log
-rtk git diff
-rtk git show
-rtk git add
-rtk git commit
-rtk git push
-rtk git pull
-rtk git branch
-rtk git fetch
-rtk git stash
-rtk git worktree
-```
-
-Note: Git passthrough works for ALL subcommands, even those not explicitly listed.
-
-### GitHub (26-87% savings)
-```bash
-rtk gh pr view <num>
-rtk gh pr checks
-rtk gh run list
-rtk gh issue list
-rtk gh api
-```
-
-### JavaScript/TypeScript Tooling (70-90% savings)
-```bash
-rtk npm run <script>
-rtk npx <cmd>
-```
-
-### Files & Search (60-75% savings)
-```bash
-rtk ls <path>
-rtk read <file>
-rtk grep <pattern>
-rtk find <pattern>
-```
-
-### Analysis & Debug (70-90% savings)
-```bash
-rtk err <cmd>
-rtk log <file>
-rtk json <file>
-rtk deps
-rtk env
-rtk summary <cmd>
-rtk diff
-```
-
-### Network (65-70% savings)
-```bash
-rtk curl <url>
-rtk wget <url>
-```
-
-### Meta Commands
-```bash
-rtk gain
-rtk gain --history
-rtk discover
-rtk proxy <cmd>
-rtk init
-rtk init --global
-```
-<!-- /rtk-instructions -->
+**Testable logic belongs in `lib/`** — `bin/web-perf.js` holds CLI wiring only: argument parsing, prompt orchestration, and logging. Anything with branching logic worth a regression test goes in a `lib/` module and is exported, because helpers defined inside `bin/` are unexported and unreachable from the test suite.
