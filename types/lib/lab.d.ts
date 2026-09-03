@@ -4,9 +4,9 @@ export type LighthouseAudit = {
     description: string;
     score: number | null;
     scoreDisplayMode: string;
-    displayValue?: string;
-    numericValue?: number;
-    numericUnit?: string;
+    displayValue?: string | undefined;
+    numericValue?: number | undefined;
+    numericUnit?: string | undefined;
     details?: unknown;
 };
 export type LighthouseCategory = {
@@ -126,6 +126,20 @@ export type LabPlanOptions = {
         kill: () => Promise<void>;
     }>) | undefined;
 };
+export type LabAuditOptions = {
+    /**
+     * - attach to an already-running Chrome instead of launching one
+     */
+    port?: number | undefined;
+    profile?: string | undefined;
+    network?: string | undefined;
+    device?: string | undefined;
+    skipAudits?: string[] | undefined;
+    blockedUrlPatterns?: string[] | undefined;
+    categories?: string[] | undefined;
+    stripJsonProps?: boolean | undefined;
+    silent?: boolean | undefined;
+};
 export function runLab(url: any, labOptions?: {}): Promise<string>;
 /**
  * Runs every (url × run) pair, reporting progress through `hooks` so this module stays
@@ -140,21 +154,23 @@ export function runLab(url: any, labOptions?: {}): Promise<string>;
  */
 export function runLabPlan(urls: string[], runs: LabRun[], options?: LabPlanOptions, hooks?: LabPlanHooks): Promise<LabPlanResult[]>;
 /**
+ * @typedef {Object} LabAuditOptions
+ * @property {number} [port] - attach to an already-running Chrome instead of launching one
+ * @property {string} [profile]
+ * @property {string} [network]
+ * @property {string} [device]
+ * @property {string[]} [skipAudits]
+ * @property {string[]} [blockedUrlPatterns]
+ * @property {string[]} [categories]
+ * @property {boolean} [stripJsonProps]
+ * @property {boolean} [silent]
+ */
+/**
  * @param {string} url
- * @param {{ port?: number, profile?: string, network?: string, device?: string, skipAudits?: string[], blockedUrlPatterns?: string[], categories?: string[], stripJsonProps?: boolean, silent?: boolean }} [labOptions]
+ * @param {LabAuditOptions} [labOptions]
  * @returns {Promise<LabReport>}
  */
-export function runLabAudit(url: string, labOptions?: {
-    port?: number;
-    profile?: string;
-    network?: string;
-    device?: string;
-    skipAudits?: string[];
-    blockedUrlPatterns?: string[];
-    categories?: string[];
-    stripJsonProps?: boolean;
-    silent?: boolean;
-}): Promise<LabReport>;
+export function runLabAudit(url: string, labOptions?: LabAuditOptions): Promise<LabReport>;
 /**
  * Runs one audit and writes it to disk, returning the report alongside its path.
  * `runLab` wraps this to keep its published `Promise<string>` signature; `runLabPlan` uses
@@ -168,8 +184,24 @@ export function runLabToDisk(url: string, labOptions?: object): Promise<{
     data: LabReport;
 }>;
 /**
- * @typedef {{ id: string, title: string, description: string, score: number|null, scoreDisplayMode: string, displayValue?: string, numericValue?: number, numericUnit?: string, details?: unknown }} LighthouseAudit
- * @typedef {{ id: string, title: string, description: string, score: number|null, auditRefs: { id: string, weight: number, group?: string }[] }} LighthouseCategory
+ * @typedef {Object} LighthouseAudit
+ * @property {string} id
+ * @property {string} title
+ * @property {string} description
+ * @property {number|null} score
+ * @property {string} scoreDisplayMode
+ * @property {string} [displayValue]
+ * @property {number} [numericValue]
+ * @property {string} [numericUnit]
+ * @property {unknown} [details]
+ */
+/**
+ * @typedef {Object} LighthouseCategory
+ * @property {string} id
+ * @property {string} title
+ * @property {string} description
+ * @property {number|null} score
+ * @property {{ id: string, weight: number, group?: string }[]} auditRefs
  */
 /**
  * @typedef {Object} LabReport
