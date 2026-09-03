@@ -28,10 +28,15 @@ export type LabReport = {
     finalUrl: string;
     fetchTime: string;
     formFactor?: "desktop" | "mobile" | undefined;
-    timing: {
+    /**
+     * - absent unless
+     * `stripJsonProps: false` is passed. runLabAudit strips it (with `i18n`) by default, so
+     * declaring it required promised consumers a field the default path deletes.
+     */
+    timing?: {
         total: number;
         breakdown: Record<string, number>;
-    };
+    } | undefined;
     categories: Record<string, LighthouseCategory>;
     audits: Record<string, LighthouseAudit>;
 };
@@ -175,7 +180,9 @@ export function runLabToDisk(url: string, labOptions?: object): Promise<{
  * @property {string} finalUrl
  * @property {string} fetchTime
  * @property {'desktop'|'mobile'} [formFactor]
- * @property {{ total: number, breakdown: Record<string, number> }} timing
+ * @property {{ total: number, breakdown: Record<string, number> }} [timing] - absent unless
+ *   `stripJsonProps: false` is passed. runLabAudit strips it (with `i18n`) by default, so
+ *   declaring it required promised consumers a field the default path deletes.
  * @property {Record<string, LighthouseCategory>} categories
  * @property {Record<string, LighthouseAudit>} audits
  */
