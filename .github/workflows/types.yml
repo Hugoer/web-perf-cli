@@ -1,0 +1,35 @@
+name: Types
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  types:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The committed declarations must match the current JSDoc. Without this, check-types
+      # would happily compile against a stale types/ and report green while the published
+      # declarations drift away from the implementation.
+      - name: Declarations are up to date
+        run: |
+          npm run generate-types
+          git diff --exit-code -- types/ \
+            || { echo "::error::types/ is stale — run 'npm run generate-types' and commit the result"; exit 1; }
+
+      # npm test exercises the implementation, not the .d.ts. This compiles a sample consumer
+      # against the published declarations, resolving through package.json "exports" exactly
+      # as a consumer's build would.
+      - run: npm run check-types
