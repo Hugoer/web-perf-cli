@@ -17,126 +17,120 @@ function withCatch(fn) {
 }
 
 async function labAction(url, options, cmd) {
-    try {
-        const {
-            promptLab, parseSkipAuditsFlag, parseBlockedUrlPatternsFlag, parseRunsFlag,
-        } = require('../lib/prompts');
-        const { runLabPlan } = require('../lib/lab');
-        const { formatRunLine, formatSummaryLine } = require('../lib/variance');
-        const { formatElapsed } = require('../lib/utils');
-        const logger = require('../lib/logger');
-        const stripJsonPropsOpt = cmd?.getOptionValueSource('stripJsonProps') === 'cli' ? options.stripJsonProps : undefined;
-        const cleanOpt = cmd?.getOptionValueSource('clean') === 'cli' ? options.clean : undefined;
-        const { LAB_CATEGORIES } = require('../lib/profiles');
-        // Validate flag combinations before any prompting or browser work.
-        const reuseBrowser = options.reuseBrowser === true;
-        const repeats = parseRunsFlag(options.runs, { reuseBrowser });
-        const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt, clean: cleanOpt });
-        const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
-        const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
-        // promptLab always sets resolved.categories (parsed from --category or the checkbox)
-        const categories = resolved.categories || [];
-        const stripJsonProps = resolved.stripJsonProps ?? options.stripJsonProps;
-        const clean = resolved.clean ?? false;
+    const {
+        promptLab, parseSkipAuditsFlag, parseBlockedUrlPatternsFlag, parseRunsFlag,
+    } = require('../lib/prompts');
+    const { runLabPlan } = require('../lib/lab');
+    const { formatRunLine, formatSummaryLine } = require('../lib/variance');
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    const stripJsonPropsOpt = cmd?.getOptionValueSource('stripJsonProps') === 'cli' ? options.stripJsonProps : undefined;
+    const cleanOpt = cmd?.getOptionValueSource('clean') === 'cli' ? options.clean : undefined;
+    const { LAB_CATEGORIES } = require('../lib/profiles');
+    // Validate flag combinations before any prompting or browser work.
+    const reuseBrowser = options.reuseBrowser === true;
+    const repeats = parseRunsFlag(options.runs, { reuseBrowser });
+    const resolved = await promptLab(url, { ...options, stripJsonProps: stripJsonPropsOpt, clean: cleanOpt });
+    const skipAudits = parseSkipAuditsFlag(options.skipAudits) || resolved.skipAudits;
+    const blockedUrlPatterns = parseBlockedUrlPatternsFlag(options.blockedUrlPatterns) || resolved.blockedUrlPatterns;
+    // promptLab always sets resolved.categories (parsed from --category or the checkbox)
+    const categories = resolved.categories || [];
+    const stripJsonProps = resolved.stripJsonProps ?? options.stripJsonProps;
+    const clean = resolved.clean ?? false;
 
-        if (categories.length > 0 && categories.length < LAB_CATEGORIES.length) {
-            logger.info(`Categories: ${categories.join(', ')}`);
-        }
+    if (categories.length > 0 && categories.length < LAB_CATEGORIES.length) {
+        logger.info(`Categories: ${categories.join(', ')}`);
+    }
 
-        const totalUrls = resolved.urls.length;
-        const totalRuns = totalUrls * resolved.runs.length * repeats;
-        const isBatch = totalUrls > 1;
-        const isRepeating = repeats > 1;
+    const totalUrls = resolved.urls.length;
+    const totalRuns = totalUrls * resolved.runs.length * repeats;
+    const isBatch = totalUrls > 1;
+    const isRepeating = repeats > 1;
 
-        if (reuseBrowser && totalRuns > 1) {
-            logger.warn('--reuse-browser keeps DNS caches and socket pools warm between runs, so later runs score better than earlier ones. Scores are not comparable across this plan.');
-        }
+    if (reuseBrowser && totalRuns > 1) {
+        logger.warn('--reuse-browser keeps DNS caches and socket pools warm between runs, so later runs score better than earlier ones. Scores are not comparable across this plan.');
+    }
 
-        const startTime = Date.now();
-        if (isBatch || isRepeating) {
-            logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-            const plan = `${totalUrls} URL(s) × ${resolved.runs.length} profile(s)${isRepeating ? ` × ${repeats} run(s)` : ''}`;
-            const summaryCount = totalUrls * resolved.runs.length;
-            const files = isRepeating
-                ? `${totalRuns} reports + ${summaryCount} ${summaryCount === 1 ? 'summary' : 'summaries'}`
-                : `${totalRuns} reports`;
-            logger.header(`Processing ${plan} = ${totalRuns} total runs (${files})\n`);
-        }
+    const startTime = Date.now();
+    if (isBatch || isRepeating) {
+        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+        const plan = `${totalUrls} URL(s) × ${resolved.runs.length} profile(s)${isRepeating ? ` × ${repeats} run(s)` : ''}`;
+        const summaryCount = totalUrls * resolved.runs.length;
+        const files = isRepeating
+            ? `${totalRuns} reports + ${summaryCount} ${summaryCount === 1 ? 'summary' : 'summaries'}`
+            : `${totalRuns} reports`;
+        logger.header(`Processing ${plan} = ${totalRuns} total runs (${files})\n`);
+    }
 
-        const results = await runLabPlan(
-            resolved.urls,
-            resolved.runs,
-            {
-                skipAudits,
-                blockedUrlPatterns,
-                categories,
-                stripJsonProps,
-                clean,
-                silent: isBatch || isRepeating,
-                // Repeat sampling tolerates a flaky run: aborting would discard the runs that
-                // did succeed and produce no summary, which is the opposite of the point.
-                continueOnError: isBatch || isRepeating,
-                reuseBrowser,
-                repeats,
+    const results = await runLabPlan(
+        resolved.urls,
+        resolved.runs,
+        {
+            skipAudits,
+            blockedUrlPatterns,
+            categories,
+            stripJsonProps,
+            clean,
+            silent: isBatch || isRepeating,
+            // Repeat sampling tolerates a flaky run: aborting would discard the runs that
+            // did succeed and produce no summary, which is the opposite of the point.
+            continueOnError: isBatch || isRepeating,
+            reuseBrowser,
+            repeats,
+        },
+        {
+            onRunStart: ({ url: runUrl, profile, runIndex, totalRuns: total }) => {
+                if (isBatch) {
+                    logger.progress(Math.round((runIndex / total) * 100), runIndex, total, `${runUrl} [profile: ${profile}]`);
+                } else if (!isRepeating) {
+                    logger.action(`\nRunning Lighthouse audit for: ${runUrl} [profile: ${profile}]`);
+                }
             },
-            {
-                onRunStart: ({ url: runUrl, profile, runIndex, totalRuns: total }) => {
-                    if (isBatch) {
-                        logger.progress(Math.round((runIndex / total) * 100), runIndex, total, `${runUrl} [profile: ${profile}]`);
-                    } else if (!isRepeating) {
-                        logger.action(`\nRunning Lighthouse audit for: ${runUrl} [profile: ${profile}]`);
-                    }
-                },
-                onRunComplete: ({ outputPath, report, repeat }) => {
-                    if (isBatch) {
-                        return;
-                    }
-                    if (isRepeating) {
-                        logger.info(`run ${repeat}/${repeats}  ${formatRunLine(report)}`);
-                    } else {
-                        logger.success(`Lab results saved to: ${outputPath} (${formatElapsed(Date.now() - startTime)})`);
-                    }
-                },
-                onRunError: ({ url: runUrl, profile, error }) => {
-                    logger.fail(`${runUrl} [${profile}] — ${error}`);
-                },
-                onSummary: ({ url: runUrl, profile, summary, summaryPath }) => {
-                    if (isBatch) {
-                        process.stderr.write('\n');
-                        logger.info(`${runUrl} [${profile}]  ${formatSummaryLine(summary)}`);
-                    } else {
-                        logger.footer(`\n  ${formatSummaryLine(summary)}`);
-                    }
-                    summary.stability.warnings.forEach((w) => logger.warn(w));
-                    logger.outputPath(summaryPath);
-                },
+            onRunComplete: ({ outputPath, report, repeat }) => {
+                if (isBatch) {
+                    return;
+                }
+                if (isRepeating) {
+                    logger.info(`run ${repeat}/${repeats}  ${formatRunLine(report)}`);
+                } else {
+                    logger.success(`Lab results saved to: ${outputPath} (${formatElapsed(Date.now() - startTime)})`);
+                }
             },
-        );
+            onRunError: ({ url: runUrl, profile, error }) => {
+                logger.fail(`${runUrl} [${profile}] — ${error}`);
+            },
+            onSummary: ({ url: runUrl, profile, summary, summaryPath }) => {
+                if (isBatch) {
+                    process.stderr.write('\n');
+                    logger.info(`${runUrl} [${profile}]  ${formatSummaryLine(summary)}`);
+                } else {
+                    logger.footer(`\n  ${formatSummaryLine(summary)}`);
+                }
+                summary.stability.warnings.forEach((w) => logger.warn(w));
+                logger.outputPath(summaryPath);
+            },
+        },
+    );
 
-        if (!isBatch && resolved.runs.length > 1) {
-            logger.footer(`\nCompleted ${resolved.runs.length} audits.`);
-        }
+    if (!isBatch && resolved.runs.length > 1) {
+        logger.footer(`\nCompleted ${resolved.runs.length} audits.`);
+    }
 
-        const succeeded = results.filter((r) => !r.error);
-        const failed = results.filter((r) => r.error);
+    const succeeded = results.filter((r) => !r.error);
+    const failed = results.filter((r) => r.error);
 
-        if (isBatch) {
-            process.stderr.write('\n');
-            succeeded.forEach((r) => logger.outputPath(r.outputPath));
-            console.log('');
-            logger.summary(succeeded.length, failed.length);
-            logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
-        }
+    if (isBatch) {
+        process.stderr.write('\n');
+        succeeded.forEach((r) => logger.outputPath(r.outputPath));
+        console.log('');
+        logger.summary(succeeded.length, failed.length);
+        logger.footer(`Finished at ${new Date().toLocaleTimeString()} (${formatElapsed(Date.now() - startTime)})`);
+    }
 
-        // A single-URL repeat plan now survives a failed run instead of throwing, so the
-        // non-zero exit has to be raised here rather than by the outer catch.
-        if (failed.length > 0) {
-            logger.failedList(failed.map((r) => `${r.url} [${r.profile}]: ${r.error}`));
-            process.exit(1);
-        }
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
+    // A single-URL repeat plan now survives a failed run instead of throwing, so the
+    // non-zero exit has to be raised here rather than by the outer catch.
+    if (failed.length > 0) {
+        logger.failedList(failed.map((r) => `${r.url} [${r.profile}]: ${r.error}`));
         process.exit(1);
     }
 }
@@ -179,62 +173,56 @@ function runPsiBatchSummary(results, startTime) {
 }
 
 async function psiAction(url, options) {
-    try {
-        const { promptPsi, DEFAULT_CONCURRENCY } = require('../lib/prompts');
-        const { formatElapsed } = require('../lib/utils');
-        const logger = require('../lib/logger');
-        const resolved = await promptPsi(url, options);
+    const { promptPsi, DEFAULT_CONCURRENCY } = require('../lib/prompts');
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    const resolved = await promptPsi(url, options);
 
-        const categoryLabels = (resolved.categories || []).map((c) => c.toLowerCase().replace(/_/g, '-'));
-        const strategies = resolved.strategies;
-        const psiClean = resolved.clean ?? false;
+    const categoryLabels = (resolved.categories || []).map((c) => c.toLowerCase().replace(/_/g, '-'));
+    const strategies = resolved.strategies;
+    const psiClean = resolved.clean ?? false;
 
-        if (resolved.urls.length === 1) {
-            const { runPsi } = require('../lib/psi');
-            logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]} [${strategies.join(', ')}]`);
-            if (categoryLabels.length > 0) {
-                logger.info(`Categories: ${categoryLabels.join(', ')}`);
-            }
-            const startTime = Date.now();
-            const outputPaths = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories, { clean: psiClean, strategies });
-            const elapsed = formatElapsed(Date.now() - startTime);
-            outputPaths.forEach((p) => logger.success(`PSI results saved to: ${p}`));
-            logger.footer(`(${elapsed})`);
-            return;
-        }
-
-        const { runPsiBatch } = require('../lib/psi');
-        const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
-        const delayMs = resolved.delay || 0;
-        const totalRequests = resolved.urls.length * strategies.length;
-
-        const startTime = Date.now();
-        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-        logger.header(`Processing ${resolved.urls.length} URLs × ${strategies.length} strategies = ${totalRequests} PSI requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
-        logger.info(`Strategies: ${strategies.join(', ')}`);
+    if (resolved.urls.length === 1) {
+        const { runPsi } = require('../lib/psi');
+        logger.action(`Fetching PageSpeed Insights for: ${resolved.urls[0]} [${strategies.join(', ')}]`);
         if (categoryLabels.length > 0) {
             logger.info(`Categories: ${categoryLabels.join(', ')}`);
         }
-        console.log('');
-        const results = await runPsiBatch(resolved.urls, resolved.apiKey, resolved.categories, {
-            concurrency,
-            delayMs,
-            clean: psiClean,
-            strategies,
-            onProgress(completed, total, targetUrl, error) {
-                const pct = Math.round((completed / total) * 100);
-                logger.progress(pct, completed, total, targetUrl);
-                if (error) {
-                    logger.fail(`${targetUrl} — ${error}`);
-                }
-            },
-        });
-        runPsiBatchSummary(results, startTime);
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
-        process.exit(1);
+        const startTime = Date.now();
+        const outputPaths = await runPsi(resolved.urls[0], resolved.apiKey, resolved.categories, { clean: psiClean, strategies });
+        const elapsed = formatElapsed(Date.now() - startTime);
+        outputPaths.forEach((p) => logger.success(`PSI results saved to: ${p}`));
+        logger.footer(`(${elapsed})`);
+        return;
     }
+
+    const { runPsiBatch } = require('../lib/psi');
+    const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
+    const delayMs = resolved.delay || 0;
+    const totalRequests = resolved.urls.length * strategies.length;
+
+    const startTime = Date.now();
+    logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+    logger.header(`Processing ${resolved.urls.length} URLs × ${strategies.length} strategies = ${totalRequests} PSI requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+    logger.info(`Strategies: ${strategies.join(', ')}`);
+    if (categoryLabels.length > 0) {
+        logger.info(`Categories: ${categoryLabels.join(', ')}`);
+    }
+    console.log('');
+    const results = await runPsiBatch(resolved.urls, resolved.apiKey, resolved.categories, {
+        concurrency,
+        delayMs,
+        clean: psiClean,
+        strategies,
+        onProgress(completed, total, targetUrl, error) {
+            const pct = Math.round((completed / total) * 100);
+            logger.progress(pct, completed, total, targetUrl);
+            if (error) {
+                logger.fail(`${targetUrl} — ${error}`);
+            }
+        },
+    });
+    runPsiBatchSummary(results, startTime);
 }
 
 function normalizeUrlsForOriginScope(logger, resolved) {
@@ -251,165 +239,141 @@ function normalizeUrlsForOriginScope(logger, resolved) {
 }
 
 async function cruxAction(url, options) {
-    try {
-        const { promptCrux, DEFAULT_CONCURRENCY } = require('../lib/prompts');
-        const { formatElapsed } = require('../lib/utils');
-        const logger = require('../lib/logger');
-        const resolved = await promptCrux(url, options);
+    const { promptCrux, DEFAULT_CONCURRENCY } = require('../lib/prompts');
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    const resolved = await promptCrux(url, options);
 
-        normalizeUrlsForOriginScope(logger, resolved);
+    normalizeUrlsForOriginScope(logger, resolved);
 
-        const formFactors = resolved.formFactors;
-        const startTime = Date.now();
+    const formFactors = resolved.formFactors;
+    const startTime = Date.now();
 
-        if (resolved.urls.length === 1) {
-            const { runCrux } = require('../lib/crux');
-            logger.action(`Querying CrUX API (${resolved.scope}) for: ${resolved.urls[0]} [${formFactors.join(', ')}]`);
-            const outputPaths = await runCrux(resolved.urls[0], resolved.apiKey, {
-                scope: resolved.scope,
-                formFactors,
-                onNoData: (_formFactor, message) => logger.warn(message),
-            });
-            const elapsed = formatElapsed(Date.now() - startTime);
-            outputPaths.forEach((p) => logger.success(`CrUX results saved to: ${p}`));
-            logger.footer(`(${elapsed})`);
-            return;
-        }
-
-        const { runCruxBatch } = require('../lib/crux');
-        const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
-        const delayMs = resolved.delay || 0;
-        const totalRequests = resolved.urls.length * formFactors.length;
-
-        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-        logger.header(`Processing ${resolved.urls.length} URLs × ${formFactors.length} form factors = ${totalRequests} CrUX requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
-        logger.info(`Form factors: ${formFactors.join(', ')}`);
-        console.log('');
-        const results = await runCruxBatch(resolved.urls, resolved.apiKey, {
+    if (resolved.urls.length === 1) {
+        const { runCrux } = require('../lib/crux');
+        logger.action(`Querying CrUX API (${resolved.scope}) for: ${resolved.urls[0]} [${formFactors.join(', ')}]`);
+        const outputPaths = await runCrux(resolved.urls[0], resolved.apiKey, {
             scope: resolved.scope,
-            concurrency,
-            delayMs,
             formFactors,
-            onProgress(completed, total, targetUrl, error, statusCode) {
-                const pct = Math.round((completed / total) * 100);
-                logger.progress(pct, completed, total, targetUrl);
-                // 404 is "not in the CrUX dataset", reported in the summary rather than
-                // inline as a failure.
-                if (error && statusCode !== 404) {
-                    logger.fail(`${targetUrl} — ${error}`);
-                }
-            },
+            onNoData: (_formFactor, message) => logger.warn(message),
         });
-        runCruxBatchSummary(results, startTime);
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
-        process.exit(1);
+        const elapsed = formatElapsed(Date.now() - startTime);
+        outputPaths.forEach((p) => logger.success(`CrUX results saved to: ${p}`));
+        logger.footer(`(${elapsed})`);
+        return;
     }
+
+    const { runCruxBatch } = require('../lib/crux');
+    const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
+    const delayMs = resolved.delay || 0;
+    const totalRequests = resolved.urls.length * formFactors.length;
+
+    logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+    logger.header(`Processing ${resolved.urls.length} URLs × ${formFactors.length} form factors = ${totalRequests} CrUX requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+    logger.info(`Form factors: ${formFactors.join(', ')}`);
+    console.log('');
+    const results = await runCruxBatch(resolved.urls, resolved.apiKey, {
+        scope: resolved.scope,
+        concurrency,
+        delayMs,
+        formFactors,
+        onProgress(completed, total, targetUrl, error, statusCode) {
+            const pct = Math.round((completed / total) * 100);
+            logger.progress(pct, completed, total, targetUrl);
+            // 404 is "not in the CrUX dataset", reported in the summary rather than
+            // inline as a failure.
+            if (error && statusCode !== 404) {
+                logger.fail(`${targetUrl} — ${error}`);
+            }
+        },
+    });
+    runCruxBatchSummary(results, startTime);
 }
 
 async function cruxHistoryAction(url, options) {
-    try {
-        const { promptCruxHistory, DEFAULT_CONCURRENCY } = require('../lib/prompts');
-        const { formatElapsed } = require('../lib/utils');
-        const logger = require('../lib/logger');
-        const resolved = await promptCruxHistory(url, options);
+    const { promptCruxHistory, DEFAULT_CONCURRENCY } = require('../lib/prompts');
+    const { formatElapsed } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    const resolved = await promptCruxHistory(url, options);
 
-        normalizeUrlsForOriginScope(logger, resolved);
+    normalizeUrlsForOriginScope(logger, resolved);
 
-        const formFactors = resolved.formFactors;
-        const startTime = Date.now();
+    const formFactors = resolved.formFactors;
+    const startTime = Date.now();
 
-        if (resolved.urls.length === 1) {
-            const { runCruxHistory } = require('../lib/crux-history');
-            logger.action(`Querying CrUX History API (${resolved.scope}) for: ${resolved.urls[0]} [${formFactors.join(', ')}]`);
-            const outputPaths = await runCruxHistory(resolved.urls[0], resolved.apiKey, {
-                scope: resolved.scope,
-                formFactors,
-                onNoData: (_formFactor, message) => logger.warn(message),
-            });
-            const elapsed = formatElapsed(Date.now() - startTime);
-            outputPaths.forEach((p) => logger.success(`CrUX History results saved to: ${p}`));
-            logger.footer(`(${elapsed})`);
-            return;
-        }
-
-        const { runCruxHistoryBatch } = require('../lib/crux-history');
-        const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
-        const delayMs = resolved.delay || 0;
-        const totalRequests = resolved.urls.length * formFactors.length;
-
-        logger.header(`Started at ${new Date().toLocaleTimeString()}`);
-        logger.header(`Processing ${resolved.urls.length} URLs × ${formFactors.length} form factors = ${totalRequests} CrUX History requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
-        logger.info(`Form factors: ${formFactors.join(', ')}`);
-        console.log('');
-        const results = await runCruxHistoryBatch(resolved.urls, resolved.apiKey, {
+    if (resolved.urls.length === 1) {
+        const { runCruxHistory } = require('../lib/crux-history');
+        logger.action(`Querying CrUX History API (${resolved.scope}) for: ${resolved.urls[0]} [${formFactors.join(', ')}]`);
+        const outputPaths = await runCruxHistory(resolved.urls[0], resolved.apiKey, {
             scope: resolved.scope,
-            concurrency,
-            delayMs,
             formFactors,
-            onProgress(completed, total, targetUrl, error, statusCode) {
-                const pct = Math.round((completed / total) * 100);
-                logger.progress(pct, completed, total, targetUrl);
-                // 404 is "not in the CrUX dataset", reported in the summary rather than
-                // inline as a failure.
-                if (error && statusCode !== 404) {
-                    logger.fail(`${targetUrl} — ${error}`);
-                }
-            },
+            onNoData: (_formFactor, message) => logger.warn(message),
         });
-        runCruxBatchSummary(results, startTime);
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
-        process.exit(1);
+        const elapsed = formatElapsed(Date.now() - startTime);
+        outputPaths.forEach((p) => logger.success(`CrUX History results saved to: ${p}`));
+        logger.footer(`(${elapsed})`);
+        return;
     }
+
+    const { runCruxHistoryBatch } = require('../lib/crux-history');
+    const concurrency = resolved.concurrency || DEFAULT_CONCURRENCY;
+    const delayMs = resolved.delay || 0;
+    const totalRequests = resolved.urls.length * formFactors.length;
+
+    logger.header(`Started at ${new Date().toLocaleTimeString()}`);
+    logger.header(`Processing ${resolved.urls.length} URLs × ${formFactors.length} form factors = ${totalRequests} CrUX History requests (concurrency: ${concurrency}, delay: ${delayMs}ms)`);
+    logger.info(`Form factors: ${formFactors.join(', ')}`);
+    console.log('');
+    const results = await runCruxHistoryBatch(resolved.urls, resolved.apiKey, {
+        scope: resolved.scope,
+        concurrency,
+        delayMs,
+        formFactors,
+        onProgress(completed, total, targetUrl, error, statusCode) {
+            const pct = Math.round((completed / total) * 100);
+            logger.progress(pct, completed, total, targetUrl);
+            // 404 is "not in the CrUX dataset", reported in the summary rather than
+            // inline as a failure.
+            if (error && statusCode !== 404) {
+                logger.fail(`${targetUrl} — ${error}`);
+            }
+        },
+    });
+    runCruxBatchSummary(results, startTime);
 }
 
 async function sitemapAction(url, options) {
-    try {
-        const { promptSitemap } = require('../lib/prompts');
-        const { runSitemap } = require('../lib/sitemap');
-        const { formatElapsed, writeAiOutput } = require('../lib/utils');
-        const logger = require('../lib/logger');
-        const resolved = await promptSitemap(url, options);
-        logger.action(`Extracting sitemap URLs for: ${resolved.url}`);
-        const startTime = Date.now();
-        const { outputPath, urls } = await runSitemap(resolved.url, resolved.depth, resolved.delay);
-        const elapsed = formatElapsed(Date.now() - startTime);
-        logger.success(`Sitemap results saved to: ${outputPath} (${elapsed})`);
-        if (resolved.outputAi) {
-            const aiPath = writeAiOutput(urls, resolved.url, 'sitemap');
-            logger.success(`AI-friendly output saved to: ${aiPath}`);
-        }
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
-        process.exit(1);
+    const { promptSitemap } = require('../lib/prompts');
+    const { runSitemap } = require('../lib/sitemap');
+    const { formatElapsed, writeAiOutput } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    const resolved = await promptSitemap(url, options);
+    logger.action(`Extracting sitemap URLs for: ${resolved.url}`);
+    const startTime = Date.now();
+    const { outputPath, urls } = await runSitemap(resolved.url, resolved.depth, resolved.delay);
+    const elapsed = formatElapsed(Date.now() - startTime);
+    logger.success(`Sitemap results saved to: ${outputPath} (${elapsed})`);
+    if (resolved.outputAi) {
+        const aiPath = writeAiOutput(urls, resolved.url, 'sitemap');
+        logger.success(`AI-friendly output saved to: ${aiPath}`);
     }
 }
 
 async function linksAction(url, options) {
-    try {
-        const { promptLinks } = require('../lib/prompts');
-        const { runLinks } = require('../lib/links');
-        const { formatElapsed, writeAiOutput } = require('../lib/utils');
-        const logger = require('../lib/logger');
-        const resolved = await promptLinks(url, options);
-        logger.action(`Extracting links from: ${resolved.url}`);
-        const startTime = Date.now();
-        const { outputPath, links } = await runLinks(resolved.url);
-        const elapsed = formatElapsed(Date.now() - startTime);
-        logger.success(`Links results saved to: ${outputPath} (${elapsed})`);
-        if (resolved.outputAi) {
-            const urls = links.map((l) => l.href);
-            const aiPath = writeAiOutput(urls, resolved.url, 'links');
-            logger.success(`AI-friendly output saved to: ${aiPath}`);
-        }
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
-        process.exit(1);
+    const { promptLinks } = require('../lib/prompts');
+    const { runLinks } = require('../lib/links');
+    const { formatElapsed, writeAiOutput } = require('../lib/utils');
+    const logger = require('../lib/logger');
+    const resolved = await promptLinks(url, options);
+    logger.action(`Extracting links from: ${resolved.url}`);
+    const startTime = Date.now();
+    const { outputPath, links } = await runLinks(resolved.url);
+    const elapsed = formatElapsed(Date.now() - startTime);
+    logger.success(`Links results saved to: ${outputPath} (${elapsed})`);
+    if (resolved.outputAi) {
+        const urls = links.map((l) => l.href);
+        const aiPath = writeAiOutput(urls, resolved.url, 'links');
+        logger.success(`AI-friendly output saved to: ${aiPath}`);
     }
 }
 
@@ -427,24 +391,18 @@ async function cleanAction() {
 }
 
 async function wizardMode() {
-    try {
-        const { promptForSubcommand } = require('../lib/prompts');
-        const command = await promptForSubcommand();
-        const actions = {
-            lab: () => labAction(undefined, {}),
-            psi: () => psiAction(undefined, {}),
-            crux: () => cruxAction(undefined, {}),
-            'crux-history': () => cruxHistoryAction(undefined, {}),
-            sitemap: () => sitemapAction(undefined, {}),
-            links: () => linksAction(undefined),
-            clean: () => cleanAction(),
-        };
-        await actions[command]();
-    } catch (err) {
-        const logger = require('../lib/logger');
-        logger.error(`Error: ${err.message}`);
-        process.exit(1);
-    }
+    const { promptForSubcommand } = require('../lib/prompts');
+    const command = await promptForSubcommand();
+    const actions = {
+        lab: () => labAction(undefined, {}),
+        psi: () => psiAction(undefined, {}),
+        crux: () => cruxAction(undefined, {}),
+        'crux-history': () => cruxHistoryAction(undefined, {}),
+        sitemap: () => sitemapAction(undefined, {}),
+        links: () => linksAction(undefined),
+        clean: () => cleanAction(),
+    };
+    await actions[command]();
 }
 
 program
