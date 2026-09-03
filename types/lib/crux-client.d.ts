@@ -31,14 +31,14 @@ export type CruxAuditOptions = {
 };
 export type CruxRunOptions = {
     scope?: "origin" | "page";
-    formFactors?: CruxFormFactor[];
+    formFactors?: readonly CruxFormFactor[];
     onNoData?: (formFactor: CruxFormFactor, message: string) => void;
 };
 export type CruxBatchOptions = {
     scope?: "origin" | "page" | undefined;
     concurrency?: number | undefined;
     delayMs?: number | undefined;
-    formFactors?: CruxFormFactor[] | undefined;
+    formFactors?: readonly CruxFormFactor[] | undefined;
     onProgress?: ((completed: number, total: number, url: string, error: string | null, statusCode: number | null) => void) | undefined;
 };
 /**
@@ -56,14 +56,14 @@ export type CruxBatchOptions = {
  *   CRUX_HISTORY_MAX_REQUESTS_PER_SECOND inert, so editing it would have changed nothing.
  *
  * @typedef {{ scope?: 'origin'|'page', formFactor?: CruxFormFactor }} CruxAuditOptions
- * @typedef {{ scope?: 'origin'|'page', formFactors?: CruxFormFactor[], onNoData?: (formFactor: CruxFormFactor, message: string) => void }} CruxRunOptions
+ * @typedef {{ scope?: 'origin'|'page', formFactors?: readonly CruxFormFactor[], onNoData?: (formFactor: CruxFormFactor, message: string) => void }} CruxRunOptions
  */
 /**
  * @typedef {Object} CruxBatchOptions
  * @property {'origin'|'page'} [scope]
  * @property {number} [concurrency]
  * @property {number} [delayMs]
- * @property {CruxFormFactor[]} [formFactors]
+ * @property {readonly CruxFormFactor[]} [formFactors]
  * @property {(completed: number, total: number, url: string, error: string|null, statusCode: number|null) => void} [onProgress]
  */
 /**
@@ -122,4 +122,4 @@ export function createCruxClient({ endpoint, command, dataLabel, periodKey, maxR
 };
 export const CRUX_MAX_REQUESTS_PER_SECOND: 2.5;
 export const CRUX_FORM_FACTORS: readonly ["phone", "desktop", "tablet"];
-export const DEFAULT_CRUX_FORM_FACTORS: string[];
+export const DEFAULT_CRUX_FORM_FACTORS: readonly CruxFormFactor[];

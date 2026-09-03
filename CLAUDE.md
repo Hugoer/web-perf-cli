@@ -185,11 +185,18 @@ Run these in order at the end of every task, without exception:
 npm run lint          # must pass before running tests
 npm test              # all tests must pass
 npm run generate-types  # regenerate types after any function signature change
+npm run check-types     # type-check a consumer against the regenerated .d.ts
 ```
+
+`check-types` runs last because it reads what `generate-types` just emitted. It compiles
+`type-tests/consumer.ts`, which imports the package by name and so resolves through
+`package.json` "exports" exactly as a consumer's build would.
 
 ### Rules
 
 **JSDoc** — Any change to a function's parameters or return value requires updating its `@param` / `@returns` JSDoc. The generated `.d.ts` is the source of truth for consumers; stale types are bugs.
+
+`npm test` does not check the `.d.ts` files — it exercises the implementation. `npm run check-types` is what checks them, and a published type can be wrong while every test passes: `LabPlanOptions` once rejected every option the CLI itself passes. When a change adds an option, a return field, or a hook argument, extend `type-tests/consumer.ts` to use it, or the guard will not cover it.
 
 **New lib modules** — two steps, and only the first is automatic.
 
