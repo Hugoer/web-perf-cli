@@ -24,7 +24,8 @@ export function createRateLimiter({ maxRequestsPerSecond }: {
     maxRequestsPerSecond: any;
 }): () => Promise<void>;
 /**
- * Retries an async function on transient failures (429 or 5xx) with exponential backoff.
+ * Retries an async function on transient failures (429, 5xx, or a network fault) with
+ * exponential backoff.
  * @param {() => Promise<any>} fn
  * @param {{ maxRetries?: number, baseDelayMs?: number, label?: string, _sleep?: (ms: number) => Promise<void> }} [opts]
  */
@@ -34,6 +35,14 @@ export function withRetry(fn: () => Promise<any>, { maxRetries, baseDelayMs, lab
     label?: string;
     _sleep?: (ms: number) => Promise<void>;
 }): Promise<any>;
+/**
+ * Decides whether a failed attempt is worth repeating: an HTTP 429 or 5xx, or a transient
+ * network fault. An error carrying any other `statusCode` came back from the server and is
+ * answered, not transient, so the network codes are consulted only when there is no status.
+ * @param {unknown} err
+ * @returns {boolean}
+ */
+export function isRetryableError(err: unknown): boolean;
 /**
  * Runs an audit function over a list of work items using a worker pool with rate limiting.
  * Items may be plain URL strings or arbitrary objects; supply `urlOf` to extract the URL
@@ -46,7 +55,7 @@ export function withRetry(fn: () => Promise<any>, { maxRetries, baseDelayMs, lab
  *   maxRequestsPerSecond: number,
  *   concurrency?: number,
  *   delayMs?: number,
- *   onProgress?: (completed: number, total: number, url: string, error: string|null) => void,
+ *   onProgress?: (completed: number, total: number, url: string, error: string|null, statusCode: number|null) => void,
  *   writeFn?: (item: T, data: R) => string,
  *   urlOf?: (item: T) => string,
  * }} opts
@@ -56,7 +65,7 @@ export function runBatch<T, R>(items: T[], auditFn: (item: T) => Promise<R>, { m
     maxRequestsPerSecond: number;
     concurrency?: number;
     delayMs?: number;
-    onProgress?: (completed: number, total: number, url: string, error: string | null) => void;
+    onProgress?: (completed: number, total: number, url: string, error: string | null, statusCode: number | null) => void;
     writeFn?: (item: T, data: R) => string;
     urlOf?: (item: T) => string;
 }): Promise<Array<{
