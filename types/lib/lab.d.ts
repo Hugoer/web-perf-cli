@@ -40,8 +40,7 @@ export type LabReport = {
     categories: Record<string, LighthouseCategory>;
     audits: Record<string, LighthouseAudit>;
     /**
-     * -
-     * survives stripJsonProps, which drops only `i18n` and `timing`. buildRunSummary reads
+     * Survives stripJsonProps, which drops only `i18n` and `timing`. buildRunSummary reads
      * `environment.benchmarkIndex` from it.
      */
     environment?: {
@@ -59,8 +58,7 @@ export type LabReport = {
         message?: string;
     } | undefined;
     /**
-     * -
-     * also survives stripJsonProps. cleanLabReport hoists formFactor out of it, because
+     * Also survives stripJsonProps. cleanLabReport hoists formFactor out of it, because
      * Lighthouse 13 moved the field here from the report root.
      */
     configSettings?: {
@@ -169,8 +167,17 @@ export type LabWriteOptions = LabAuditOptions & {
  * the two halves genuinely are one options object to a caller. Declaring only the controls
  * made the published type reject `skipAudits`, `categories`, `blockedUrlPatterns`,
  * `stripJsonProps`, `clean` and `silent` — every option bin/web-perf.js actually passes.
+ *
+ * `runNumber` and `port` are excluded because runLabPlan owns both, and a caller-supplied
+ * value survives to do damage rather than being overridden:
+ *
+ * - `runNumber` is only replaced when `repeats > 1`, so passing it to a single-run plan
+ *   stamps every report in the plan with the same `-runNN` suffix.
+ * - `port` is only replaced when the plan launched its own Chrome, so passing it with
+ *   `reuseBrowser: false` shares one browser across every run anyway — the position-dependent
+ *   scoring `reuseBrowser` warns about, with none of the warning.
  */
-export type LabPlanOptions = LabPlanControls & LabWriteOptions;
+export type LabPlanOptions = LabPlanControls & Omit<LabWriteOptions, "runNumber" | "port">;
 export type LabAuditOptions = {
     /**
      * - attach to an already-running Chrome instead of launching one
@@ -262,14 +269,14 @@ export function runLabToDisk(url: string, labOptions?: LabWriteOptions): Promise
  *   declaring it required promised consumers a field the default path deletes.
  * @property {Record<string, LighthouseCategory>} categories
  * @property {Record<string, LighthouseAudit>} audits
- * @property {{ benchmarkIndex?: number, hostUserAgent?: string, networkUserAgent?: string }} [environment] -
- *   survives stripJsonProps, which drops only `i18n` and `timing`. buildRunSummary reads
+ * @property {{ benchmarkIndex?: number, hostUserAgent?: string, networkUserAgent?: string }} [environment]
+ *   Survives stripJsonProps, which drops only `i18n` and `timing`. buildRunSummary reads
  *   `environment.benchmarkIndex` from it.
  * @property {{ code: string, message?: string }} [runtimeError] - present when Lighthouse
  *   resolved rather than threw: the page failed to load and the report carries no usable
  *   metrics. runLabPlan treats a report with this set as a failed run.
- * @property {{ formFactor?: 'desktop'|'mobile', [key: string]: unknown }} [configSettings] -
- *   also survives stripJsonProps. cleanLabReport hoists formFactor out of it, because
+ * @property {{ formFactor?: 'desktop'|'mobile', [key: string]: unknown }} [configSettings]
+ *   Also survives stripJsonProps. cleanLabReport hoists formFactor out of it, because
  *   Lighthouse 13 moved the field here from the report root.
  */
 /**
@@ -318,7 +325,17 @@ export function runLabToDisk(url: string, labOptions?: LabWriteOptions): Promise
  * the two halves genuinely are one options object to a caller. Declaring only the controls
  * made the published type reject `skipAudits`, `categories`, `blockedUrlPatterns`,
  * `stripJsonProps`, `clean` and `silent` — every option bin/web-perf.js actually passes.
- * @typedef {LabPlanControls & LabWriteOptions} LabPlanOptions
+ *
+ * `runNumber` and `port` are excluded because runLabPlan owns both, and a caller-supplied
+ * value survives to do damage rather than being overridden:
+ *
+ * - `runNumber` is only replaced when `repeats > 1`, so passing it to a single-run plan
+ *   stamps every report in the plan with the same `-runNN` suffix.
+ * - `port` is only replaced when the plan launched its own Chrome, so passing it with
+ *   `reuseBrowser: false` shares one browser across every run anyway — the position-dependent
+ *   scoring `reuseBrowser` warns about, with none of the warning.
+ *
+ * @typedef {LabPlanControls & Omit<LabWriteOptions, 'runNumber' | 'port'>} LabPlanOptions
  */
 export function buildLighthouseConfig(labOptions: any, profileSettings?: {}): {
     extends: string;
