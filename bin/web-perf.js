@@ -377,12 +377,13 @@ async function linksAction(url, options) {
     }
 }
 
-async function cleanAction() {
+async function cleanAction(input) {
     const { promptClean } = require('../lib/prompts');
     const { runCleanCmd } = require('../lib/clean-cmd');
     const logger = require('../lib/logger');
-    const { input } = await promptClean();
-    const { cleaned, skipped, errored } = await runCleanCmd(input);
+    // The subcommand supplies the input as an argument; the wizard has to ask for it.
+    const target = input ?? (await promptClean()).input;
+    const { cleaned, skipped, errored } = await runCleanCmd(target);
     logger.summary(cleaned.length, errored.length);
     logger.info(`cleaned: ${cleaned.length}, skipped: ${skipped.length}, errored: ${errored.length}`);
     if (errored.length > 0) {
@@ -511,16 +512,7 @@ Examples:
   $ web-perf clean results/lab/
   $ web-perf clean 'results/**/*.json'
 `)
-    .action(withCatch(async (input) => {
-        const { runCleanCmd } = require('../lib/clean-cmd');
-        const logger = require('../lib/logger');
-        const { cleaned, skipped, errored } = await runCleanCmd(input);
-        logger.summary(cleaned.length, errored.length);
-        logger.info(`cleaned: ${cleaned.length}, skipped: ${skipped.length}, errored: ${errored.length}`);
-        if (errored.length > 0) {
-            process.exit(1);
-        }
-    }));
+    .action(withCatch(cleanAction));
 
 program.command('list-profiles').description('List available simulation profiles').action(() => {
     const { printProfiles } = require('../lib/profiles');
