@@ -553,7 +553,21 @@ Key exported types:
 | `LabWriteOptions` | `LabAuditOptions` plus `clean` — what `runLabToDisk` takes |
 | `LabPlanControls` | Plan-level controls only: `continueOnError`, `reuseBrowser`, `repeats` |
 | `LabPlanOptions` | `LabPlanControls` plus the per-run options, minus `runNumber` and `port`, which `runLabPlan` owns |
+| `LabProfile` | One `PROFILES` entry: `{ network, device, label }`, both keys `null` for the `native` profile |
+| `NetworkPreset` | One `NETWORK_PRESETS` entry: nominal `rttMs`, `throughputKbps`, `uploadKbps`, `cpuSlowdownMultiplier`, `label` |
+| `DevicePreset` | One `DEVICE_PRESETS` entry: `width`, `height`, `deviceScaleFactor`, `mobile`, `formFactor`, `label` |
 | `RunSummary` | Variance record for one repeated (URL x profile) pair: median, spread, `benchmarkIndex` range, per-metric arrays, stability warnings |
+
+`PROFILES`, `NETWORK_PRESETS` and `DEVICE_PRESETS` (from `web-perf-cli/profiles`) are frozen
+at every level and published as `readonly`, so `PROFILES.low.network = 'wifi'` does not
+compile, and at runtime throws under strict mode (ESM, or `'use strict'`) rather than taking
+effect. `resolveProfileSettings` reads them on every audit, and a
+mutation there would silently change what later runs measure while the report still named the
+original profile. Build a variant by spreading instead:
+
+```js
+const custom = { ...NETWORK_PRESETS['3g'], rttMs: 250 };
+```
 
 ## Development
 
