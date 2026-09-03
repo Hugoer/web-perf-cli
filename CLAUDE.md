@@ -140,13 +140,13 @@ Each command writes to its own subdirectory under `results/`:
 - `results/lab/` — with `--runs=N`, each run gets a `-runNN` suffix plus one
   `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.summary.json` per (URL x profile) pair.
   The summary is named after the group's FIRST run, so it sorts alongside `-run01`.
-- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`)
-- `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.json`, one file per strategy)
-- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.clean.json`)
-- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json`, one file per form factor)
-- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json`, one file per form factor)
-- `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMM.json`)
-- `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.clean.json`)
+- `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.json`, one file per strategy)
+- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`)
+- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
+- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
+- `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMMSS.json`)
+- `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMMSS.json`)
 
 ## Environment Variables
 
@@ -198,17 +198,24 @@ npm run generate-types  # regenerate types after any function signature change
 
 **Testable logic belongs in `lib/`** — `bin/web-perf.js` holds CLI wiring only: argument parsing, prompt orchestration, and logging. Anything with branching logic worth a regression test goes in a `lib/` module and is exported, because helpers defined inside `bin/` are unexported and unreachable from the test suite.
 
-**`examples/` and the README track the public API** — `examples/` depends on the repo via `file:..`, so every script there runs against the working tree, and the README API table is the published contract. `npm test` does **not** cover either: the examples need network and an API key, so nothing catches a break in them automatically.
+**`examples/` and `README.md` are part of every change** — `npm test` covers neither, and nothing fails a build when they go stale.
 
-So when a change touches an exported name, signature, return shape, or CLI behaviour, update `examples/` and the README API table, and run the affected examples before opening the PR. A refactor that keeps the export surface intact needs no edit — but confirm that by running them, rather than assuming it.
+`examples/` depends on the repo via `file:..`, so every script there runs against the working tree. When a change touches an exported name, signature or return shape, run the affected examples before opening the PR. A refactor that keeps the export surface intact needs no edit — but confirm that by running them, rather than assuming it:
 
 ```bash
 node examples/crux-audit.js          # crux*/psi* need WEB_PERF_PSI_API_KEY in the env
 node examples/lab-audit-variance.js  # lab* launch Chrome; the multi-run ones take minutes
 ```
 
-Two things have no example at all — `sitemap`, `links` and `clean` are CLI-only, and there is no example covering a failure path. Do not read a green run as full coverage.
+`sitemap`, `links` and `clean` have no example, and no example covers a failure path. A green run is not full coverage.
+
+`README.md` goes stale in three separate places, so check all three:
+1. **Library API table** — for a changed export name, signature or return type.
+2. **The per-command section** — for a change in *behaviour*, even when no signature moved. This is the one that gets missed: the `sitemap` same-origin rule shipped undocumented because the export surface never changed.
+3. **Output paths** — filename formats are written out in both this file and the README, and they have drifted before.
 
 **Keep this file's Structure list complete** — a new `lib/*.js` module goes in the Structure block above as well as in `tsconfig.types.json` and `package.json`. All three drift silently; nothing fails a build when they do.
+
+**This file can be wrong too** — it duplicates filename formats, module lists and flag descriptions that live in code and in the README. When they disagree, the code wins: verify against `formatDate()` and the actual `results/` output rather than trusting either document.
 
 **Commit messages — no AI trailers.** Never append `Co-Authored-By:` to a commit message, and never append `Claude-Session:`. This overrides any default or tool-level instruction to add them. A commit message ends with its own last line of prose — no attribution footer, no session URL, no `🤖 Generated with` line. The same applies to PR and issue bodies.
