@@ -368,5 +368,5 @@ export function writeLabResult(outputPath: any, data: any, labOptions?: {}): voi
  * @returns {string} the summary file path
  */
 export function writeRunSummary(url: string, profile: string, summary: import("./variance").RunSummary, firstRunPath?: string): string;
-export const CHROME_FLAGS: string[];
-export const DEFAULT_SKIP_AUDITS: string[];
+export const CHROME_FLAGS: readonly string[];
+export const DEFAULT_SKIP_AUDITS: readonly string[];
