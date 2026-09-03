@@ -570,9 +570,11 @@ node bin/web-perf.js lab https://example.com
 | `npm run lint` | Lint and auto-fix with ESLint |
 | `npm test` | Run all tests (vitest) |
 | `npm run generate-types` | Regenerate `types/lib/*.d.ts` from JSDoc annotations |
+| `npm run check-types` | Type-check a sample consumer against the generated declarations |
 
-Run them in that order at the end of every change — `lint` must pass before `test`, and
-`generate-types` last so the regenerated `.d.ts` reflects the final JSDoc.
+Run them in that order at the end of every change — `lint` must pass before `test`,
+`generate-types` after that so the regenerated `.d.ts` reflects the final JSDoc, and
+`check-types` last, since it compiles a sample consumer against what `generate-types` emitted.
 
 ### Regenerating types
 
