@@ -122,4 +122,4 @@ export function createCruxClient({ endpoint, command, dataLabel, periodKey, maxR
 };
 export const CRUX_MAX_REQUESTS_PER_SECOND: 2.5;
 export const CRUX_FORM_FACTORS: readonly ["phone", "desktop", "tablet"];
-export const DEFAULT_CRUX_FORM_FACTORS: string[];
+export const DEFAULT_CRUX_FORM_FACTORS: readonly string[];
