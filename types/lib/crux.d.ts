@@ -24,22 +24,9 @@ export type CruxBatchWriteResult = {
     noData: boolean;
     error: string | null;
 };
-export type CruxAuditOptions = {
-    scope?: "origin" | "page";
-    formFactor?: CruxFormFactor;
-};
-export type CruxRunOptions = {
-    scope?: "origin" | "page";
-    formFactors?: CruxFormFactor[];
-    onNoData?: (formFactor: CruxFormFactor, message: string) => void;
-};
-export type CruxBatchOptions = {
-    scope?: "origin" | "page" | undefined;
-    concurrency?: number | undefined;
-    delayMs?: number | undefined;
-    formFactors?: import("./crux-client").CruxFormFactor[] | undefined;
-    onProgress?: ((completed: number, total: number, url: string, error: string | null, statusCode: number | null) => void) | undefined;
-};
+export type CruxAuditOptions = import("./crux-client").CruxAuditOptions;
+export type CruxRunOptions = import("./crux-client").CruxRunOptions;
+export type CruxBatchOptions = import("./crux-client").CruxBatchOptions;
 import { buildRequestBody } from "./crux-client";
 import { callCruxApi } from "./crux-client";
 /**

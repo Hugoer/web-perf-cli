@@ -17,6 +17,29 @@ export type CruxClientConfig = {
      * the collection window. queryRecord returns one period; queryHistoryRecord returns many.
      */
     periodKey: "collectionPeriod" | "collectionPeriods";
+    /**
+     * - request-start cap for batch runs, defaulting to
+     * CRUX_MAX_REQUESTS_PER_SECOND. Configurable rather than hard-coded because each module
+     * publishes its own quota constant: hard-coding one here left crux-history's exported
+     * CRUX_HISTORY_MAX_REQUESTS_PER_SECOND inert, so editing it would have changed nothing.
+     */
+    maxRequestsPerSecond?: number | undefined;
+};
+export type CruxAuditOptions = {
+    scope?: "origin" | "page";
+    formFactor?: CruxFormFactor;
+};
+export type CruxRunOptions = {
+    scope?: "origin" | "page";
+    formFactors?: CruxFormFactor[];
+    onNoData?: (formFactor: CruxFormFactor, message: string) => void;
+};
+export type CruxBatchOptions = {
+    scope?: "origin" | "page" | undefined;
+    concurrency?: number | undefined;
+    delayMs?: number | undefined;
+    formFactors?: CruxFormFactor[] | undefined;
+    onProgress?: ((completed: number, total: number, url: string, error: string | null, statusCode: number | null) => void) | undefined;
 };
 /**
  * @typedef {'phone'|'desktop'|'tablet'} CruxFormFactor
@@ -27,6 +50,21 @@ export type CruxClientConfig = {
  * @property {string} dataLabel - name used in error messages ("CrUX", "CrUX history")
  * @property {'collectionPeriod'|'collectionPeriods'} periodKey - the record field carrying
  *   the collection window. queryRecord returns one period; queryHistoryRecord returns many.
+ * @property {number} [maxRequestsPerSecond] - request-start cap for batch runs, defaulting to
+ *   CRUX_MAX_REQUESTS_PER_SECOND. Configurable rather than hard-coded because each module
+ *   publishes its own quota constant: hard-coding one here left crux-history's exported
+ *   CRUX_HISTORY_MAX_REQUESTS_PER_SECOND inert, so editing it would have changed nothing.
+ *
+ * @typedef {{ scope?: 'origin'|'page', formFactor?: CruxFormFactor }} CruxAuditOptions
+ * @typedef {{ scope?: 'origin'|'page', formFactors?: CruxFormFactor[], onNoData?: (formFactor: CruxFormFactor, message: string) => void }} CruxRunOptions
+ */
+/**
+ * @typedef {Object} CruxBatchOptions
+ * @property {'origin'|'page'} [scope]
+ * @property {number} [concurrency]
+ * @property {number} [delayMs]
+ * @property {CruxFormFactor[]} [formFactors]
+ * @property {(completed: number, total: number, url: string, error: string|null, statusCode: number|null) => void} [onProgress]
  */
 /**
  * @param {string} url
@@ -55,41 +93,26 @@ export function callCruxApi(endpointUrl: any, body: any, apiKey: any, { scope, d
  *
  * @param {CruxClientConfig} config
  */
-export function createCruxClient({ endpoint, command, dataLabel, periodKey }: CruxClientConfig): {
-    runAudit: (rawUrl: any, apiKey: any, { scope, formFactor }?: {
-        scope?: string | undefined;
-    }) => Promise<{
+export function createCruxClient({ endpoint, command, dataLabel, periodKey, maxRequestsPerSecond, }: CruxClientConfig): {
+    runAudit: (rawUrl: string, apiKey: string, { scope, formFactor }?: CruxAuditOptions) => Promise<{
         [x: string]: any;
         source: string;
-        scope: string;
-        formFactor: any;
-        url: any;
+        scope: "origin" | "page";
+        formFactor: CruxFormFactor | null;
+        url: string;
         extractedAt: string;
         metrics: any;
         key: any;
     }>;
-    run: (rawUrl: any, apiKey: any, { scope, formFactors, onNoData }?: {
-        scope?: string | undefined;
-        formFactors?: string[] | undefined;
-    }) => Promise<string[]>;
-    runAuditBatch: (urls: any, apiKey: any, { scope, concurrency, delayMs, formFactors, onProgress }?: {
-        scope?: string | undefined;
-        concurrency?: number | undefined;
-        delayMs?: number | undefined;
-        formFactors?: string[] | undefined;
-    }) => Promise<{
+    run: (rawUrl: string, apiKey: string, { scope, formFactors, onNoData }?: CruxRunOptions) => Promise<string[]>;
+    runAuditBatch: (urls: string[], apiKey: string, { scope, concurrency, delayMs, formFactors, onProgress }?: CruxBatchOptions) => Promise<{
         data: any;
         url: string;
         formFactor: CruxFormFactor;
         noData: boolean;
         error: string | null;
     }[]>;
-    runWriteBatch: (urls: any, apiKey: any, { scope, concurrency, delayMs, formFactors, onProgress }?: {
-        scope?: string | undefined;
-        concurrency?: number | undefined;
-        delayMs?: number | undefined;
-        formFactors?: string[] | undefined;
-    }) => Promise<{
+    runWriteBatch: (urls: string[], apiKey: string, { scope, concurrency, delayMs, formFactors, onProgress }?: CruxBatchOptions) => Promise<{
         outputPath: string | null;
         url: string;
         formFactor: CruxFormFactor;

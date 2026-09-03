@@ -20,9 +20,9 @@ export type CruxHistoryBatchWriteResult = {
     noData: boolean;
     error: string | null;
 };
-export type CruxAuditOptions = import("./crux").CruxAuditOptions;
-export type CruxRunOptions = import("./crux").CruxRunOptions;
-export type CruxBatchOptions = import("./crux").CruxBatchOptions;
+export type CruxAuditOptions = import("./crux-client").CruxAuditOptions;
+export type CruxRunOptions = import("./crux-client").CruxRunOptions;
+export type CruxBatchOptions = import("./crux-client").CruxBatchOptions;
 /**
  * Runs CrUX History audits for a single URL across one or more form factors and writes each result to disk.
  * @param {string} rawUrl
