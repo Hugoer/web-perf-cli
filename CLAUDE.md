@@ -106,17 +106,31 @@ node bin/web-perf.js clean 'results/**/*.json'                # glob
 ## Structure
 
 ```
-bin/web-perf.js    # CLI entrypoint (commander)
+bin/web-perf.js        # CLI entrypoint (commander). withCatch is the single error policy:
+                       #   actions throw, it logs and exits 1 — do not add per-action catches
+lib/index.js           # Package root: lazy getters over the public API
 lib/lab.js             # Lighthouse via chrome-launcher
 lib/psi.js             # PageSpeed Insights via global fetch
+lib/crux-client.js     # Shared CrUX client factory (endpoint, dir, label, period key)
 lib/crux.js            # CrUX REST API (origin/page-level, 28-day rolling average)
 lib/crux-history.js    # CrUX History REST API (~6 months of weekly data points)
 lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
-lib/sitemap.js         # Recursive sitemap parser
+lib/sitemap.js         # Recursive sitemap parser (same-origin children only)
 lib/profiles.js        # Lab simulation profiles, network/device presets
 lib/variance.js        # Run-to-run variance: median selection, benchmarkIndex stability
-lib/utils.js           # Shared helpers (ensureResultsDir, buildFilename, normalizeOrigin)
+lib/clean.js           # Report -> AI-friendly .clean.json transforms
+lib/clean-cmd.js       # `clean` subcommand: file/dir/glob resolution
+lib/strip-props.js     # Drops i18n/timing from raw lab reports
+lib/logger.js          # All user-facing output — modules must not call console directly
+lib/prompts.js         # Interactive prompts and flag parsing/validation
+lib/utils.js           # Shared helpers (ensureCommandDir, buildFilename, normalizeOrigin,
+                       #   withRetry, runBatch, createRateLimiter)
 ```
+
+`crux.js` and `crux-history.js` are configuration plus typed wrappers over
+`crux-client.js`. The wrappers are load-bearing: the factory builds its record with a
+computed `[periodKey]`, which erases the return type to `{ [x: string]: any }`, so each
+module restates its signature to keep the published `.d.ts` describing a real CrUX record.
 
 ## Output
 
@@ -183,5 +197,18 @@ npm run generate-types  # regenerate types after any function signature change
 **New CLI commands** — When a new subcommand is added to `bin/web-perf.js`, update `promptForSubcommand()` in `lib/prompts.js` and the `actions` map in `wizardMode()` so it is reachable from interactive mode.
 
 **Testable logic belongs in `lib/`** — `bin/web-perf.js` holds CLI wiring only: argument parsing, prompt orchestration, and logging. Anything with branching logic worth a regression test goes in a `lib/` module and is exported, because helpers defined inside `bin/` are unexported and unreachable from the test suite.
+
+**`examples/` and the README track the public API** — `examples/` depends on the repo via `file:..`, so every script there runs against the working tree, and the README API table is the published contract. `npm test` does **not** cover either: the examples need network and an API key, so nothing catches a break in them automatically.
+
+So when a change touches an exported name, signature, return shape, or CLI behaviour, update `examples/` and the README API table, and run the affected examples before opening the PR. A refactor that keeps the export surface intact needs no edit — but confirm that by running them, rather than assuming it.
+
+```bash
+node examples/crux-audit.js          # crux*/psi* need WEB_PERF_PSI_API_KEY in the env
+node examples/lab-audit-variance.js  # lab* launch Chrome; the multi-run ones take minutes
+```
+
+Two things have no example at all — `sitemap`, `links` and `clean` are CLI-only, and there is no example covering a failure path. Do not read a green run as full coverage.
+
+**Keep this file's Structure list complete** — a new `lib/*.js` module goes in the Structure block above as well as in `tsconfig.types.json` and `package.json`. All three drift silently; nothing fails a build when they do.
 
 **Commit messages — no AI trailers.** Never append `Co-Authored-By:` to a commit message, and never append `Claude-Session:`. This overrides any default or tool-level instruction to add them. A commit message ends with its own last line of prose — no attribution footer, no session URL, no `🤖 Generated with` line. The same applies to PR and issue bodies.
