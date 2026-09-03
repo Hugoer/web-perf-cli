@@ -15,54 +15,54 @@
   },
   "exports": {
     ".": {
+      "types": "./types/lib/index.d.ts",
       "require": "./lib/index.js",
-      "import": "./lib/index.js",
-      "types": "./types/lib/index.d.ts"
+      "import": "./lib/index.js"
     },
     "./lab": {
+      "types": "./types/lib/lab.d.ts",
       "require": "./lib/lab.js",
-      "import": "./lib/lab.js",
-      "types": "./types/lib/lab.d.ts"
+      "import": "./lib/lab.js"
     },
     "./psi": {
+      "types": "./types/lib/psi.d.ts",
       "require": "./lib/psi.js",
-      "import": "./lib/psi.js",
-      "types": "./types/lib/psi.d.ts"
+      "import": "./lib/psi.js"
     },
     "./crux": {
+      "types": "./types/lib/crux.d.ts",
       "require": "./lib/crux.js",
-      "import": "./lib/crux.js",
-      "types": "./types/lib/crux.d.ts"
+      "import": "./lib/crux.js"
     },
     "./crux-history": {
+      "types": "./types/lib/crux-history.d.ts",
       "require": "./lib/crux-history.js",
-      "import": "./lib/crux-history.js",
-      "types": "./types/lib/crux-history.d.ts"
+      "import": "./lib/crux-history.js"
     },
     "./utils": {
+      "types": "./types/lib/utils.d.ts",
       "require": "./lib/utils.js",
-      "import": "./lib/utils.js",
-      "types": "./types/lib/utils.d.ts"
+      "import": "./lib/utils.js"
     },
     "./profiles": {
+      "types": "./types/lib/profiles.d.ts",
       "require": "./lib/profiles.js",
-      "import": "./lib/profiles.js",
-      "types": "./types/lib/profiles.d.ts"
+      "import": "./lib/profiles.js"
     },
     "./links": {
+      "types": "./types/lib/links.d.ts",
       "require": "./lib/links.js",
-      "import": "./lib/links.js",
-      "types": "./types/lib/links.d.ts"
+      "import": "./lib/links.js"
     },
     "./sitemap": {
+      "types": "./types/lib/sitemap.d.ts",
       "require": "./lib/sitemap.js",
-      "import": "./lib/sitemap.js",
-      "types": "./types/lib/sitemap.d.ts"
+      "import": "./lib/sitemap.js"
     },
     "./variance": {
+      "types": "./types/lib/variance.d.ts",
       "require": "./lib/variance.js",
-      "import": "./lib/variance.js",
-      "types": "./types/lib/variance.d.ts"
+      "import": "./lib/variance.js"
     }
   },
   "scripts": {
