@@ -549,6 +549,10 @@ Key exported types:
 | `CruxBatchResult` | `{ url, data: CruxReport \| null, error: string \| null }` |
 | `CruxHistoryBatchResult` | `{ url, data: CruxHistoryReport \| null, error: string \| null }` |
 | `LabPlanResult` | `{ url, profile, outputPath?, error? }` — one per run in a `runLabPlan` plan |
+| `LabAuditOptions` | Options for a single `runLabAudit` call (`port`, `profile`, `network`, `device`, `categories`, `skipAudits`, `blockedUrlPatterns`, `stripJsonProps`, `silent`) |
+| `LabWriteOptions` | `LabAuditOptions` plus `clean` — what `runLabToDisk` takes |
+| `LabPlanControls` | Plan-level controls only: `continueOnError`, `reuseBrowser`, `repeats` |
+| `LabPlanOptions` | `LabPlanControls` plus the per-run options, minus `runNumber` and `port`, which `runLabPlan` owns |
 | `RunSummary` | Variance record for one repeated (URL x profile) pair: median, spread, `benchmarkIndex` range, per-metric arrays, stability warnings |
 
 ## Development
