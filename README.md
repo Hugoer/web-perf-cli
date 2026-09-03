@@ -379,6 +379,18 @@ web-perf sitemap --output-ai <url>
 | `--delay <ms>` | No | Delay between requests in ms (randomized ±50ms). Default: `0` |
 | `--output-ai` | No | Generate AI-friendly `.txt` output (one URL per line, normalized) |
 
+**Child sitemaps must be on the same origin.** When an index lists a child sitemap, it is
+followed only if its scheme, host and port all match the URL the crawl started from.
+Anything else is skipped with a warning — including a `www.` variant of the same domain,
+which is a different origin. The sitemaps protocol already scopes a sitemap to its own host
+and requires verification for cross-host submission, so this also stops an untrusted sitemap
+from pointing the crawler at an unrelated address.
+
+**URLs are XML-entity decoded.** The sitemaps protocol requires `&` to be escaped inside
+`<loc>`, so a location written as `https://example.com/p?a=1&amp;b=2` is extracted as
+`https://example.com/p?a=1&b=2` — the URL the site actually meant. Without this, every
+sitemap URL carrying a query string would be unusable when piped into `--urls-file`.
+
 **Output:** `results/sitemap/sitemap-<hostname>-YYYY-MM-DD-HHMMSS.json`
 
 ---

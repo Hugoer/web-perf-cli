@@ -18,6 +18,7 @@
         "lib/lab.js",
         "lib/psi.js",
         "lib/crux.js",
+        "lib/crux-client.js",
         "lib/crux-history.js",
         "lib/utils.js",
         "lib/profiles.js",

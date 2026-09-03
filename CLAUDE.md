@@ -106,17 +106,32 @@ node bin/web-perf.js clean 'results/**/*.json'                # glob
 ## Structure
 
 ```
-bin/web-perf.js    # CLI entrypoint (commander)
+bin/web-perf.js        # CLI entrypoint (commander). withCatch is the single error policy:
+                       #   actions throw, it logs and exits 1 — do not add per-action catches
+lib/index.js           # Package root: lazy getters over the public API
 lib/lab.js             # Lighthouse via chrome-launcher
 lib/psi.js             # PageSpeed Insights via global fetch
+lib/crux-client.js     # INTERNAL: shared CrUX client factory (endpoint, dir, label, period
+                       #   key). Not in package.json exports — reach it via crux/crux-history
 lib/crux.js            # CrUX REST API (origin/page-level, 28-day rolling average)
 lib/crux-history.js    # CrUX History REST API (~6 months of weekly data points)
 lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
-lib/sitemap.js         # Recursive sitemap parser
+lib/sitemap.js         # Recursive sitemap parser (same-origin children only)
 lib/profiles.js        # Lab simulation profiles, network/device presets
 lib/variance.js        # Run-to-run variance: median selection, benchmarkIndex stability
-lib/utils.js           # Shared helpers (ensureResultsDir, buildFilename, normalizeOrigin)
+lib/clean.js           # Report -> AI-friendly .clean.json transforms
+lib/clean-cmd.js       # `clean` subcommand: file/dir/glob resolution
+lib/strip-props.js     # Drops i18n/timing from raw lab reports
+lib/logger.js          # All user-facing output — modules must not call console directly
+lib/prompts.js         # Interactive prompts and flag parsing/validation
+lib/utils.js           # Shared helpers (ensureCommandDir, buildFilename, normalizeOrigin,
+                       #   withRetry, runBatch, createRateLimiter)
 ```
+
+`crux.js` and `crux-history.js` are configuration plus typed wrappers over
+`crux-client.js`. The wrappers are load-bearing: the factory builds its record with a
+computed `[periodKey]`, which erases the return type to `{ [x: string]: any }`, so each
+module restates its signature to keep the published `.d.ts` describing a real CrUX record.
 
 ## Output
 
@@ -126,13 +141,13 @@ Each command writes to its own subdirectory under `results/`:
 - `results/lab/` — with `--runs=N`, each run gets a `-runNN` suffix plus one
   `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.summary.json` per (URL x profile) pair.
   The summary is named after the group's FIRST run, so it sorts alongside `-run01`.
-- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMM.clean.json`)
-- `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.json`, one file per strategy)
-- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMM-<strategy>.clean.json`)
-- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json`, one file per form factor)
-- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMM-<form-factor>.json`, one file per form factor)
-- `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMM.json`)
-- `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMM.json`)
+- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.clean.json`)
+- `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.json`, one file per strategy)
+- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`)
+- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
+- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
+- `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMMSS.json`)
+- `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMMSS.json`)
 
 ## Environment Variables
 
@@ -176,12 +191,35 @@ npm run generate-types  # regenerate types after any function signature change
 
 **JSDoc** — Any change to a function's parameters or return value requires updating its `@param` / `@returns` JSDoc. The generated `.d.ts` is the source of truth for consumers; stale types are bugs.
 
-**New lib modules** — Every new `lib/*.js` file must be added to:
-1. `tsconfig.types.json` → `include` array (so `generate-types` picks it up)
-2. `package.json` → `exports` object (so the module is importable as `web-perf/<name>`)
+**New lib modules** — two steps, and only the first is automatic.
+
+1. `tsconfig.types.json` → `include` array. **Always.** `generate-types` only emits a `.d.ts` for what is listed, and a private module still needs one when another module's published types reference it.
+2. `package.json` → `exports` object. **Only if consumers should import it directly.** This is what makes a module public: every subpath there is a semver commitment, and it belongs in the README API table. Internal plumbing — shared factories, helpers that exist to serve one other module — stays out of both.
+
+`lib/crux-client.js` is the worked example. Its `.d.ts` ships, because `crux.d.ts` and `crux-history.d.ts` reference `CruxFormFactor` from it, and consumers of `web-perf-cli/crux` need that to resolve. It has no subpath, because nobody should `require('@hugoer/web-perf-cli/crux-client')` — it is an implementation detail of the two modules in front of it.
 
 **New CLI commands** — When a new subcommand is added to `bin/web-perf.js`, update `promptForSubcommand()` in `lib/prompts.js` and the `actions` map in `wizardMode()` so it is reachable from interactive mode.
 
 **Testable logic belongs in `lib/`** — `bin/web-perf.js` holds CLI wiring only: argument parsing, prompt orchestration, and logging. Anything with branching logic worth a regression test goes in a `lib/` module and is exported, because helpers defined inside `bin/` are unexported and unreachable from the test suite.
+
+**`examples/` and `README.md` are part of every change** — `npm test` covers neither, and nothing fails a build when they go stale.
+
+`examples/` depends on the repo via `file:..`, so every script there runs against the working tree. When a change touches an exported name, signature or return shape, run the affected examples before opening the PR. A refactor that keeps the export surface intact needs no edit — but confirm that by running them, rather than assuming it:
+
+```bash
+node examples/crux-audit.js          # crux*/psi* need WEB_PERF_PSI_API_KEY in the env
+node examples/lab-audit-variance.js  # lab* launch Chrome; the multi-run ones take minutes
+```
+
+`sitemap`, `links` and `clean` have no example, and no example covers a failure path. A green run is not full coverage.
+
+`README.md` goes stale in three separate places, so check all three:
+1. **Library API table** — for a changed export name, signature or return type.
+2. **The per-command section** — for a change in *behaviour*, even when no signature moved. This is the one that gets missed: the `sitemap` same-origin rule shipped undocumented because the export surface never changed.
+3. **Output paths** — filename formats are written out in both this file and the README, and they have drifted before.
+
+**Keep this file's Structure list complete** — a new `lib/*.js` module goes in the Structure block above as well as in `tsconfig.types.json` and `package.json`. All three drift silently; nothing fails a build when they do.
+
+**This file can be wrong too** — it duplicates filename formats, module lists and flag descriptions that live in code and in the README. When they disagree, the code wins: verify against `formatDate()` and the actual `results/` output rather than trusting either document.
 
 **Commit messages — no AI trailers.** Never append `Co-Authored-By:` to a commit message, and never append `Claude-Session:`. This overrides any default or tool-level instruction to add them. A commit message ends with its own last line of prose — no attribution footer, no session URL, no `🤖 Generated with` line. The same applies to PR and issue bodies.
