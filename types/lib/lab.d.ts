@@ -39,6 +39,34 @@ export type LabReport = {
     } | undefined;
     categories: Record<string, LighthouseCategory>;
     audits: Record<string, LighthouseAudit>;
+    /**
+     * -
+     * survives stripJsonProps, which drops only `i18n` and `timing`. buildRunSummary reads
+     * `environment.benchmarkIndex` from it.
+     */
+    environment?: {
+        benchmarkIndex?: number;
+        hostUserAgent?: string;
+        networkUserAgent?: string;
+    } | undefined;
+    /**
+     * - present when Lighthouse
+     * resolved rather than threw: the page failed to load and the report carries no usable
+     * metrics. runLabPlan treats a report with this set as a failed run.
+     */
+    runtimeError?: {
+        code: string;
+        message?: string;
+    } | undefined;
+    /**
+     * -
+     * also survives stripJsonProps. cleanLabReport hoists formFactor out of it, because
+     * Lighthouse 13 moved the field here from the report root.
+     */
+    configSettings?: {
+        [key: string]: unknown;
+        formFactor?: "desktop" | "mobile";
+    } | undefined;
 };
 export type LabRun = {
     profile?: string;
@@ -91,11 +119,11 @@ export type LabPlanHooks = {
     onSummary?: ((ctx: {
         url: string;
         profile: string;
-        summary: object;
+        summary: import("./variance").RunSummary;
         summaryPath: string;
     }) => void) | undefined;
 };
-export type LabPlanOptions = {
+export type LabPlanControls = {
     /**
      * - collect failures instead of aborting the plan
      */
@@ -126,6 +154,23 @@ export type LabPlanOptions = {
         kill: () => Promise<void>;
     }>) | undefined;
 };
+/**
+ * What runLabToDisk takes: the audit options, plus the flag that writes an AI-friendly copy
+ * beside the raw report. `runNumber` is set by runLabPlan itself, not by callers.
+ */
+export type LabWriteOptions = LabAuditOptions & {
+    clean?: boolean;
+    runNumber?: number;
+};
+/**
+ * Plan-level controls plus the per-run options forwarded to every audit.
+ *
+ * runLabPlan destructures the controls and spreads the rest into each runLabToDisk call, so
+ * the two halves genuinely are one options object to a caller. Declaring only the controls
+ * made the published type reject `skipAudits`, `categories`, `blockedUrlPatterns`,
+ * `stripJsonProps`, `clean` and `silent` — every option bin/web-perf.js actually passes.
+ */
+export type LabPlanOptions = LabPlanControls & LabWriteOptions;
 export type LabAuditOptions = {
     /**
      * - attach to an already-running Chrome instead of launching one
@@ -176,10 +221,10 @@ export function runLabAudit(url: string, labOptions?: LabAuditOptions): Promise<
  * `runLab` wraps this to keep its published `Promise<string>` signature; `runLabPlan` uses
  * it directly so summaries can read scores without re-parsing the file it just wrote.
  * @param {string} url
- * @param {object} [labOptions]
+ * @param {LabWriteOptions} [labOptions]
  * @returns {Promise<{ outputPath: string, data: LabReport }>}
  */
-export function runLabToDisk(url: string, labOptions?: object): Promise<{
+export function runLabToDisk(url: string, labOptions?: LabWriteOptions): Promise<{
     outputPath: string;
     data: LabReport;
 }>;
@@ -217,6 +262,15 @@ export function runLabToDisk(url: string, labOptions?: object): Promise<{
  *   declaring it required promised consumers a field the default path deletes.
  * @property {Record<string, LighthouseCategory>} categories
  * @property {Record<string, LighthouseAudit>} audits
+ * @property {{ benchmarkIndex?: number, hostUserAgent?: string, networkUserAgent?: string }} [environment] -
+ *   survives stripJsonProps, which drops only `i18n` and `timing`. buildRunSummary reads
+ *   `environment.benchmarkIndex` from it.
+ * @property {{ code: string, message?: string }} [runtimeError] - present when Lighthouse
+ *   resolved rather than threw: the page failed to load and the report carries no usable
+ *   metrics. runLabPlan treats a report with this set as a failed run.
+ * @property {{ formFactor?: 'desktop'|'mobile', [key: string]: unknown }} [configSettings] -
+ *   also survives stripJsonProps. cleanLabReport hoists formFactor out of it, because
+ *   Lighthouse 13 moved the field here from the report root.
  */
 /**
  * @typedef {{ profile?: string, network?: string, device?: string }} LabRun
@@ -240,9 +294,9 @@ export function runLabToDisk(url: string, labOptions?: object): Promise<{
  * @property {(ctx: LabPlanContext) => void} [onRunStart]
  * @property {(ctx: LabPlanContext & { outputPath: string, report: LabReport }) => void} [onRunComplete]
  * @property {(ctx: LabPlanContext & { error: string, outputPath?: string }) => void} [onRunError]
- * @property {(ctx: { url: string, profile: string, summary: object, summaryPath: string }) => void} [onSummary]
+ * @property {(ctx: { url: string, profile: string, summary: import('./variance').RunSummary, summaryPath: string }) => void} [onSummary]
  *
- * @typedef {Object} LabPlanOptions
+ * @typedef {Object} LabPlanControls
  * @property {boolean} [continueOnError=false] - collect failures instead of aborting the plan
  * @property {boolean} [reuseBrowser=false] - share one Chrome across every run. Faster, but
  *   Lighthouse does not clear DNS caches or socket pools between runs, so later runs start
@@ -251,6 +305,20 @@ export function runLabToDisk(url: string, labOptions?: object): Promise<{
  *   written with a `-runNN` suffix and the group gets a `.summary.json` variance record.
  * @property {(url: string, opts: object) => Promise<{ outputPath: string, data: LabReport }>} [_runLab] - injectable runner (tests)
  * @property {(opts: object) => Promise<{ port: number, kill: () => Promise<void> }>} [_launch] - injectable Chrome launcher (tests)
+ */
+/**
+ * What runLabToDisk takes: the audit options, plus the flag that writes an AI-friendly copy
+ * beside the raw report. `runNumber` is set by runLabPlan itself, not by callers.
+ * @typedef {LabAuditOptions & { clean?: boolean, runNumber?: number }} LabWriteOptions
+ */
+/**
+ * Plan-level controls plus the per-run options forwarded to every audit.
+ *
+ * runLabPlan destructures the controls and spreads the rest into each runLabToDisk call, so
+ * the two halves genuinely are one options object to a caller. Declaring only the controls
+ * made the published type reject `skipAudits`, `categories`, `blockedUrlPatterns`,
+ * `stripJsonProps`, `clean` and `silent` — every option bin/web-perf.js actually passes.
+ * @typedef {LabPlanControls & LabWriteOptions} LabPlanOptions
  */
 export function buildLighthouseConfig(labOptions: any, profileSettings?: {}): {
     extends: string;
