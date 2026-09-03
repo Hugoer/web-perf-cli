@@ -6,6 +6,7 @@ export type CruxReport = chromeuxreport_v1.Schema$Record & {
     url: string;
     extractedAt: string;
 };
+export type CruxMetric = chromeuxreport_v1.Schema$Metric;
 export type CruxWorkItem = {
     url: string;
     formFactor: CruxFormFactor;
