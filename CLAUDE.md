@@ -111,7 +111,8 @@ bin/web-perf.js        # CLI entrypoint (commander). withCatch is the single err
 lib/index.js           # Package root: lazy getters over the public API
 lib/lab.js             # Lighthouse via chrome-launcher
 lib/psi.js             # PageSpeed Insights via global fetch
-lib/crux-client.js     # Shared CrUX client factory (endpoint, dir, label, period key)
+lib/crux-client.js     # INTERNAL: shared CrUX client factory (endpoint, dir, label, period
+                       #   key). Not in package.json exports — reach it via crux/crux-history
 lib/crux.js            # CrUX REST API (origin/page-level, 28-day rolling average)
 lib/crux-history.js    # CrUX History REST API (~6 months of weekly data points)
 lib/links.js           # DOM link extractor via puppeteer-core + chrome-launcher
@@ -190,9 +191,12 @@ npm run generate-types  # regenerate types after any function signature change
 
 **JSDoc** — Any change to a function's parameters or return value requires updating its `@param` / `@returns` JSDoc. The generated `.d.ts` is the source of truth for consumers; stale types are bugs.
 
-**New lib modules** — Every new `lib/*.js` file must be added to:
-1. `tsconfig.types.json` → `include` array (so `generate-types` picks it up)
-2. `package.json` → `exports` object (so the module is importable as `web-perf/<name>`)
+**New lib modules** — two steps, and only the first is automatic.
+
+1. `tsconfig.types.json` → `include` array. **Always.** `generate-types` only emits a `.d.ts` for what is listed, and a private module still needs one when another module's published types reference it.
+2. `package.json` → `exports` object. **Only if consumers should import it directly.** This is what makes a module public: every subpath there is a semver commitment, and it belongs in the README API table. Internal plumbing — shared factories, helpers that exist to serve one other module — stays out of both.
+
+`lib/crux-client.js` is the worked example. Its `.d.ts` ships, because `crux.d.ts` and `crux-history.d.ts` reference `CruxFormFactor` from it, and consumers of `web-perf-cli/crux` need that to resolve. It has no subpath, because nobody should `require('@hugoer/web-perf-cli/crux-client')` — it is an implementation detail of the two modules in front of it.
 
 **New CLI commands** — When a new subcommand is added to `bin/web-perf.js`, update `promptForSubcommand()` in `lib/prompts.js` and the `actions` map in `wizardMode()` so it is reachable from interactive mode.
 

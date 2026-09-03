@@ -34,11 +34,6 @@
       "import": "./lib/crux.js",
       "types": "./types/lib/crux.d.ts"
     },
-    "./crux-client": {
-      "require": "./lib/crux-client.js",
-      "import": "./lib/crux-client.js",
-      "types": "./types/lib/crux-client.d.ts"
-    },
     "./crux-history": {
       "require": "./lib/crux-history.js",
       "import": "./lib/crux-history.js",
