@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
-    "noEmit": true, "strict": true,
-    "module": "node16", "moduleResolution": "node16",
-    "target": "ES2022", "skipLibCheck": true, "types": []
+    "noEmit": true,
+    "strict": true,
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "ES2022",
+    "skipLibCheck": false,
+    "types": []
   },
   "include": ["*.ts"]
 }
