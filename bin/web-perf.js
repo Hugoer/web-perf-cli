@@ -378,11 +378,14 @@ async function linksAction(url, options) {
 }
 
 async function cleanAction(input) {
-    const { promptClean } = require('../lib/prompts');
     const { runCleanCmd } = require('../lib/clean-cmd');
     const logger = require('../lib/logger');
-    // The subcommand supplies the input as an argument; the wizard has to ask for it.
-    const target = input ?? (await promptClean()).input;
+    // The subcommand declares `<input>` as required, so commander rejects the call before this
+    // runs and only the wizard ever reaches promptClean. Required inside the branch to keep
+    // lib/prompts — and the crux, psi and profiles modules it pulls in — off the startup path
+    // of a plain `web-perf clean <path>`.
+    // eslint-disable-next-line global-require
+    const target = input ?? (await require('../lib/prompts').promptClean()).input;
     const { cleaned, skipped, errored } = await runCleanCmd(target);
     logger.summary(cleaned.length, errored.length);
     logger.info(`cleaned: ${cleaned.length}, skipped: ${skipped.length}, errored: ${errored.length}`);
