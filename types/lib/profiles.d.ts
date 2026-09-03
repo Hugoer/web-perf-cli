@@ -123,7 +123,7 @@ export const DEVICE_PRESETS: {
         label: string;
     };
 };
-export const LAB_CATEGORIES: string[];
+export const LAB_CATEGORIES: readonly string[];
 export const DEVTOOLS_RTT_ADJUSTMENT_FACTOR: 3.75;
 export const DEVTOOLS_THROUGHPUT_ADJUSTMENT_FACTOR: 0.9;
 export const MOBILE_UA: "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36";
