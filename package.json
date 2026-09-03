@@ -69,7 +69,8 @@
     "start": "node bin/web-perf.js",
     "lint": "eslint . --fix",
     "test": "vitest run",
-    "generate-types": "tsc --project tsconfig.types.json"
+    "generate-types": "tsc --project tsconfig.types.json",
+    "check-types": "tsc --project type-tests/tsconfig.json"
   },
   "dependencies": {
     "chalk": "^6.0.0",
