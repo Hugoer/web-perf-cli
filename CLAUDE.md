@@ -137,17 +137,33 @@ module restates its signature to keep the published `.d.ts` describing a real Cr
 
 Each command writes to its own subdirectory under `results/`:
 
-- `results/lab/` — lab (format: `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.json`)
+- `results/lab/` — lab (format: `lab-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<profile>.json`)
 - `results/lab/` — with `--runs=N`, each run gets a `-runNN` suffix plus one
-  `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.summary.json` per (URL x profile) pair.
+  `lab-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<profile>.summary.json` per (URL x profile) pair.
   The summary is named after the group's FIRST run, so it sorts alongside `-run01`.
-- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.clean.json`)
-- `results/psi/` — psi (format: `psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.json`, one file per strategy)
-- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`)
-- `results/crux/` — crux (format: `crux-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
-- `results/crux-history/` — crux-history (format: `crux-history-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
-- `results/links/` — links (format: `links-<hostname>-YYYY-MM-DD-HHMMSS.json`)
+- `results/lab/clean/` — AI-friendly lab output when `--clean` is used (format: `lab-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<profile>.clean.json`)
+- `results/psi/` — psi (format: `psi-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<strategy>.json`, one file per strategy)
+- `results/psi/clean/` — AI-friendly psi output when `--clean` is used (format: `psi-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`)
+- `results/crux/` — crux (format: `crux-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
+- `results/crux-history/` — crux-history (format: `crux-history-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<form-factor>.json`, one file per form factor)
+- `results/links/` — links (format: `links-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS.json`)
 - `results/sitemap/` — sitemap (format: `sitemap-<hostname>-YYYY-MM-DD-HHMMSS.json`)
+
+`<slug>` is the URL's path, slugged by `urlSlug` (`lib/utils.js`) so two pages of one host do
+not produce two filenames distinguishable only by a `_NN` counter. Rules: query string and
+fragment dropped, percent-encoding decoded, lowercased, every run of non-letter/non-digit
+collapsed to one `-`. Unicode letters survive, so `/es/zapatos-de-niño` slugs to
+`es-zapatos-de-niño` rather than to the UTF-8 hex of its bytes.
+
+**A root path yields no slug segment at all**, so single-page runs and origin-scoped
+`crux`/`crux-history` produce byte-identical filenames to before the slug existed. `sitemap`
+is passed an origin, so it is unaffected.
+
+The slug is capped at 80 **bytes** — not characters, since 80 CJK characters is 240 bytes and
+would exceed the 255-byte filename limit on its own. Past the cap it keeps the path's tail (the
+discriminating end of a hierarchical URL) and appends a 6-char hash of the full path. The hash
+is what makes a truncated name stable run to run; the `_NN` fallback is not, because `runBatch`
+records results in completion order.
 
 ## Environment Variables
 
