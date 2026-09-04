@@ -12,6 +12,7 @@ import { runLabPlan, runLabAudit, runLabToDisk } from '@hugoer/web-perf-cli/lab'
 import { runCrux, runCruxAudit, runCruxBatch, DEFAULT_CRUX_FORM_FACTORS } from '@hugoer/web-perf-cli/crux';
 import { runCruxHistoryAudit } from '@hugoer/web-perf-cli/crux-history';
 import { buildRunSummary } from '@hugoer/web-perf-cli/variance';
+import { urlSlug, buildFilename } from '@hugoer/web-perf-cli/utils';
 import type { LabReport, LabPlanResult } from '@hugoer/web-perf-cli/lab';
 import type { CruxReport } from '@hugoer/web-perf-cli/crux';
 import type { CruxHistoryReport } from '@hugoer/web-perf-cli/crux-history';
@@ -120,3 +121,11 @@ export const rejectsPort = runLabPlan(['u'], [{ profile: 'low' }], {
 });
 
 export const audit = runLabAudit('https://example.com', { profile: 'low', silent: true });
+
+// --- urlSlug and buildFilename are typed, so a consumer can predict an output path ----------
+export const slug: string = urlSlug('https://a.com/es/page-one');
+export const filename: string = buildFilename('https://a.com/es/page-one', 'psi', 'mobile');
+export const noSuffix: string = buildFilename('https://a.com', 'sitemap', undefined, 'txt');
+
+// @ts-expect-error urlSlug returns a string, never null — callers should not have to narrow it
+export const notNullable: null = urlSlug('https://a.com/');
