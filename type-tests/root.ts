@@ -8,15 +8,20 @@ import type {
     CruxReport, CruxMetric, CruxBatchResult, CruxFormFactor,
     CruxHistoryReport, CruxHistoryBatchResult, RunSummary,
     LabProfile, NetworkPreset, DevicePreset,
+    LabAuditOptions, LabWriteOptions, LabPlanControls, LabPlanOptions,
 } from '@hugoer/web-perf-cli';
 
 export const fns = [runCruxAudit, runPsiAudit, runLabAudit, normalizeOrigin];
 export const flags: readonly string[] = CHROME_FLAGS;
 
-// Every row of the README's "Key exported types" table must resolve from the root.
+// Every row of the README's "Key exported types" table must resolve from the root. The list is
+// maintained by hand, so a new row added to that table is only covered once it is added here too
+// — four Lab*Options rows sat undetected that way (#22). The README table carries a comment
+// pointing back at this file so the two are edited together.
 export type Rows = [
     LabReport, LabPlanResult, PsiReport, PsiBatchResult,
     CruxReport, CruxMetric, CruxBatchResult, CruxFormFactor,
     CruxHistoryReport, CruxHistoryBatchResult, RunSummary,
     LabProfile, NetworkPreset, DevicePreset,
+    LabAuditOptions, LabWriteOptions, LabPlanControls, LabPlanOptions,
 ];
