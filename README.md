@@ -216,7 +216,7 @@ that fail are excluded from the statistics and listed under `errors`.
 
 Scores are never rescaled after the fact: the variance is reported, not corrected.
 
-**Output:** `results/lab/lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.json`
+**Output:** `results/lab/lab-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<profile>.json`
 
 With `--runs=N`, each run is written as `...-<profile>-runNN.json` plus one
 `...-<profile>.summary.json` per (URL x profile) pair, named after the group's first run.
@@ -283,7 +283,7 @@ web-perf psi --category=performance,seo --api-key-path=<key-file> <url>
 4. `WEB_PERF_PSI_API_KEY_PATH` env var (file path)
 5. Interactive prompt
 
-**Output:** `results/psi/psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.json` (one file per URL per strategy — default produces both `-mobile.json` and `-desktop.json`)
+**Output:** `results/psi/psi-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<strategy>.json` (one file per URL per strategy — default produces both `-mobile.json` and `-desktop.json`)
 
 ---
 
@@ -320,7 +320,7 @@ Built-in quota protection: CrUX request starts are capped at 2.5 requests/second
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Provide via `--api-key`, `--api-key-path`, or the `WEB_PERF_PSI_API_KEY` / `WEB_PERF_PSI_API_KEY_PATH` environment variables.
 
-**Output:** `results/crux/crux-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
+**Output:** `results/crux/crux-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
 
 ---
 
@@ -357,7 +357,7 @@ Built-in quota protection: CrUX History request starts are capped at 2.5 request
 \* Not required when `--urls` or `--urls-file` is provided.
 \*\* A CrUX API key is required. Credential resolution is identical to `crux` (see above).
 
-**Output:** `results/crux-history/crux-history-<hostname>-YYYY-MM-DD-HHMMSS-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
+**Output:** `results/crux-history/crux-history-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<form-factor>.json` (one file per form factor — default produces both `-phone.json` and `-desktop.json`)
 
 ---
 
@@ -409,7 +409,7 @@ web-perf links --output-ai <url>
 | `<url>` | Yes | URL to extract links from |
 | `--output-ai` | No | Generate AI-friendly `.txt` output (one URL per line, normalized) |
 
-**Output:** `results/links/links-<hostname>-YYYY-MM-DD-HHMMSS.json`
+**Output:** `results/links/links-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS.json`
 
 ### `clean` — AI-friendly output
 
@@ -427,10 +427,37 @@ web-perf clean 'results/**/*.json'
 ```
 
 Clean files are written to a `clean/` subfolder next to the raw output:
-- `results/lab/clean/lab-<hostname>-YYYY-MM-DD-HHMMSS-<profile>.clean.json`
-- `results/psi/clean/psi-<hostname>-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`
+- `results/lab/clean/lab-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<profile>.clean.json`
+- `results/psi/clean/psi-<hostname>[-<slug>]-YYYY-MM-DD-HHMMSS-<strategy>.clean.json`
 
 The clean file is self-describing: `JSON.parse(cleanFile)._clean === true`.
+
+## Output filenames and the path slug
+
+Output filenames carry a slug of the URL's path, so auditing several pages of one host produces
+files you can tell apart without opening them:
+
+```
+https://a.com/                       ->  psi-a.com-2026-09-02-171221-mobile.json
+https://a.com/es/page-one            ->  psi-a.com-es-page-one-2026-09-02-171221-mobile.json
+https://a.com/es/productos/zapatos   ->  lab-a.com-es-productos-zapatos-2026-09-02-171221-low.json
+https://a.com/es/page?utm_source=x   ->  psi-a.com-es-page-2026-09-02-171221-mobile.json
+https://a.com/es/zapatos-de-niño     ->  psi-a.com-es-zapatos-de-niño-2026-09-02-171221-mobile.json
+```
+
+The query string and fragment are dropped, so tracking parameters do not produce a different
+filename for the same page. Percent-encoding is decoded and Unicode letters are kept, so
+non-Latin paths stay readable (`/日本語/ページ` → `日本語-ページ`) instead of becoming the hex of
+their UTF-8 bytes.
+
+**A root path adds no slug segment**, so single-page runs and origin-scoped `crux` /
+`crux-history` keep exactly the filenames they produced before. `sitemap` is passed an origin and
+is likewise unchanged.
+
+Slugs are capped at 80 bytes. Past that the path's tail is kept — the discriminating end of a
+hierarchical URL — and a 6-character hash of the full path is appended. Two URLs that still
+collide fall back to a `_NN` counter, and each file's `url` field remains authoritative either
+way. `urlSlug` is exported from `web-perf-cli/utils` if you need to predict a filename.
 
 ## Environment variables
 
@@ -498,6 +525,7 @@ const { buildRunSummary }                 = require('@hugoer/web-perf-cli/varian
 | `selectMedianRun(scores)` | `web-perf-cli/variance` | `number` (index; lower median, `-1` if empty) |
 | `assessStability(benchmarkIndexes)` | `web-perf-cli/variance` | `{ stable: boolean, warnings: string[] }` |
 | `buildRunSummary(runs, context?)` | `web-perf-cli/variance` | `RunSummary` |
+| `urlSlug(url)` | `web-perf-cli/utils` | `string` (path slug used in output filenames; `''` for a root path) |
 
 The `variance` helpers are pure too — they take report-shaped plain objects and do no I/O,
 so they can summarise runs collected by any means, not just this CLI's.
