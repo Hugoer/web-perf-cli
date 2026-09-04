@@ -558,15 +558,21 @@ Key exported types:
 | `DevicePreset` | One `DEVICE_PRESETS` entry: `width`, `height`, `deviceScaleFactor`, `mobile`, `formFactor`, `label` |
 | `RunSummary` | Variance record for one repeated (URL x profile) pair: median, spread, `benchmarkIndex` range, per-metric arrays, stability warnings |
 
-`PROFILES`, `NETWORK_PRESETS` and `DEVICE_PRESETS` (from `web-perf-cli/profiles`) are frozen
-at every level and published as `readonly`, so `PROFILES.low.network = 'wifi'` does not
-compile, and at runtime throws under strict mode (ESM, or `'use strict'`) rather than taking
-effect. `resolveProfileSettings` reads them on every audit, and a
-mutation there would silently change what later runs measure while the report still named the
-original profile. Build a variant by spreading instead:
+Every exported constant is frozen and published as `readonly`: the arrays `CHROME_FLAGS`,
+`DEFAULT_SKIP_AUDITS`, `LAB_CATEGORIES`, `PSI_STRATEGIES`, `DEFAULT_PSI_STRATEGIES`,
+`CRUX_FORM_FACTORS` and `DEFAULT_CRUX_FORM_FACTORS`, plus the three preset objects
+`PROFILES`, `NETWORK_PRESETS` and `DEVICE_PRESETS` (from `web-perf-cli/profiles`). Mutating
+any of them fails to compile, and at runtime throws under strict mode (ESM, or `'use strict'`)
+rather than taking effect.
+
+The three objects are frozen at *every* level, because the damaging write is one step down:
+`resolveProfileSettings` reads the presets on every audit, so `PROFILES.low.network = 'wifi'`
+would silently change what later runs measure while the report still named the original
+profile. Build a variant by spreading instead:
 
 ```js
 const custom = { ...NETWORK_PRESETS['3g'], rttMs: 250 };
+const onWifi = { ...PROFILES.low, network: 'wifi' };
 ```
 
 ## Development

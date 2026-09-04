@@ -8,11 +8,11 @@ export type NetworkPreset = {
      */
     rttMs: number;
     /**
-     * - nominal download speed (see the INVARIANT above)
+     * - nominal (pre-adjustment) download speed; `buildThrottling` applies the DevTools factors
      */
     throughputKbps: number;
     /**
-     * - nominal upload speed (see the INVARIANT above)
+     * - nominal (pre-adjustment) upload speed; `buildThrottling` applies the DevTools factors
      */
     uploadKbps: number;
     cpuSlowdownMultiplier: number;
@@ -68,8 +68,8 @@ export const PROFILES: Readonly<Record<"low" | "medium" | "high" | "native", Rea
  *
  * @typedef {Object} NetworkPreset
  * @property {number} rttMs - nominal round-trip time, in milliseconds
- * @property {number} throughputKbps - nominal download speed (see the INVARIANT above)
- * @property {number} uploadKbps - nominal upload speed (see the INVARIANT above)
+ * @property {number} throughputKbps - nominal (pre-adjustment) download speed; `buildThrottling` applies the DevTools factors
+ * @property {number} uploadKbps - nominal (pre-adjustment) upload speed; `buildThrottling` applies the DevTools factors
  * @property {number} cpuSlowdownMultiplier
  * @property {string} label - the one-line summary printed by `list-profiles`
  */
