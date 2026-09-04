@@ -1,0 +1,20 @@
+version: 2
+
+updates:
+  # Watches the action versions pinned in .github/workflows/. "/" is the whole
+  # repository for this ecosystem, not a hint that the workflows live at the root.
+  #
+  # The actions went a full major behind without anyone noticing, until a job log
+  # started printing a node20 deprecation notice (#25). This is what catches the
+  # next one.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # One PR for every action rather than one each. Most weeks that is no PR at
+    # all; a week where three actions cut releases is still a single review.
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: ci
