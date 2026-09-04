@@ -177,6 +177,13 @@ CLI flags (`--api-key`, `--api-key-path`) take precedence over environment varia
 npm test  # vitest
 ```
 
+`lib/package-tarball.test.js` is the one test that does not exercise `lib/` source. It runs
+`npm pack`, extracts the tarball, and requires every published subpath by name from a directory
+where the extracted copy is the installed dependency. It is the only guard that reads
+`package.json` "files": `examples/` installs with `file:..`, which symlinks the repo root rather
+than packing it, and `type-tests/` resolves the package by self-reference. A `lib/` module left
+out of "files" therefore passes both, passes CI, and breaks only for a consumer after publish.
+
 ## Development Checklist
 
 Run these in order at the end of every task, without exception:
