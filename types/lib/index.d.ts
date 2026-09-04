@@ -1,5 +1,5 @@
 declare namespace _exports {
-    export { LabReport, LabPlanResult, PsiReport, PsiBatchResult, CruxReport, CruxMetric, CruxBatchResult, CruxFormFactor, CruxHistoryReport, CruxHistoryBatchResult, LabProfile, NetworkPreset, DevicePreset, RunSummary };
+    export { LabReport, LabPlanResult, LabAuditOptions, LabWriteOptions, LabPlanControls, LabPlanOptions, PsiReport, PsiBatchResult, CruxReport, CruxMetric, CruxBatchResult, CruxFormFactor, CruxHistoryReport, CruxHistoryBatchResult, LabProfile, NetworkPreset, DevicePreset, RunSummary };
 }
 declare namespace _exports {
     const runLabAudit: typeof import("./lab").runLabAudit;
@@ -39,6 +39,30 @@ type LabReport = import("./lab").LabReport;
  * documented `import type { CruxReport } from '@hugoer/web-perf-cli'` fails with TS2305.
  */
 type LabPlanResult = import("./lab").LabPlanResult;
+/**
+ * The types the README's "Key exported types" table promises from the package root. Re-declared
+ * here because lib/index.js is a value-only façade of lazy getters: without these, the
+ * documented `import type { CruxReport } from '@hugoer/web-perf-cli'` fails with TS2305.
+ */
+type LabAuditOptions = import("./lab").LabAuditOptions;
+/**
+ * The types the README's "Key exported types" table promises from the package root. Re-declared
+ * here because lib/index.js is a value-only façade of lazy getters: without these, the
+ * documented `import type { CruxReport } from '@hugoer/web-perf-cli'` fails with TS2305.
+ */
+type LabWriteOptions = import("./lab").LabWriteOptions;
+/**
+ * The types the README's "Key exported types" table promises from the package root. Re-declared
+ * here because lib/index.js is a value-only façade of lazy getters: without these, the
+ * documented `import type { CruxReport } from '@hugoer/web-perf-cli'` fails with TS2305.
+ */
+type LabPlanControls = import("./lab").LabPlanControls;
+/**
+ * The types the README's "Key exported types" table promises from the package root. Re-declared
+ * here because lib/index.js is a value-only façade of lazy getters: without these, the
+ * documented `import type { CruxReport } from '@hugoer/web-perf-cli'` fails with TS2305.
+ */
+type LabPlanOptions = import("./lab").LabPlanOptions;
 /**
  * The types the README's "Key exported types" table promises from the package root. Re-declared
  * here because lib/index.js is a value-only façade of lazy getters: without these, the
