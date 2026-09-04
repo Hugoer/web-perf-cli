@@ -1,5 +1,23 @@
 export function ensureCommandDir(command: any): void;
 export function buildFilename(url: any, command: any, suffix: any, ext?: string): string;
+/**
+ * Builds the filename-safe slug for a URL's path, so two pages of one host produce two
+ * distinguishable filenames.
+ *
+ * Query strings and fragments are dropped, which keeps tracking parameters (`utm_source`,
+ * `gclid`) from producing a different filename for the same page. A root path yields an empty
+ * slug, so single-page and origin-scoped runs keep the filenames they have always had.
+ *
+ * Truncation keeps the END of the path and appends a short hash. URLs are hierarchical, so the
+ * shared part is the prefix and the discriminating part is the suffix — keeping the head would
+ * collapse exactly the deep-category pages most likely to be audited together. The hash makes a
+ * truncated slug stable across runs, which the `_NN` fallback is not: `runBatch` records results
+ * in completion order, so the number a given URL receives varies run to run.
+ *
+ * @param {string} url - absolute URL
+ * @returns {string} the slug, or '' for a root path
+ */
+export function urlSlug(url: string): string;
 export function formatDate(): string;
 export function formatElapsed(ms: any): string;
 export function normalizeOrigin(url: any): string;
