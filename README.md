@@ -553,7 +553,27 @@ Key exported types:
 | `LabWriteOptions` | `LabAuditOptions` plus `clean` — what `runLabToDisk` takes |
 | `LabPlanControls` | Plan-level controls only: `continueOnError`, `reuseBrowser`, `repeats` |
 | `LabPlanOptions` | `LabPlanControls` plus the per-run options, minus `runNumber` and `port`, which `runLabPlan` owns |
+| `LabProfile` | One `PROFILES` entry: `{ network, device, label }`, both keys `null` for the `native` profile |
+| `NetworkPreset` | One `NETWORK_PRESETS` entry: nominal `rttMs`, `throughputKbps`, `uploadKbps`, `cpuSlowdownMultiplier`, `label` |
+| `DevicePreset` | One `DEVICE_PRESETS` entry: `width`, `height`, `deviceScaleFactor`, `mobile`, `formFactor`, `label` |
 | `RunSummary` | Variance record for one repeated (URL x profile) pair: median, spread, `benchmarkIndex` range, per-metric arrays, stability warnings |
+
+Every exported constant is frozen and published as `readonly`: the arrays `CHROME_FLAGS`,
+`DEFAULT_SKIP_AUDITS`, `LAB_CATEGORIES`, `PSI_STRATEGIES`, `DEFAULT_PSI_STRATEGIES`,
+`CRUX_FORM_FACTORS` and `DEFAULT_CRUX_FORM_FACTORS`, plus the three preset objects
+`PROFILES`, `NETWORK_PRESETS` and `DEVICE_PRESETS` (from `web-perf-cli/profiles`). Mutating
+any of them fails to compile, and at runtime throws under strict mode (ESM, or `'use strict'`)
+rather than taking effect.
+
+The three objects are frozen at *every* level, because the damaging write is one step down:
+`resolveProfileSettings` reads the presets on every audit, so `PROFILES.low.network = 'wifi'`
+would silently change what later runs measure while the report still named the original
+profile. Build a variant by spreading instead:
+
+```js
+const custom = { ...NETWORK_PRESETS['3g'], rttMs: 250 };
+const onWifi = { ...PROFILES.low, network: 'wifi' };
+```
 
 ## Development
 

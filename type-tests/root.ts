@@ -7,6 +7,7 @@ import type {
     LabReport, LabPlanResult, PsiReport, PsiBatchResult,
     CruxReport, CruxMetric, CruxBatchResult, CruxFormFactor,
     CruxHistoryReport, CruxHistoryBatchResult, RunSummary,
+    LabProfile, NetworkPreset, DevicePreset,
 } from '@hugoer/web-perf-cli';
 
 export const fns = [runCruxAudit, runPsiAudit, runLabAudit, normalizeOrigin];
@@ -17,4 +18,5 @@ export type Rows = [
     LabReport, LabPlanResult, PsiReport, PsiBatchResult,
     CruxReport, CruxMetric, CruxBatchResult, CruxFormFactor,
     CruxHistoryReport, CruxHistoryBatchResult, RunSummary,
+    LabProfile, NetworkPreset, DevicePreset,
 ];

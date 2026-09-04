@@ -1,128 +1,93 @@
-export namespace PROFILES {
-    namespace low {
-        let network: string;
-        let device: string;
-        let label: string;
-    }
-    namespace medium {
-        let network_1: string;
-        export { network_1 as network };
-        let device_1: string;
-        export { device_1 as device };
-        let label_1: string;
-        export { label_1 as label };
-    }
-    namespace high {
-        let network_2: string;
-        export { network_2 as network };
-        let device_2: string;
-        export { device_2 as device };
-        let label_2: string;
-        export { label_2 as label };
-    }
-    namespace native {
-        let network_3: null;
-        export { network_3 as network };
-        let device_3: null;
-        export { device_3 as device };
-        let label_3: string;
-        export { label_3 as label };
-    }
-}
-export const NETWORK_PRESETS: {
-    '3g-slow': {
-        rttMs: number;
-        throughputKbps: number;
-        uploadKbps: number;
-        cpuSlowdownMultiplier: number;
-        label: string;
-    };
-    '3g': {
-        rttMs: number;
-        throughputKbps: number;
-        uploadKbps: number;
-        cpuSlowdownMultiplier: number;
-        label: string;
-    };
-    '4g': {
-        rttMs: number;
-        throughputKbps: number;
-        uploadKbps: number;
-        cpuSlowdownMultiplier: number;
-        label: string;
-    };
-    '4g-fast': {
-        rttMs: number;
-        throughputKbps: number;
-        uploadKbps: number;
-        cpuSlowdownMultiplier: number;
-        label: string;
-    };
-    wifi: {
-        rttMs: number;
-        throughputKbps: number;
-        uploadKbps: number;
-        cpuSlowdownMultiplier: number;
-        label: string;
-    };
-    none: {
-        rttMs: number;
-        throughputKbps: number;
-        uploadKbps: number;
-        cpuSlowdownMultiplier: number;
-        label: string;
-    };
+/**
+ * One entry in NETWORK_PRESETS. Named rather than inline so the published declarations
+ * describe a preset once instead of repeating its structure per key.
+ */
+export type NetworkPreset = {
+    /**
+     * - nominal round-trip time, in milliseconds
+     */
+    rttMs: number;
+    /**
+     * - nominal (pre-adjustment) download speed; `buildThrottling` applies the DevTools factors
+     */
+    throughputKbps: number;
+    /**
+     * - nominal (pre-adjustment) upload speed; `buildThrottling` applies the DevTools factors
+     */
+    uploadKbps: number;
+    cpuSlowdownMultiplier: number;
+    /**
+     * - the one-line summary printed by `list-profiles`
+     */
+    label: string;
 };
-export const DEVICE_PRESETS: {
-    'moto-g-power': {
-        width: number;
-        height: number;
-        deviceScaleFactor: number;
-        mobile: boolean;
-        formFactor: string;
-        label: string;
-    };
-    'iphone-12': {
-        width: number;
-        height: number;
-        deviceScaleFactor: number;
-        mobile: boolean;
-        formFactor: string;
-        label: string;
-    };
-    'iphone-14': {
-        width: number;
-        height: number;
-        deviceScaleFactor: number;
-        mobile: boolean;
-        formFactor: string;
-        label: string;
-    };
-    ipad: {
-        width: number;
-        height: number;
-        deviceScaleFactor: number;
-        mobile: boolean;
-        formFactor: string;
-        label: string;
-    };
-    desktop: {
-        width: number;
-        height: number;
-        deviceScaleFactor: number;
-        mobile: boolean;
-        formFactor: string;
-        label: string;
-    };
-    'desktop-large': {
-        width: number;
-        height: number;
-        deviceScaleFactor: number;
-        mobile: boolean;
-        formFactor: string;
-        label: string;
-    };
+/**
+ * One entry in DEVICE_PRESETS: the screen emulation and form factor for a device.
+ */
+export type DevicePreset = {
+    width: number;
+    height: number;
+    deviceScaleFactor: number;
+    mobile: boolean;
+    formFactor: "mobile" | "desktop";
+    /**
+     * - the one-line summary printed by `list-profiles`
+     */
+    label: string;
 };
+/**
+ * One entry in PROFILES: a named pairing of a network preset with a device preset.
+ */
+export type LabProfile = {
+    /**
+     * - a NETWORK_PRESETS key, or null for the native profile
+     */
+    network: string | null;
+    /**
+     * - a DEVICE_PRESETS key, or null for the native profile
+     */
+    device: string | null;
+    /**
+     * - the one-line summary printed by `list-profiles`
+     */
+    label: string;
+};
+/**
+ * One entry in PROFILES: a named pairing of a network preset with a device preset.
+ *
+ * @typedef {Object} LabProfile
+ * @property {string|null} network - a NETWORK_PRESETS key, or null for the native profile
+ * @property {string|null} device - a DEVICE_PRESETS key, or null for the native profile
+ * @property {string} label - the one-line summary printed by `list-profiles`
+ */
+/** @type {Readonly<Record<'low'|'medium'|'high'|'native', Readonly<LabProfile>>>} */
+export const PROFILES: Readonly<Record<"low" | "medium" | "high" | "native", Readonly<LabProfile>>>;
+/**
+ * One entry in NETWORK_PRESETS. Named rather than inline so the published declarations
+ * describe a preset once instead of repeating its structure per key.
+ *
+ * @typedef {Object} NetworkPreset
+ * @property {number} rttMs - nominal round-trip time, in milliseconds
+ * @property {number} throughputKbps - nominal (pre-adjustment) download speed; `buildThrottling` applies the DevTools factors
+ * @property {number} uploadKbps - nominal (pre-adjustment) upload speed; `buildThrottling` applies the DevTools factors
+ * @property {number} cpuSlowdownMultiplier
+ * @property {string} label - the one-line summary printed by `list-profiles`
+ */
+/** @type {Readonly<Record<'3g-slow'|'3g'|'4g'|'4g-fast'|'wifi'|'none', Readonly<NetworkPreset>>>} */
+export const NETWORK_PRESETS: Readonly<Record<"3g-slow" | "3g" | "4g" | "4g-fast" | "wifi" | "none", Readonly<NetworkPreset>>>;
+/**
+ * One entry in DEVICE_PRESETS: the screen emulation and form factor for a device.
+ *
+ * @typedef {Object} DevicePreset
+ * @property {number} width
+ * @property {number} height
+ * @property {number} deviceScaleFactor
+ * @property {boolean} mobile
+ * @property {'mobile'|'desktop'} formFactor
+ * @property {string} label - the one-line summary printed by `list-profiles`
+ */
+/** @type {Readonly<Record<'moto-g-power'|'iphone-12'|'iphone-14'|'ipad'|'desktop'|'desktop-large', Readonly<DevicePreset>>>} */
+export const DEVICE_PRESETS: Readonly<Record<"moto-g-power" | "iphone-12" | "iphone-14" | "ipad" | "desktop" | "desktop-large", Readonly<DevicePreset>>>;
 export const LAB_CATEGORIES: readonly string[];
 export const DEVTOOLS_RTT_ADJUSTMENT_FACTOR: 3.75;
 export const DEVTOOLS_THROUGHPUT_ADJUSTMENT_FACTOR: 0.9;
