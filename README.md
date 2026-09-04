@@ -594,6 +594,11 @@ import type { CruxHistoryReport } from '@hugoer/web-perf-cli/crux-history';
 
 Key exported types:
 
+<!-- Adding a row here? Add the type to the `@typedef` block in lib/index.js and to both
+     the import and the `Rows` tuple in type-tests/root.ts, then run `npm run generate-types`.
+     lib/index.js is a value-only façade, so a type not re-declared there does not resolve
+     from the package root, and root.ts is the only guard that catches it. -->
+
 | Type | Description |
 |------|-------------|
 | `LabReport` | Lighthouse JSON with `i18n` and `timing` stripped (categories, audits, environment, configSettings). Pass `--no-strip-json-props` / `stripJsonProps: false` to keep them |
