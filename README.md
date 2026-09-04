@@ -523,6 +523,62 @@ writes each report plus any `.summary.json`, and reports progress through `onRun
 `onRunComplete` / `onRunError` / `onSummary` callbacks rather than logging. It returns
 `Promise<LabPlanResult[]>`.
 
+### Runnable examples
+
+[`examples/`](examples/) holds 21 scripts covering every library entry point. They depend on the
+package as `file:..`, so they always run against the working tree rather than a published version:
+
+```bash
+npm install --prefix examples   # once
+node examples/lab-audit.js      # then, from the repo root
+```
+
+Two conventions run through the directory. A script ending in **`-audit` prints to the console and
+writes nothing**; one ending in **`-save` writes JSON under `results/`** and prints the paths. The
+`lab-*` scripts need Chrome installed locally; the `psi-*`, `crux-*` and `crux-history-*` scripts
+need `WEB_PERF_PSI_API_KEY` set (see [API key](#google-cloud-api-key-for-psi-crux-crux-history)).
+
+#### `lab` — local Lighthouse
+
+| Script | What it demonstrates |
+|--------|----------------------|
+| [`lab-audit.js`](examples/lab-audit.js) | One audit through headless Chrome, printed to the console |
+| [`lab-save.js`](examples/lab-save.js) | The same audit written to `results/lab/` |
+| [`lab-audit-profiles.js`](examples/lab-audit-profiles.js) | The `low` / `medium` / `high` presets run back to back and compared |
+| [`lab-save-profiles.js`](examples/lab-save-profiles.js) | One file per profile, with the profile name in the filename |
+| [`lab-audit-custom-throttling.js`](examples/lab-audit-custom-throttling.js) | Explicit `network` + `device` instead of a preset, plus `blockedUrlPatterns` |
+| [`lab-audit-variance.js`](examples/lab-audit-variance.js) | Why repeated runs disagree, and using the pure `variance` helpers to pick a median |
+| [`lab-save-runs.js`](examples/lab-save-runs.js) | `runLabPlan` driving a full (URL x profile x repeat) matrix through its callbacks |
+
+#### `psi` — PageSpeed Insights
+
+| Script | What it demonstrates |
+|--------|----------------------|
+| [`psi-audit.js`](examples/psi-audit.js) | One URL; category scores and Core Web Vitals to the console |
+| [`psi-save.js`](examples/psi-save.js) | The full API response written to `results/psi/` |
+| [`psi-audit-categories.js`](examples/psi-audit-categories.js) | Requesting only `PERFORMANCE` and `SEO`, which is faster than all four |
+| [`psi-batch-audit.js`](examples/psi-batch-audit.js) | Many URLs concurrently, rate-limited to the PSI quota |
+| [`psi-batch-save.js`](examples/psi-batch-save.js) | The same batch, one file per URL, with a progress line each |
+
+#### `crux` — CrUX 28-day rolling average
+
+| Script | What it demonstrates |
+|--------|----------------------|
+| [`crux-audit.js`](examples/crux-audit.js) | Page-level metric distributions for one URL |
+| [`crux-audit-origin.js`](examples/crux-audit-origin.js) | `scope: 'origin'` — every page aggregated, for a high-level check |
+| [`crux-save.js`](examples/crux-save.js) | One file per form factor (phone + desktop by default, so two) |
+| [`crux-batch-audit.js`](examples/crux-batch-audit.js) | Many URLs concurrently, printed as a summary table |
+| [`crux-batch-save.js`](examples/crux-batch-save.js) | The same batch written to `results/crux/` |
+
+#### `crux-history` — ~6 months of weekly CrUX data
+
+| Script | What it demonstrates |
+|--------|----------------------|
+| [`crux-history-audit.js`](examples/crux-history-audit.js) | The LCP trend for one URL, period by period |
+| [`crux-history-save.js`](examples/crux-history-save.js) | One file per form factor under `results/crux-history/` |
+| [`crux-history-batch-audit.js`](examples/crux-history-batch-audit.js) | Oldest vs latest LCP p75 per URL — improved or regressed |
+| [`crux-history-batch-save.js`](examples/crux-history-batch-save.js) | The same batch written to disk |
+
 ## TypeScript
 
 TypeScript type declarations are included and resolve automatically when you install the package. No `@types/` package needed.
